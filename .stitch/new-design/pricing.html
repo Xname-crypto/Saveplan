@@ -1,0 +1,337 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>大学生期末拯救计划 - 方案定价</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&amp;family=Hanken+Grotesk:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#303030",
+                    "on-tertiary": "#352e36",
+                    "outline": "#939187",
+                    "error-container": "#93000a",
+                    "outline-variant": "#48473f",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-surface-variant": "#c9c6bc",
+                    "on-primary-fixed": "#1c1c10",
+                    "surface-bright": "#393939",
+                    "surface-container-highest": "#353535",
+                    "on-error": "#690005",
+                    "on-tertiary-container": "#655d66",
+                    "on-secondary-fixed": "#1b1c10",
+                    "primary-fixed-dim": "#cac7b5",
+                    "secondary-fixed-dim": "#c8c7b4",
+                    "on-secondary-container": "#b7b6a3",
+                    "tertiary": "#fff4fd",
+                    "primary-container": "#dedbc8",
+                    "surface-container": "#1f1f1f",
+                    "on-background": "#e2e2e2",
+                    "surface": "#131313",
+                    "surface-tint": "#cac7b5",
+                    "tertiary-container": "#e3d7e2",
+                    "secondary-container": "#474839",
+                    "tertiary-fixed": "#ebdfea",
+                    "on-primary": "#323124",
+                    "inverse-surface": "#e2e2e2",
+                    "on-secondary": "#303124",
+                    "primary-fixed": "#e6e3d0",
+                    "secondary": "#c8c7b4",
+                    "on-primary-container": "#616051",
+                    "on-secondary-fixed-variant": "#474839",
+                    "on-primary-fixed-variant": "#484739",
+                    "background": "#131313",
+                    "on-tertiary-fixed": "#201921",
+                    "on-surface": "#e2e2e2",
+                    "primary": "#fbf7e4",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed-dim": "#cec3ce",
+                    "on-error-container": "#ffdad6",
+                    "surface-variant": "#353535",
+                    "inverse-primary": "#605f50",
+                    "surface-dim": "#131313",
+                    "surface-container-low": "#1b1b1b",
+                    "on-tertiary-fixed-variant": "#4c444d",
+                    "secondary-fixed": "#e5e3cf",
+                    "surface-container-high": "#2a2a2a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-lg": "8rem",
+                    "margin-mobile": "1.5rem",
+                    "gutter": "2rem",
+                    "stack-md": "4rem",
+                    "container-max": "1440px",
+                    "margin-desktop": "5rem",
+                    "stack-sm": "2rem"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Bodoni Moda"],
+                    "title-md": ["Hanken Grotesk"],
+                    "display-lg": ["Bodoni Moda"],
+                    "headline-lg": ["Bodoni Moda"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "title-md": ["20px", {"lineHeight": "1.5", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display-lg": ["80px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.2", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+        }
+        
+        .cinematic-gradient {
+            background: radial-gradient(circle at top, rgba(251, 247, 228, 0.05) 0%, rgba(19, 19, 19, 1) 70%);
+        }
+
+        .stagger-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-glow {
+            box-shadow: inset 0 1px 0 0 rgba(251, 247, 228, 0.05);
+        }
+
+        .highlighted-card {
+            box-shadow: 0 0 40px -10px rgba(251, 247, 228, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary selection:text-surface">
+<div class="noise-overlay"></div>
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+  <div class="bg-black rounded-b-2xl md:rounded-b-3xl px-6 py-3 md:px-12 md:py-4 flex items-center gap-12 pointer-events-auto border-x border-b border-primary/10 shadow-2xl shadow-black/50">
+    <div class="font-headline-lg text-primary text-xl md:text-2xl tracking-tighter hover:opacity-80 transition-opacity cursor-pointer">Save Your Finals <span class="text-sm md:text-base opacity-80 tracking-normal">| 题库导入助手</span></div>
+    <nav class="hidden md:flex items-center gap-8">
+      <a class="font-label-sm text-label-sm uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-colors" href="#">核心方案&nbsp;</a>
+      <a class="font-label-sm text-label-sm uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-colors" href="#">历年真题</a>
+      <a class="font-label-sm text-label-sm uppercase tracking-[0.2em] text-on-surface-variant hover:text-primary transition-colors" href="#">复习指南</a>
+      <a class="font-label-sm text-label-sm uppercase tracking-[0.2em] text-primary" href="#">关于我们</a>
+    </nav>
+    <div class="flex items-center gap-6">
+      <button class="bg-primary text-surface px-6 py-2 rounded-full font-label-sm text-label-sm uppercase tracking-wider hover:bg-primary-fixed transition-colors">登录 / 注册</button>
+    </div>
+  </div>
+</header>
+<main class="pt-24 cinematic-gradient min-h-screen">
+<!-- Hero Section -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center py-12">
+<h1 class="stagger-in font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-display-lg text-primary mb-6 animate-in" style="animation-delay: 0.1s;">
+                选择你的拯救方案
+            </h1>
+<p class="stagger-in font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto animate-in" style="animation-delay: 0.2s;">
+                为不同阶段的备考者量身定制的高效工具。从容应对每一次DDL，让期末不再是学术梦魇。
+            </p>
+</section>
+<!-- Pricing Tiers -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-12">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Tier 1: Basic -->
+<div class="stagger-in bg-surface-container-low border border-primary/10 p-10 flex flex-col h-full card-glow transition-all duration-500 hover:border-primary/30 group animate-in" style="animation-delay: 0.3s;">
+<div class="mb-8">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Starter</span>
+<h3 class="font-headline-lg text-headline-lg text-primary mt-2">新手启航</h3>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-[40px] text-primary">¥0</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/月</span>
+</div>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            每日5次转换
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            基础校对
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            导出PDF
+                        </li>
+</ul>
+<button class="w-full py-4 border border-primary/20 font-label-sm text-label-sm uppercase transition-all duration-500 group-hover:bg-primary/5">开始免费使用</button>
+</div>
+<!-- Tier 2: Pro (Highlighted) -->
+<div class="stagger-in bg-surface-container-high border-2 border-primary/80 p-10 flex flex-col h-full highlighted-card relative overflow-hidden group scale-105 z-10 animate-in" style="animation-delay: 0.4s;">
+<div class="absolute top-0 right-0 bg-primary text-surface px-4 py-1 font-label-sm text-label-sm uppercase">推荐</div>
+<div class="mb-8">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-primary-container">Popular</span>
+<h3 class="font-headline-lg text-headline-lg text-primary mt-2">高效拯救</h3>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-[40px] text-primary">¥29</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/月</span>
+</div>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            无限次转换
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            AI智能纠错
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            导出Anki/Markdown
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            云端自动同步
+                        </li>
+</ul>
+<button class="w-full py-4 bg-primary text-surface font-label-sm text-label-sm uppercase transition-all duration-500 hover:opacity-90">立即升级</button>
+</div>
+<!-- Tier 3: Annual -->
+<div class="stagger-in bg-surface-container-low border border-primary/10 p-10 flex flex-col h-full card-glow transition-all duration-500 hover:border-primary/30 group animate-in" style="animation-delay: 0.5s;">
+<div class="mb-8">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Exclusive</span>
+<h3 class="font-headline-lg text-headline-lg text-primary mt-2">学术精英</h3>
+</div>
+<div class="mb-8">
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-[40px] text-primary">¥199</span>
+<span class="font-body-md text-body-md text-on-surface-variant">/年</span>
+</div>
+</div>
+<ul class="space-y-4 mb-12 flex-grow">
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            包含Pro所有功能
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            专属模板库
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            优先AI解析通道
+                        </li>
+<li class="flex items-center gap-3 font-body-md text-body-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                            1对1技术支持
+                        </li>
+</ul>
+<button class="w-full py-4 border border-primary/20 font-label-sm text-label-sm uppercase transition-all duration-500 group-hover:bg-primary/5">获取年度特惠</button>
+</div>
+</div>
+</section>
+<!-- Aesthetic Visual Break -->
+<section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12">
+    <div class="mb-16 text-center">
+        <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary tracking-tight">常见问题</h2>
+        <div class="mt-4 w-12 h-[2px] bg-primary/20 mx-auto"></div>
+    </div>
+    <div class="max-w-3xl mx-auto space-y-8">
+        <div class="border-b border-primary/10 pb-4">
+            <h4 class="font-title-md text-primary mb-3">支持哪些格式的试卷上传？</h4>
+            <p class="font-body-md text-on-surface-variant">支持 PDF, Word, 以及高清手写图片扫描件。系统会自动处理倾斜、阴影，确保解析精度。</p>
+        </div>
+        <div class="border-b border-primary/10 pb-4">
+            <h4 class="font-title-md text-primary mb-3">解析后的题库可以直接导出吗？</h4>
+            <p class="font-body-md text-on-surface-variant">支持一键导出为 Anki 卡片、结构化 PDF 或 Markdown 格式，完美兼容主流笔记软件。</p>
+        </div>
+        <div class="border-b border-primary/10 pb-4">
+            <h4 class="font-title-md text-primary mb-3">AI 对复杂数学公式的识别率如何？</h4>
+            <p class="font-body-md text-on-surface-variant">我们采用了先进的 OCR 引擎，对复杂公式、手写符号及化学方程式均有极高的识别精度，并自动生成 LaTeX 格式。</p>
+        </div>
+        <div class="border-b border-primary/10 pb-4">
+            <h4 class="font-title-md text-primary mb-3">不同方案之间的解析速度有区别吗？</h4>
+            <p class="font-body-md text-on-surface-variant">高效版及精英版用户享有专属 GPU 算力通道，解析速度提升 300% 以上，应对紧急复习需求。</p>
+        </div>
+        <div class="border-b border-primary/10 pb-4">
+            <h4 class="font-title-md text-primary mb-3">我的试卷资料会被泄露吗？</h4>
+            <p class="font-body-md text-on-surface-variant">我们采用银行级加密存储，所有数据仅供您个人学习辅助使用，并支持手动永久销毁云端存档，确保学术私密性。</p>
+        </div>
+    </div>
+</section><section class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative overflow-hidden h-[250px] mb-12">
+<div class="absolute inset-0 bg-black/40 z-10"></div>
+<img class="w-full h-full object-cover grayscale opacity-50 transition-transform duration-1000 hover:scale-105" data-alt="A cinematic, high-contrast shot of a minimalist library at midnight, with soft warm light glowing from a single study lamp onto an open book. The atmosphere is deep, focused, and scholarly, with rich black shadows and elegant cream-toned paper highlights, perfectly reflecting a high-end academic design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXdLEkdIFAbryavKNF1g56l9xskuAC2tMI7bAsc1P869iX6PzLPTHJV1-C_ocQQpArym8jkGlquxYccZkPLh8-BRbqy_362878Wwl6SSvpJOZLoNi3om8FaTZSFUHDSsw451mTAOzwdS0BG0ELZbfGJuvwlBeqrESqJtJeMtaM-Yv91tD2Uqm0PNMkSiWLfw0g305Umme8bIpcvkwpL5X4dHLcwSDKMYCmuDCi1Mr9ms3g1h1RScvsGOgAN640DMTIuE8g6ETDq2s">
+<div class="absolute inset-0 z-20 flex flex-col justify-center items-center text-center p-8">
+<p class="font-headline-lg-mobile md:font-headline-lg text-primary italic max-w-3xl">"在最后的时限到来之前，为你的学术理想注入最后一丝光芒。"</p>
+<div class="mt-8 w-24 h-[1px] bg-primary/30"></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-primary/10 bg-surface py-12">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop w-full max-w-container-max mx-auto gap-8">
+<div class="flex flex-col gap-4">
+<div class="font-headline-lg text-headline-lg text-primary">大学生期末拯救计划</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm">CINEMATIC ACADEMIC SOLUTIONS. 为全球学子提供最具美感的学术辅助体验。</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-500" href="#">隐私协议</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-500" href="#">服务条款</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-500" href="#">加入我们</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-500" href="#">联系支持</a>
+</div>
+</div>
+<div class="mt-16 text-center">
+<p class="font-body-md text-body-md text-outline opacity-50">© 2024 大学生期末拯救计划. PRODUCED BY THE SCHOLARLY COLLECTIVE.</p>
+</div>
+</footer>
+<script>
+        // Micro-interaction for staggered entrance and parallax-like grain effect
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.stagger-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => observer.observe(card));
+        });
+    </script>
+
+
+</body></html>

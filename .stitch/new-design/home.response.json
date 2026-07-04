@@ -1,0 +1,28 @@
+﻿{
+    "id":  10,
+    "jsonrpc":  "2.0",
+    "result":  {
+                   "content":  [
+                                   {
+                                       "text":  "{\"name\":\"projects/7094212472848096695/screens/414690e2eb764099b44f0abdaa3a5cd2\",\"title\":\"题库导入助手 | 电影级首页 (Prisma 模板)\",\"screenshot\":{\"name\":\"projects/7094212472848096695/files/127919870583951223\",\"downloadUrl\":\"https://lh3.googleusercontent.com/aida/ADBb0ujRgb-ikI9p1lAzyqZqUOibPxEosQGOuKbQa7ZpI3Z5PTh5NZ90JPzNNm1qD1g5cAQaSZIe334LETqxA6EHzRaRvpURz7zhJ2OPEqQzV6xc3FKI23WXw4GcvvF-5izwG9UimsBLp6bR4DqAhsGEtDb51OFDEvrU1Uba3QPpH0a5lX7rl5RWa0rMGNuEGjHPuOGFb_rulvAsT5qrDfCZJL5tyEiq5Byli6eRJlhcEC7FYwML_bAG0-ErZJE\"},\"htmlCode\":{\"name\":\"projects/7094212472848096695/files/5936866941351735607\",\"downloadUrl\":\"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmNkMjBmZDhmZjkwODg0Yzc2MWIzMDJmMTUyEgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086\",\"mimeType\":\"text/html\"},\"width\":\"2560\",\"height\":\"6008\",\"deviceType\":\"DESKTOP\"}",
+                                       "type":  "text"
+                                   }
+                               ],
+                   "structuredContent":  {
+                                             "deviceType":  "DESKTOP",
+                                             "height":  "6008",
+                                             "htmlCode":  {
+                                                              "downloadUrl":  "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmNkMjBmZDhmZjkwODg0Yzc2MWIzMDJmMTUyEgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086",
+                                                              "mimeType":  "text/html",
+                                                              "name":  "projects/7094212472848096695/files/5936866941351735607"
+                                                          },
+                                             "name":  "projects/7094212472848096695/screens/414690e2eb764099b44f0abdaa3a5cd2",
+                                             "screenshot":  {
+                                                                "downloadUrl":  "https://lh3.googleusercontent.com/aida/ADBb0ujRgb-ikI9p1lAzyqZqUOibPxEosQGOuKbQa7ZpI3Z5PTh5NZ90JPzNNm1qD1g5cAQaSZIe334LETqxA6EHzRaRvpURz7zhJ2OPEqQzV6xc3FKI23WXw4GcvvF-5izwG9UimsBLp6bR4DqAhsGEtDb51OFDEvrU1Uba3QPpH0a5lX7rl5RWa0rMGNuEGjHPuOGFb_rulvAsT5qrDfCZJL5tyEiq5Byli6eRJlhcEC7FYwML_bAG0-ErZJE",
+                                                                "name":  "projects/7094212472848096695/files/127919870583951223"
+                                                            },
+                                             "title":  "题库导入助手 | 电影级首页 (Prisma 模板)",
+                                             "width":  "2560"
+                                         }
+               }
+}

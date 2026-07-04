@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>题库导入助手 - 格式转换</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&amp;family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Base noise texture for cinematic feel */
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+        /* Smooth fade-in animation */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#655d66",
+                        "surface-container-high": "#2a2a2a",
+                        "outline": "#939187",
+                        "primary-fixed-dim": "#cac7b5",
+                        "tertiary-fixed": "#ebdfea",
+                        "on-primary-fixed": "#1c1c10",
+                        "tertiary-container": "#e3d7e2",
+                        "on-tertiary-fixed-variant": "#4c444d",
+                        "surface-container-highest": "#353535",
+                        "outline-variant": "#48473f",
+                        "on-secondary-fixed": "#1b1c10",
+                        "secondary": "#c8c7b4",
+                        "surface": "#131313",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-container": "#616051",
+                        "on-error": "#690005",
+                        "tertiary-fixed-dim": "#cec3ce",
+                        "on-background": "#e2e2e2",
+                        "surface-container-low": "#1b1b1b",
+                        "on-surface-variant": "#c9c6bc",
+                        "on-secondary": "#303124",
+                        "primary": "#fbf7e4",
+                        "tertiary": "#fff4fd",
+                        "secondary-container": "#474839",
+                        "on-secondary-container": "#b7b6a3",
+                        "on-primary-fixed-variant": "#484739",
+                        "surface-variant": "#353535",
+                        "secondary-fixed-dim": "#c8c7b4",
+                        "error": "#ffb4ab",
+                        "background": "#131313",
+                        "surface-tint": "#cac7b5",
+                        "surface-bright": "#393939",
+                        "on-tertiary-fixed": "#201921",
+                        "on-secondary-fixed-variant": "#474839",
+                        "primary-container": "#dedbc8",
+                        "on-tertiary": "#352e36",
+                        "secondary-fixed": "#e5e3cf",
+                        "inverse-surface": "#e2e2e2",
+                        "surface-dim": "#131313",
+                        "primary-fixed": "#e6e3d0",
+                        "surface-container": "#1f1f1f",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#605f50",
+                        "on-surface": "#e2e2e2",
+                        "on-primary": "#323124",
+                        "on-error-container": "#ffdad6",
+                        "inverse-on-surface": "#303030"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "gutter": "2rem",
+                        "container-max": "1440px",
+                        "stack-lg": "8rem",
+                        "margin-mobile": "1.5rem",
+                        "stack-md": "4rem",
+                        "stack-sm": "2rem",
+                        "margin-desktop": "5rem"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Bodoni Moda", "serif"],
+                        "headline-lg-mobile": ["Bodoni Moda", "serif"],
+                        "body-md": ["Hanken Grotesk", "sans-serif"],
+                        "title-md": ["Hanken Grotesk", "sans-serif"],
+                        "headline-lg": ["Bodoni Moda", "serif"],
+                        "label-sm": ["Hanken Grotesk", "sans-serif"],
+                        "body-lg": ["Hanken Grotesk", "sans-serif"]
+                    },
+                    fontSize: {
+                        "display-lg": ["80px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "400" }],
+                        "headline-lg-mobile": ["32px", { lineHeight: "1.2", fontWeight: "400" }],
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "title-md": ["20px", { lineHeight: "1.5", letterSpacing: "0.05em", fontWeight: "500" }],
+                        "headline-lg": ["48px", { lineHeight: "1.2", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "1", letterSpacing: "0.1em", fontWeight: "600" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-surface overflow-x-hidden relative">
+<!-- Global Noise Overlay -->
+<div class="fixed inset-0 pointer-events-none z-0 bg-noise mix-blend-overlay"></div>
+<!-- Atmospheric Background Image -->
+<div class="fixed top-0 left-0 w-full h-[614px] z-0 opacity-30 pointer-events-none" data-alt="A dark, abstract cinematic background featuring subtle, slow-moving light leaks and a fine film grain texture. The color palette is predominantly deep pure black with very soft, out-of-focus highlights in warm cream and pale gold. The composition is highly minimalist, evoking the feel of a high-end editorial photo shoot or a moody, atmospheric film scene, providing a sophisticated backdrop for digital content." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAfts6spLFnj59mKVFcJIqbHazikij72QEl0P87IodddNuE1RtNvob9uCLssbQDVprcX83j1iEnSmG_noKGA3wuvMj15-LxnGHGMhrtj2kvsUjXoE8nzeac9T5Gbp4M5LimMdu5ZD0dgmtzfRFNKiFbyIhzz-IxTJZUFbvTo1Ur7BChFgoutfJjhJlwJTfRFstyI0R8HSQ0ppZqA4O9VzqI21D0jbtpc3b-PrXkh60oR966mp_3LdzXpLcMo9luN5xVwe0bMfp8m2I'); background-size: cover; background-position: center; filter: blur(40px) brightness(0.5);">
+</div>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-primary/10">
+<div class="flex justify-between items-center px-gutter py-6 max-w-container-max mx-auto">
+<div class="flex flex-col">
+<span class="font-title-md text-title-md tracking-widest text-primary">题库导入助手</span>
+<span class="font-display-lg text-label-sm tracking-widest text-primary/70 uppercase">SAVE YOUR FINALS</span>
+</div>
+<div class="hidden md:flex gap-8 items-center font-body-md text-body-md">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 hover:opacity-80 transition-opacity duration-500 ease-[0.22,1,0.36,1]" href="#">转换</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-500 hover:opacity-80 ease-[0.22,1,0.36,1]" href="#">模板</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-500 hover:opacity-80 ease-[0.22,1,0.36,1]" href="#">历史</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-500 hover:opacity-80 ease-[0.22,1,0.36,1]" href="#">文档</a>
+</div>
+<button class="hidden md:block font-label-sm text-label-sm uppercase tracking-widest bg-primary-container text-on-primary-fixed px-6 py-3 rounded hover:opacity-80 transition-opacity duration-500 ease-[0.22,1,0.36,1]">
+                立即开始
+            </button>
+<!-- Mobile Menu Icon -->
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined text-title-md">menu</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow relative z-10 pt-32 md:pt-48 pb-stack-lg px-gutter max-w-container-max mx-auto w-full">
+<!-- Hero Section -->
+<header class="text-center mb-stack-md fade-in-up">
+<h1 class="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-primary mb-6">
+                格式转换 <span class="opacity-50 font-light">|</span> FORMAT CONVERT
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">
+                精准学术转换。将非结构化学习资料转化为高保真结构化格式，为深度学习做好准备。
+            </p>
+</header>
+<!-- Converter Interface -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-stack-md fade-in-up delay-100">
+<!-- Upload Zone (Glassmorphic) -->
+<div class="lg:col-span-8 bg-surface-container/30 backdrop-blur-md border border-primary/10 rounded-xl p-8 md:p-12 relative group overflow-hidden transition-all duration-500 hover:bg-surface-container/50">
+<div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+<div class="border-2 border-dashed border-primary/20 rounded-lg h-full min-h-[300px] flex flex-col items-center justify-center p-8 transition-colors duration-500 group-hover:border-primary/40 cursor-pointer" id="upload-zone">
+<span class="material-symbols-outlined text-[48px] text-primary/70 mb-4 group-hover:-translate-y-2 transition-transform duration-500 ease-[0.22,1,0.36,1]" style="font-variation-settings: 'FILL' 0;">upload_file</span>
+<h3 class="font-title-md text-title-md text-primary mb-2">拖拽文档至此</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-center max-w-sm">
+                        支持 PDF, DOCX 及高分辨率图片。支持多文件上传。
+                    </p>
+<div class="mt-8">
+<button class="font-label-sm text-label-sm uppercase tracking-widest border border-primary/30 text-primary px-6 py-3 rounded hover:bg-primary/5 transition-colors duration-500">
+                            浏览文件
+                        </button>
+</div>
+</div>
+<!-- Progress Bar (Hidden initially) -->
+<div class="hidden absolute bottom-0 left-0 w-full h-1 bg-surface-container-high" id="progress-container">
+<div class="h-full bg-primary-container w-0 transition-all duration-300 ease-out" id="progress-bar"></div>
+</div>
+</div>
+<!-- Settings Panel -->
+<div class="lg:col-span-4 bg-surface-container/30 backdrop-blur-md border border-primary/10 rounded-xl p-8 flex flex-col justify-between">
+<div>
+<h3 class="font-label-sm text-label-sm uppercase tracking-widest text-primary/70 mb-6 border-b border-primary/10 pb-4">输出配置</h3>
+<div class="space-y-4">
+<label class="flex items-center p-4 border border-primary/20 rounded cursor-pointer hover:border-primary/50 transition-colors bg-surface-container-low">
+<input class="text-primary-container bg-surface border-primary/30 focus:ring-primary-container focus:ring-offset-surface" name="format" type="radio" value="anki"/>
+<span class="ml-4 flex flex-col">
+<span class="font-title-md text-[16px] text-primary">Anki 记忆卡片</span>
+<span class="font-body-md text-[14px] text-on-surface-variant">填充与基础布局</span>
+</span>
+</label>
+<label class="flex items-center p-4 border border-primary/10 rounded cursor-pointer hover:border-primary/50 transition-colors">
+<input checked="" class="text-primary-container bg-surface border-primary/30 focus:ring-primary-container focus:ring-offset-surface" name="format" type="radio" value="markdown"/>
+<span class="ml-4 flex flex-col">
+<span class="font-title-md text-[16px] text-primary">Markdown</span>
+<span class="font-body-md text-[14px] text-on-surface-variant">纯净结构化文本</span>
+</span>
+</label>
+<label class="flex items-center p-4 border border-primary/10 rounded cursor-pointer hover:border-primary/50 transition-colors">
+<input class="text-primary-container bg-surface border-primary/30 focus:ring-primary-container focus:ring-offset-surface" name="format" type="radio" value="pdf"/>
+<span class="ml-4 flex flex-col">
+<span class="font-title-md text-[16px] text-primary">结构化 PDF</span>
+<span class="font-body-md text-[14px] text-on-surface-variant">打印就绪布局</span>
+</span>
+</label>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-primary/10">
+<button class="w-full font-label-sm text-label-sm uppercase tracking-widest bg-primary text-on-primary-fixed py-4 rounded hover:opacity-90 transition-opacity duration-300 shadow-[0_0_20px_rgba(251,247,228,0.1)]" id="start-btn">
+                        开始转换 | INITIATE
+                    </button>
+</div>
+</div>
+</div>
+<!-- Features Preview (Bento Grid Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in-up delay-200">
+<!-- Feature 1 -->
+<div class="bg-surface-container-low border border-primary/5 p-8 rounded-lg hover:border-primary/20 transition-colors duration-500 group">
+<span class="material-symbols-outlined text-title-md text-primary/70 mb-4 group-hover:text-primary transition-colors">document_scanner</span>
+<h4 class="font-title-md text-[18px] text-primary mb-2">精准 OCR</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant">针对复杂学术布局和低质量扫描件的高保真文字提取。</p>
+</div>
+<!-- Feature 2 -->
+<div class="bg-surface-container-low border border-primary/5 p-8 rounded-lg hover:border-primary/20 transition-colors duration-500 group relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">functions</span>
+</div>
+<span class="material-symbols-outlined text-title-md text-primary/70 mb-4 group-hover:text-primary transition-colors">functions</span>
+<h4 class="font-title-md text-[18px] text-primary mb-2">公式识别</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant">原生 LaTeX 转换，支持数学和化学公式。</p>
+</div>
+<!-- Feature 3 -->
+<div class="bg-surface-container-low border border-primary/5 p-8 rounded-lg hover:border-primary/20 transition-colors duration-500 group">
+<span class="material-symbols-outlined text-title-md text-primary/70 mb-4 group-hover:text-primary transition-colors">account_tree</span>
+<h4 class="font-title-md text-[18px] text-primary mb-2">智能结构</h4>
+<p class="font-body-md text-[14px] text-on-surface-variant">自动层级检测，保留标题、列表和关联性。</p>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-stack-sm border-t border-primary/10 bg-surface z-10 relative">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter gap-4 max-w-container-max mx-auto">
+<div class="flex flex-col">
+<span class="font-title-md text-body-lg text-primary">题库导入助手</span>
+<span class="font-display-lg text-[10px] text-primary/70 uppercase">SAVE YOUR FINALS</span>
+</div>
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant text-center">
+                © 2024 SAVE YOUR FINALS. 精准学术转换。
+            </div>
+<div class="flex gap-6 font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">
+<a class="hover:text-primary transition-colors duration-500" href="#">隐私政策</a>
+<a class="hover:text-primary transition-colors duration-500" href="#">服务条款</a>
+<a class="hover:text-primary transition-colors duration-500" href="#">支持</a>
+<a class="hover:text-primary transition-colors duration-500" href="#">API</a>
+</div>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // Radio button interaction highlighting
+            const radios = document.querySelectorAll('input[type="radio"][name="format"]');
+            radios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    radios.forEach(r => {
+                        r.closest('label').classList.remove('bg-surface-container-low');
+                        r.closest('label').classList.replace('border-primary/20', 'border-primary/10');
+                    });
+                    if(e.target.checked) {
+                        e.target.closest('label').classList.add('bg-surface-container-low');
+                        e.target.closest('label').classList.replace('border-primary/10', 'border-primary/20');
+                    }
+                });
+            });
+
+            // Simulate conversion process
+            startBtn.addEventListener('click', () => {
+                if(startBtn.disabled) return;
+                
+                startBtn.disabled = true;
+                startBtn.innerHTML = 'PROCESSING...';
+                startBtn.classList.add('opacity-50');
+                
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            startBtn.innerHTML = 'COMPLETE | 下载';
+                            startBtn.classList.remove('opacity-50');
+                            startBtn.classList.replace('bg-primary', 'bg-primary-container');
+                            startBtn.classList.replace('text-on-primary-fixed', 'text-surface');
+                            startBtn.disabled = false;
+                        }, 500);
+                    }
+                    progressBar.style.width = `${progress}%`;
+                }, 400);
+            });
+        });
+    </script>
+</body></html>

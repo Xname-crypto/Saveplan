@@ -1,0 +1,28 @@
+﻿{
+    "id":  10,
+    "jsonrpc":  "2.0",
+    "result":  {
+                   "content":  [
+                                   {
+                                       "text":  "{\"name\":\"projects/7094212472848096695/screens/12897ba571eb49efb557ee54534f39b8\",\"title\":\"题库导入助手 | 个人中心管理空间\",\"screenshot\":{\"name\":\"projects/7094212472848096695/files/5200294798067433888\",\"downloadUrl\":\"https://lh3.googleusercontent.com/aida/ADBb0ugnRdCmM5UIuY1an4e7ch9AIExmyjxSbXjWLRWUXgtMqL4L3wcibtx-nL9XFEX6VmX3wXzXupmKMR6VEIn3rB9cHjAQJ9L3ONU7XxwXhDeVNhIUAw0R_w6cy3jsVTZBfFbeXImqTgrK4VpORWu_vr1x4p7DFDm3FxuJ4azhyW09Zf0IVG7MPkiWgqsyBhM8qlmLJ60RB8AmZ7jk6P-8Oe5LGFw-oz27yMkXPxXg-rh325IcybzKdX-GUrc\"},\"htmlCode\":{\"name\":\"projects/7094212472848096695/files/1162139360655664739\",\"downloadUrl\":\"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmUwMDc0M2RmYjcwODE2YzIzOTQ0MzhlMTNkEgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086\",\"mimeType\":\"text/html\"},\"width\":\"2560\",\"height\":\"3238\",\"deviceType\":\"DESKTOP\"}",
+                                       "type":  "text"
+                                   }
+                               ],
+                   "structuredContent":  {
+                                             "deviceType":  "DESKTOP",
+                                             "height":  "3238",
+                                             "htmlCode":  {
+                                                              "downloadUrl":  "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmUwMDc0M2RmYjcwODE2YzIzOTQ0MzhlMTNkEgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086",
+                                                              "mimeType":  "text/html",
+                                                              "name":  "projects/7094212472848096695/files/1162139360655664739"
+                                                          },
+                                             "name":  "projects/7094212472848096695/screens/12897ba571eb49efb557ee54534f39b8",
+                                             "screenshot":  {
+                                                                "downloadUrl":  "https://lh3.googleusercontent.com/aida/ADBb0ugnRdCmM5UIuY1an4e7ch9AIExmyjxSbXjWLRWUXgtMqL4L3wcibtx-nL9XFEX6VmX3wXzXupmKMR6VEIn3rB9cHjAQJ9L3ONU7XxwXhDeVNhIUAw0R_w6cy3jsVTZBfFbeXImqTgrK4VpORWu_vr1x4p7DFDm3FxuJ4azhyW09Zf0IVG7MPkiWgqsyBhM8qlmLJ60RB8AmZ7jk6P-8Oe5LGFw-oz27yMkXPxXg-rh325IcybzKdX-GUrc",
+                                                                "name":  "projects/7094212472848096695/files/5200294798067433888"
+                                                            },
+                                             "title":  "题库导入助手 | 个人中心管理空间",
+                                             "width":  "2560"
+                                         }
+               }
+}

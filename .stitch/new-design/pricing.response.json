@@ -1,0 +1,28 @@
+﻿{
+    "id":  10,
+    "jsonrpc":  "2.0",
+    "result":  {
+                   "content":  [
+                                   {
+                                       "text":  "{\"name\":\"projects/7094212472848096695/screens/c3e363675aad4be0a3cd96c16a3c9d14\",\"title\":\"大学生期末拯救计划 | 电影级价格方案\",\"screenshot\":{\"name\":\"projects/7094212472848096695/files/14657493864331373983\",\"downloadUrl\":\"https://lh3.googleusercontent.com/aida/ADBb0uhyL41MLIuV0QLSWWKSq0YL3eKWO6IEQwTdt80lDNRnf08cehx708LFNeNKqJAec2iG5thlKylGgZ0mJdcuAVv8yj0WBJRGhe-OPCpO8hM1lRWQfuNpBMUUZ4CajS6TiWF_M8LCmfDtDVgFPQ5X8_ILM6iX2T8lWdR3lo3Qs5XmwAH171-lnEodVsACxLzurU-yABRIGGatsLpTIBRfrRYDaIddQpgdW103NcBk7ZE_mie5Sn7hmkt1ucQ\"},\"htmlCode\":{\"name\":\"projects/7094212472848096695/files/7438392963636126875\",\"downloadUrl\":\"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmNjM2ZjYWFmYWEwN2M0ZDRlMGU0MTk4MzU0EgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086\",\"mimeType\":\"text/html\"},\"width\":\"2560\",\"height\":\"3930\",\"deviceType\":\"DESKTOP\"}",
+                                       "type":  "text"
+                                   }
+                               ],
+                   "structuredContent":  {
+                                             "deviceType":  "DESKTOP",
+                                             "height":  "3930",
+                                             "htmlCode":  {
+                                                              "downloadUrl":  "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MmNjM2ZjYWFmYWEwN2M0ZDRlMGU0MTk4MzU0EgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086",
+                                                              "mimeType":  "text/html",
+                                                              "name":  "projects/7094212472848096695/files/7438392963636126875"
+                                                          },
+                                             "name":  "projects/7094212472848096695/screens/c3e363675aad4be0a3cd96c16a3c9d14",
+                                             "screenshot":  {
+                                                                "downloadUrl":  "https://lh3.googleusercontent.com/aida/ADBb0uhyL41MLIuV0QLSWWKSq0YL3eKWO6IEQwTdt80lDNRnf08cehx708LFNeNKqJAec2iG5thlKylGgZ0mJdcuAVv8yj0WBJRGhe-OPCpO8hM1lRWQfuNpBMUUZ4CajS6TiWF_M8LCmfDtDVgFPQ5X8_ILM6iX2T8lWdR3lo3Qs5XmwAH171-lnEodVsACxLzurU-yABRIGGatsLpTIBRfrRYDaIddQpgdW103NcBk7ZE_mie5Sn7hmkt1ucQ",
+                                                                "name":  "projects/7094212472848096695/files/14657493864331373983"
+                                                            },
+                                             "title":  "大学生期末拯救计划 | 电影级价格方案",
+                                             "width":  "2560"
+                                         }
+               }
+}

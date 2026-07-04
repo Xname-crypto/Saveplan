@@ -1,0 +1,45 @@
+{
+  "name": "@edgespark/web",
+  "version": "0.0.4",
+  "private": false,
+  "description": "EdgeSpark web SDK: same-origin auth, API, and managed auth UI.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": [
+    "auth/styles/styles.css"
+  ],
+  "files": [
+    "dist",
+    "auth/styles/styles.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.es.js"
+    },
+    "./styles.css": "./auth/styles/styles.css",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "better-auth": "^1.5.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.2.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "pnpm run clean && pnpm exec vite build -c vite.config.ts",
+    "clean": "rm -rf dist",
+    "test": "node ./scripts/audit-auth-contract.mjs",
+    "typecheck": "pnpm exec tsc --noEmit && pnpm exec tsc --noEmit -p tsconfig.type-tests.json"
+  }
+}

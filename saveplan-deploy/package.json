@@ -1,0 +1,9 @@
+{
+  "name": "saveplan-deploy",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {}
+}

@@ -1,0 +1,7 @@
+[app.server]
+path = "server"
+
+[app.web]
+path = "web"
+output_path = "web/dist"
+

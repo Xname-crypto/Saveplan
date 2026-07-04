@@ -1,0 +1,280 @@
+[data-edgespark-auth] {
+  --edgespark-auth-bg: #ffffff;
+  --edgespark-auth-bg-muted: #f7f7f8;
+  --edgespark-auth-card-bg: linear-gradient(180deg, #ffffff 0%, #fcfcfc 100%);
+  --edgespark-auth-border: rgba(15, 23, 42, 0.08);
+  --edgespark-auth-text: #111827;
+  --edgespark-auth-text-muted: #6b7280;
+  --edgespark-auth-divider-bg: var(--edgespark-auth-bg);
+  --edgespark-auth-primary: #0f766e;
+  --edgespark-auth-primary-hover: #115e59;
+  --edgespark-auth-primary-contrast: #ffffff;
+  --edgespark-auth-error: #b91c1c;
+  --edgespark-auth-info: #0f766e;
+  --edgespark-auth-radius-card: 20px;
+  --edgespark-auth-radius-control: 12px;
+  --edgespark-auth-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  --edgespark-auth-font: "IBM Plex Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --edgespark-auth-modal-backdrop: rgba(15, 23, 42, 0.22);
+  --edgespark-auth-modal-card-bg: #ffffff;
+  --edgespark-auth-modal-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  color: var(--edgespark-auth-text);
+  font-family: var(--edgespark-auth-font);
+}
+
+[data-edgespark-auth][data-edgespark-auth-theme="dark"] {
+  --edgespark-auth-bg: #14181f;
+  --edgespark-auth-bg-muted: #1d2330;
+  --edgespark-auth-card-bg: linear-gradient(180deg, #171d27 0%, #121823 100%);
+  --edgespark-auth-border: rgba(226, 232, 240, 0.12);
+  --edgespark-auth-text: #f8fafc;
+  --edgespark-auth-text-muted: #94a3b8;
+  --edgespark-auth-divider-bg: var(--edgespark-auth-bg);
+  --edgespark-auth-primary: #14b8a6;
+  --edgespark-auth-primary-hover: #0f9488;
+  --edgespark-auth-primary-contrast: #f8fafc;
+  --edgespark-auth-error: #fca5a5;
+  --edgespark-auth-info: #5eead4;
+  --edgespark-auth-shadow: 0 24px 60px rgba(2, 6, 23, 0.32);
+  --edgespark-auth-modal-backdrop: rgba(2, 6, 23, 0.56);
+  --edgespark-auth-modal-card-bg: #101722;
+  --edgespark-auth-modal-shadow: 0 24px 60px rgba(2, 6, 23, 0.48);
+}
+
+[data-edgespark-auth] *,
+[data-edgespark-auth] *::before,
+[data-edgespark-auth] *::after {
+  box-sizing: border-box;
+}
+
+.edgespark-auth__shell {
+  width: 100%;
+}
+
+.edgespark-auth__card {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 420px;
+  padding: 24px;
+  border: 1px solid var(--edgespark-auth-border);
+  border-radius: var(--edgespark-auth-radius-card);
+  background: var(--edgespark-auth-card-bg);
+  box-shadow: var(--edgespark-auth-shadow);
+}
+
+.edgespark-auth__section,
+.edgespark-auth__form,
+.edgespark-auth__stack {
+  display: grid;
+  gap: 14px;
+}
+
+.edgespark-auth__header {
+  display: grid;
+  gap: 8px;
+}
+
+.edgespark-auth__title {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.edgespark-auth__copy,
+.edgespark-auth__meta {
+  margin: 0;
+  color: var(--edgespark-auth-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.edgespark-auth__field {
+  display: grid;
+  gap: 8px;
+}
+
+.edgespark-auth__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.edgespark-auth__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--edgespark-auth-border);
+  border-radius: var(--edgespark-auth-radius-control);
+  background: var(--edgespark-auth-bg);
+  color: var(--edgespark-auth-text);
+  font: inherit;
+}
+
+.edgespark-auth__input:focus {
+  outline: 2px solid color-mix(in srgb, var(--edgespark-auth-primary) 35%, transparent);
+  outline-offset: 1px;
+  border-color: var(--edgespark-auth-primary);
+}
+
+.edgespark-auth__button,
+.edgespark-auth__link {
+  font: inherit;
+}
+
+.edgespark-auth__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, opacity 120ms ease;
+}
+
+.edgespark-auth__button:disabled,
+.edgespark-auth__link:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.edgespark-auth__button--primary {
+  background: var(--edgespark-auth-primary);
+  color: var(--edgespark-auth-primary-contrast);
+}
+
+.edgespark-auth__button--primary:hover:not(:disabled) {
+  background: var(--edgespark-auth-primary-hover);
+}
+
+.edgespark-auth__button--secondary {
+  border-color: var(--edgespark-auth-border);
+  background: var(--edgespark-auth-bg);
+  color: var(--edgespark-auth-text);
+}
+
+.edgespark-auth__button--secondary:hover:not(:disabled) {
+  background: var(--edgespark-auth-bg-muted);
+}
+
+.edgespark-auth__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.edgespark-auth__link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--edgespark-auth-primary);
+  cursor: pointer;
+}
+
+.edgespark-auth__divider {
+  position: relative;
+  text-align: center;
+  color: var(--edgespark-auth-text-muted);
+  font-size: 0.85rem;
+}
+
+.edgespark-auth__divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px solid var(--edgespark-auth-border);
+}
+
+.edgespark-auth__divider span {
+  position: relative;
+  padding: 0 10px;
+  background: var(--edgespark-auth-divider-bg);
+}
+
+.edgespark-auth__status {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.edgespark-auth__status--error {
+  color: var(--edgespark-auth-error);
+  background: color-mix(in srgb, var(--edgespark-auth-error) 10%, var(--edgespark-auth-bg));
+}
+
+.edgespark-auth__status--info {
+  color: var(--edgespark-auth-info);
+  background: color-mix(in srgb, var(--edgespark-auth-info) 10%, var(--edgespark-auth-bg));
+}
+
+.edgespark-auth__status--muted {
+  color: var(--edgespark-auth-text-muted);
+  background: var(--edgespark-auth-bg-muted);
+}
+
+.edgespark-auth__iframe-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--edgespark-auth-modal-backdrop);
+}
+
+.edgespark-auth__iframe-modal-card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  width: min(520px, 100%);
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--edgespark-auth-modal-card-bg);
+  box-shadow: var(--edgespark-auth-modal-shadow);
+}
+
+.edgespark-auth__iframe-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--edgespark-auth-text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.edgespark-auth__iframe-modal-close:hover {
+  background: var(--edgespark-auth-bg-muted);
+}
+
+.edgespark-auth__dev-banner {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .edgespark-auth__card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .edgespark-auth__title {
+    font-size: 1.45rem;
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "saveplan-edge",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {}
+}

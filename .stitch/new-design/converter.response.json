@@ -1,0 +1,28 @@
+﻿{
+    "id":  10,
+    "jsonrpc":  "2.0",
+    "result":  {
+                   "content":  [
+                                   {
+                                       "text":  "{\"name\":\"projects/7094212472848096695/screens/527d8e786524467198d7441e2640b08a\",\"title\":\"题库导入助手 | 智能格式转换界面 (中文版)\",\"screenshot\":{\"name\":\"projects/7094212472848096695/files/6b7af0091ae140d2b77ec5ca42993507\",\"downloadUrl\":\"https://lh3.googleusercontent.com/aida/ADBb0ugBHSw5gvZA0znGNO0d_RRK050Ffns8E_tsHCFLz3cuTSH9RF2F7tCMLcMHMwKT8SsBwF5crxxX1rkc_DhWsMGZ7MpYKKpWbzKElDTPs1dU-gnW2v_PifUOefpJwRa9yoBdekHSr1Q0pK_RLIVf3uL78TkGfcYsYvV_vI09tc_DBX-4XEwdCfHOJqszq1EOWHOzmAYlWDgoj6SCogil88hPmv-G7sDXUtkDo2Z7M8p_UweZXj_sYObXrg0\"},\"htmlCode\":{\"name\":\"projects/7094212472848096695/files/9d07149f59224a51be3de29e862ce041\",\"downloadUrl\":\"https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzQ1NGMwYzA1NTAzZjRhODI5NWMxNDhmN2E1ZGFmNmQ3EgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086\",\"mimeType\":\"text/html\"},\"width\":\"2560\",\"height\":\"2744\",\"deviceType\":\"DESKTOP\"}",
+                                       "type":  "text"
+                                   }
+                               ],
+                   "structuredContent":  {
+                                             "deviceType":  "DESKTOP",
+                                             "height":  "2744",
+                                             "htmlCode":  {
+                                                              "downloadUrl":  "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzQ1NGMwYzA1NTAzZjRhODI5NWMxNDhmN2E1ZGFmNmQ3EgsSBxCai7erzhkYAZIBIwoKcHJvamVjdF9pZBIVQhM3MDk0MjEyNDcyODQ4MDk2Njk1\u0026filename=\u0026opi=89354086",
+                                                              "mimeType":  "text/html",
+                                                              "name":  "projects/7094212472848096695/files/9d07149f59224a51be3de29e862ce041"
+                                                          },
+                                             "name":  "projects/7094212472848096695/screens/527d8e786524467198d7441e2640b08a",
+                                             "screenshot":  {
+                                                                "downloadUrl":  "https://lh3.googleusercontent.com/aida/ADBb0ugBHSw5gvZA0znGNO0d_RRK050Ffns8E_tsHCFLz3cuTSH9RF2F7tCMLcMHMwKT8SsBwF5crxxX1rkc_DhWsMGZ7MpYKKpWbzKElDTPs1dU-gnW2v_PifUOefpJwRa9yoBdekHSr1Q0pK_RLIVf3uL78TkGfcYsYvV_vI09tc_DBX-4XEwdCfHOJqszq1EOWHOzmAYlWDgoj6SCogil88hPmv-G7sDXUtkDo2Z7M8p_UweZXj_sYObXrg0",
+                                                                "name":  "projects/7094212472848096695/files/6b7af0091ae140d2b77ec5ca42993507"
+                                                            },
+                                             "title":  "题库导入助手 | 智能格式转换界面 (中文版)",
+                                             "width":  "2560"
+                                         }
+               }
+}

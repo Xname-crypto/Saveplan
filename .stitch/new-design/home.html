@@ -1,0 +1,360 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>题库导入助手 | Velorah®</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&amp;family=Hanken+Grotesk:wght@100..900&amp;family=Almarai:wght@300;400;700;800&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Custom Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-container": "#dedbc8",
+            "primary-fixed": "#e6e3d0",
+            "surface-container": "#1f1f1f",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed-dim": "#c8c7b4",
+            "on-surface": "#e2e2e2",
+            "surface-container-low": "#1b1b1b",
+            "tertiary-fixed": "#ebdfea",
+            "on-tertiary-fixed-variant": "#4c444d",
+            "error-container": "#93000a",
+            "surface-variant": "#353535",
+            "on-primary-fixed-variant": "#484739",
+            "on-error": "#690005",
+            "on-primary": "#323124",
+            "on-secondary": "#303124",
+            "error": "#ffb4ab",
+            "tertiary-container": "#e3d7e2",
+            "on-tertiary": "#352e36",
+            "surface-dim": "#131313",
+            "on-tertiary-container": "#655d66",
+            "surface-container-high": "#2a2a2a",
+            "secondary-fixed": "#e5e3cf",
+            "inverse-on-surface": "#303030",
+            "on-surface-variant": "#c9c6bc",
+            "surface": "#131313",
+            "tertiary": "#fff4fd",
+            "on-secondary-fixed-variant": "#474839",
+            "on-tertiary-fixed": "#201921",
+            "outline-variant": "#48473f",
+            "on-primary-fixed": "#1c1c10",
+            "surface-tint": "#cac7b5",
+            "primary": "#fbf7e4",
+            "outline": "#939187",
+            "on-secondary-container": "#b7b6a3",
+            "inverse-primary": "#605f50",
+            "surface-container-lowest": "#0e0e0e",
+            "primary-fixed-dim": "#cac7b5",
+            "secondary": "#c8c7b4",
+            "on-secondary-fixed": "#1b1c10",
+            "tertiary-fixed-dim": "#cec3ce",
+            "secondary-container": "#474839",
+            "background": "#131313",
+            "surface-bright": "#393939",
+            "on-background": "#e2e2e2",
+            "surface-container-highest": "#353535",
+            "on-primary-container": "#616051",
+            "inverse-surface": "#e2e2e2"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "gutter": "2rem",
+            "stack-md": "4rem",
+            "stack-lg": "8rem",
+            "margin-desktop": "5rem",
+            "stack-sm": "2rem",
+            "margin-mobile": "1.5rem",
+            "container-max": "1440px"
+          },
+          fontFamily: {
+            "label-sm": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Bodoni Moda"],
+            "body-lg": ["Hanken Grotesk"],
+            "headline-lg": ["Bodoni Moda"],
+            "title-md": ["Hanken Grotesk"],
+            "display-lg": ["Bodoni Moda"],
+            "body-md": ["Hanken Grotesk"],
+            "almarai": ["Almarai", "sans-serif"],
+            "instrument": ["Instrument Serif", "serif"]
+          },
+          fontSize: {
+            "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+            "headline-lg": ["48px", { "lineHeight": "1.2", "fontWeight": "400" }],
+            "title-md": ["20px", { "lineHeight": "1.5", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "display-lg": ["80px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24
+    }
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.05;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDTJvWqPX1jtCkVrvvQ997QoYoy-FZce2MK-CF2_1nbfWo5IHmeGs6EYplq2mxhfLxI96-T0lzQpEsoxQeOizyZ25ZSiZhyLeUgBX0AERjtdvhpqQS1UH-LBDRxJBhjQ0JZV34H3AlFWtW5Nw_2HRM6rS1LJLMBEGorm2bXnP5ECGk8CeP6lADBJy9Z0qY32WmgGNRKLBQGBueyC7vVrXY5Cxj7Cux2AZzfiWhFRj-YHrlooA_V7rRVmZRW0xio8QrJPzWG-GOzDH8)
+    }
+.reveal-text span {
+    opacity: 0.2;
+    transition: opacity 0.1s linear
+    }
+.custom-scroll-reveal span.active {
+    opacity: 1;
+    color: #fbf7e4
+    }
+.glass {
+    background: rgba(16, 16, 16, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px)
+    }
+@keyframes pull-up {
+    0% {
+        transform: translateY(40px);
+        opacity: 0;
+        } 100% {
+        transform: translateY(0);
+        opacity: 1;
+        }
+    }
+.animate-pull-up {
+    animation: pull-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards
+    }
+.stagger-delay-1 {
+    animation-delay: 0.1s
+    }
+.stagger-delay-2 {
+    animation-delay: 0.2s
+    }
+.stagger-delay-3 {
+    animation-delay: 0.3s
+    }</style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<div class="noise-overlay"></div>
+<!-- TopNavBar (Shared Component) -->
+<nav class="fixed top-0 left-0 right-0 z-50 flex justify-center items-center">
+<div class="bg-surface/70 dark:bg-surface/70 backdrop-blur-xl rounded-full mt-6 mx-auto w-fit px-8 py-3 border border-primary/15 flex items-center gap-8">
+<div class="font-display-lg text-title-md tracking-tighter text-primary dark:text-primary mr-4 flex items-center">Save Your Finals <span class="mx-2 border-l border-primary/30 h-4 inline-block"></span> <span class="font-almarai text-sm font-normal">题库导入助手</span></div>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold border-b border-primary/40 pb-1" href="#">首页</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-500 ease-[0.22,1,0.36,1]" href="#">功能特色</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-500 ease-[0.22,1,0.36,1]" href="#">价格</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-500 ease-[0.22,1,0.36,1]" href="#">帮助中心</a>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 rounded-full font-label-sm text-label-sm uppercase tracking-widest hover:scale-95 transition-transform duration-300 ml-4">
+        登录 / 注册
+      </button>
+</div>
+</nav>
+<!-- Section 1: Hero -->
+<section class="h-screen p-4 md:p-6 relative">
+<div class="h-full w-full rounded-2xl md:rounded-[2rem] overflow-hidden relative">
+<video autoplay="" class="absolute inset-0 w-full h-full object-cover" loop="" muted="" playsinline="">
+<source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4" type="video/mp4">
+</video>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<!-- Content Overlay -->
+<div class="relative h-full flex flex-col justify-end p-gutter md:p-margin-desktop z-10">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
+<div class="md:col-span-8">
+<h1 class="font-display-lg text-[8vw] md:text-[7vw] leading-none opacity-0 animate-pull-up text-primary mb-4">
+              在方寸之间，<br>让效率起航。
+</h1>
+</div>
+<div class="md:col-span-4 flex flex-col items-end text-right gap-6">
+<p class="font-body-lg text-body-lg text-primary/80 max-w-sm opacity-0 animate-pull-up stagger-delay-1">
+              我们相信，每一个备考的人都值得更高效的学习方式。在这个信息爆炸的时代，海量的试卷和资料不应成为你的负担，而应是你前进的燃料。
+            </p>
+<button class="group flex items-center gap-4 bg-primary-container text-on-primary-container px-8 py-4 rounded-full font-label-sm text-label-sm uppercase tracking-widest hover:bg-primary transition-all duration-500 opacity-0 animate-pull-up stagger-delay-2">
+              立即开始
+              <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: About (Product Philosophy) -->
+<section class="bg-black py-stack-lg px-gutter">
+<div class="max-w-container-max mx-auto">
+<div class="bg-surface-container-lowest p-gutter md:p-24 rounded-[3rem] border border-primary/5">
+<span class="font-label-sm text-label-sm uppercase tracking-[0.2em] text-primary mb-12 block opacity-0 animate-pull-up">关于我们</span>
+<h2 class="font-almarai text-headline-lg-mobile md:text-headline-lg leading-tight text-on-surface mb-16 opacity-0 stagger-delay-1 animate-pull-up">
+          从混乱到有序，<span class="font-instrument italic">重塑你的学习边界。</span>
+</h2>
+<div class="max-w-4xl custom-scroll-reveal font-body-lg text-body-lg leading-relaxed text-on-surface-variant flex flex-wrap gap-x-2 gap-y-1" id="reveal-container">
+<!-- Text will be injected here for the scroll reveal effect -->
+<span class="transition-opacity duration-300 active">无</span><span class="transition-opacity duration-300 active">论</span><span class="transition-opacity duration-300 active">是</span><span class="transition-opacity duration-300 active">复</span><span class="transition-opacity duration-300 active">杂</span><span class="transition-opacity duration-300 active">排</span><span class="transition-opacity duration-300 active">版</span><span class="transition-opacity duration-300 active">、</span><span class="transition-opacity duration-300 active">文</span><span class="transition-opacity duration-300 active">字</span><span class="transition-opacity duration-300 active">图</span><span class="transition-opacity duration-300 active">片</span><span class="transition-opacity duration-300 active">混</span><span class="transition-opacity duration-300 active">合</span><span class="transition-opacity duration-300 active">还</span><span class="transition-opacity duration-300 active">是</span><span class="transition-opacity duration-300 active">手</span><span class="transition-opacity duration-300 active">写</span><span class="transition-opacity duration-300 active">公</span><span class="transition-opacity duration-300 active">式</span><span class="transition-opacity duration-300 active">，</span><span class="transition-opacity duration-300 active">我</span><span class="transition-opacity duration-300 active">们</span><span class="transition-opacity duration-300 active">都</span><span class="transition-opacity duration-300 active">致</span><span class="transition-opacity duration-300 active">力</span><span class="transition-opacity duration-300 active">于</span><span class="transition-opacity duration-300 active">为</span><span class="transition-opacity duration-300 active">你</span><span class="transition-opacity duration-300 active">带</span><span class="transition-opacity duration-300 active">来</span><span class="transition-opacity duration-300 active">前</span><span class="transition-opacity duration-300 active">所</span><span class="transition-opacity duration-300 active">未</span><span class="transition-opacity duration-300 active">有</span><span class="transition-opacity duration-300 active">的</span><span class="transition-opacity duration-300 active">转</span><span class="transition-opacity duration-300 active">换</span><span class="transition-opacity duration-300 active">体</span><span class="transition-opacity duration-300 active">验</span><span class="transition-opacity duration-300 active">。</span><span class="transition-opacity duration-300 active">上</span><span class="transition-opacity duration-300 active">传</span><span class="transition-opacity duration-300 active">你</span><span class="transition-opacity duration-300 active">的</span><span class="transition-opacity duration-300 active">文</span><span class="transition-opacity duration-300 active">件</span><span class="transition-opacity duration-300 active">，</span><span class="transition-opacity duration-300 active">亲</span><span class="transition-opacity duration-300">眼</span><span class="transition-opacity duration-300">见</span><span class="transition-opacity duration-300">证</span><span class="transition-opacity duration-300">从</span><span class="transition-opacity duration-300">混</span><span class="transition-opacity duration-300">乱</span><span class="transition-opacity duration-300">到</span><span class="transition-opacity duration-300">有</span><span class="transition-opacity duration-300">序</span><span class="transition-opacity duration-300">的</span><span class="transition-opacity duration-300">蜕</span><span class="transition-opacity duration-300">变</span><span class="transition-opacity duration-300">。</span><span class="transition-opacity duration-300">无</span><span class="transition-opacity duration-300">论</span><span class="transition-opacity duration-300">是</span><span class="transition-opacity duration-300">复</span><span class="transition-opacity duration-300">杂</span><span class="transition-opacity duration-300">排</span><span class="transition-opacity duration-300">版</span><span class="transition-opacity duration-300">、</span><span class="transition-opacity duration-300">文</span><span class="transition-opacity duration-300">字</span><span class="transition-opacity duration-300">图</span><span class="transition-opacity duration-300">片</span><span class="transition-opacity duration-300">混</span><span class="transition-opacity duration-300">合</span><span class="transition-opacity duration-300">还</span><span class="transition-opacity duration-300">是</span><span class="transition-opacity duration-300">手</span><span class="transition-opacity duration-300">写</span><span class="transition-opacity duration-300">公</span><span class="transition-opacity duration-300">式</span><span class="transition-opacity duration-300">，</span><span class="transition-opacity duration-300">我</span><span class="transition-opacity duration-300">们</span><span class="transition-opacity duration-300">都</span><span class="transition-opacity duration-300">致</span><span class="transition-opacity duration-300">力</span><span class="transition-opacity duration-300">于</span><span class="transition-opacity duration-300">为</span><span class="transition-opacity duration-300">你</span><span class="transition-opacity duration-300">带</span><span class="transition-opacity duration-300">来</span><span class="transition-opacity duration-300">前</span><span class="transition-opacity duration-300">所</span><span class="transition-opacity duration-300">未</span><span class="transition-opacity duration-300">有</span><span class="transition-opacity duration-300">的</span><span class="transition-opacity duration-300">转</span><span class="transition-opacity duration-300">换</span><span class="transition-opacity duration-300">体</span><span class="transition-opacity duration-300">验</span><span class="transition-opacity duration-300">。</span><span class="transition-opacity duration-300">上</span><span class="transition-opacity duration-300">传</span><span class="transition-opacity duration-300">你</span><span class="transition-opacity duration-300">的</span><span class="transition-opacity duration-300">文</span><span class="transition-opacity duration-300">件</span><span class="transition-opacity duration-300">，</span><span class="transition-opacity duration-300">亲</span><span class="transition-opacity duration-300">眼</span><span class="transition-opacity duration-300">见</span><span class="transition-opacity duration-300">证</span><span class="transition-opacity duration-300">从</span><span class="transition-opacity duration-300">混</span><span class="transition-opacity duration-300">乱</span><span class="transition-opacity duration-300">到</span><span class="transition-opacity duration-300">有</span><span class="transition-opacity duration-300">序</span><span class="transition-opacity duration-300">的</span><span class="transition-opacity duration-300">蜕</span><span class="transition-opacity duration-300">变</span><span class="transition-opacity duration-300">。</span></div>
+</div>
+</div>
+</section>
+<!-- Section 3: Features (Core Functions) -->
+<section class="min-h-screen bg-black py-stack-lg relative overflow-hidden">
+<!-- Animated background grain -->
+<div class="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+<div class="max-w-container-max mx-auto px-gutter relative z-10">
+<div class="mb-24">
+<h3 class="font-almarai text-headline-lg-mobile md:text-[4rem] text-primary max-w-4xl opacity-0 animate-pull-up">
+          专为高效学习者打造的智能工具。<br>
+<span class="font-instrument italic text-secondary text-[0.6em] md:text-[0.6em] block mt-4">准备好告别手动整理了吗？</span>
+</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- Card 1: Video -->
+<div class="md:col-span-1 h-[500px] rounded-2xl overflow-hidden relative group border border-white/5 opacity-0 animate-pull-up">
+<video autoplay="" class="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100" loop="" muted="" playsinline="">
+<source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260406_133058_0504132a-0cf3-4450-a370-8ea3b05c95d4.mp4" type="video/mp4">
+</video>
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute bottom-8 left-8">
+<span class="font-label-sm text-[12px] uppercase tracking-widest text-primary bg-black/50 backdrop-blur-md px-4 py-2 rounded-full">极简上传，即刻解析。</span>
+</div>
+</div>
+<!-- Card 2: Feature (Smart Conversion) -->
+<div class="md:col-span-1 bg-surface-container rounded-2xl p-8 flex flex-col justify-between border border-white/5 hover:border-primary/20 transition-all duration-500 opacity-0 stagger-delay-1 animate-pull-up">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-6">auto_awesome</span>
+<h4 class="font-title-md text-primary mb-6">智能转换 (01)</h4>
+<ul class="space-y-4 font-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 精准识别复杂公式</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 支持多种文档格式</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> AI 结构化排版</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 保持原始逻辑结构</li>
+</ul>
+</div>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-secondary flex items-center gap-2 group mt-8" href="#">
+            了解更多
+            <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<!-- Card 3: Feature (Online Review) -->
+<div class="md:col-span-1 bg-surface-container rounded-2xl p-8 flex flex-col justify-between border border-white/5 hover:border-primary/20 transition-all duration-500 opacity-0 stagger-delay-2 animate-pull-up">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-6">rate_review</span>
+<h4 class="font-title-md text-primary mb-6">在线校对 (02)</h4>
+<ul class="space-y-4 font-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 双栏实时对比</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 智能纠错建议</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 一键批量修改</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 云端自动保存</li>
+</ul>
+</div>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-secondary flex items-center gap-2 group mt-8" href="#">
+            了解更多
+            <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<!-- Card 4: Feature (Multi-export) -->
+<div class="md:col-span-1 bg-surface-container rounded-2xl p-8 flex flex-col justify-between border border-white/5 hover:border-primary/20 transition-all duration-500 opacity-0 stagger-delay-3 animate-pull-up">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-6">ios_share</span>
+<h4 class="font-title-md text-primary mb-6">多端导出 (03)</h4>
+<ul class="space-y-4 font-body-md text-on-surface-variant">
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> Anki 卡片一键转换</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 结构化 PDF 导出</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> Markdown 格式支持</li>
+<li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary/60">check_circle</span> 适配各种刷题软件</li>
+</ul>
+</div>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-secondary flex items-center gap-2 group mt-8" href="#">
+            了解更多
+            <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer (Shared Component) -->
+<footer class="bg-background dark:bg-background border-t border-primary/10">
+<div class="w-full py-20 px-gutter max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="font-display-lg text-headline-lg text-primary">Velorah®</div>
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-secondary dark:text-secondary opacity-80">
+          © 2024 VELORAH 题库导入助手. ALL RIGHTS RESERVED.
+        </div>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors duration-500" href="#">隐私政策</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors duration-500" href="#">服务条款</a>
+<a class="font-label-sm text-label-sm uppercase tracking-widest text-outline hover:text-primary transition-colors duration-500" href="#">联系我们</a>
+</div>
+</div>
+</div>
+</footer>
+<script>
+    // Scroll Reveal Interaction
+    const text = "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。";
+    const container = document.getElementById('reveal-container');
+    
+    // Split text into words and spans
+    text.split('').forEach(char => {
+      const span = document.createElement('span');
+      span.innerText = char;
+      span.className = 'transition-opacity duration-300';
+      container.appendChild(span);
+    });
+
+    const spans = container.querySelectorAll('span');
+
+    window.addEventListener('scroll', () => {
+      const section = container.closest('section');
+      const rect = section.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // Calculate how far through the section we are (0 to 1)
+      const scrollPercent = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height)));
+      
+      // Highlight spans based on scroll position
+      const highlightCount = Math.floor(scrollPercent * spans.length * 1.5); 
+      
+      spans.forEach((span, index) => {
+        if (index < highlightCount) {
+          span.classList.add('active');
+        } else {
+          span.classList.remove('active');
+        }
+      });
+    });
+
+    // Observer for entry animations
+    const observerOptions = {
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-pull-up');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.opacity-0').forEach(el => observer.observe(el));
+  </script>
+
+
+
+
+</body></html>
