@@ -5,8 +5,7 @@ import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import { authClient, getAuthErrorMessage } from "@/services/authClient"
 import { Loader2, Mail } from "lucide-vue-next"
 
-const forgotPasswordVideo =
-  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B9%A6%E6%9C%AC-%E4%B9%A6%E6%A1%8C-%E4%BA%8C%E6%AC%A1%E5%85%83.mp4"
+const forgotPasswordVideo = "/video/forgot-study-desk.mp4"
 const authPoster = "/video/auth-poster.jpeg"
 
 const email = ref("")
