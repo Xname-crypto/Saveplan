@@ -2,10 +2,12 @@
 import { computed, ref } from "vue"
 import { useRoute, useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
+import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import { authClient, getAuthErrorMessage } from "@/services/authClient"
-import { Loader2 } from "lucide-vue-next"
+import { Loader2, Lock } from "lucide-vue-next"
 
-const forgotPasswordVideo = "/video/fp_v3.mp4?v=auth-balanced-2"
+const forgotPasswordVideo =
+  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B9%A6%E6%9C%AC-%E4%B9%A6%E6%A1%8C-%E4%BA%8C%E6%AC%A1%E5%85%83.mp4"
 const authPoster = "/video/auth-poster.jpeg"
 
 const route = useRoute()
@@ -60,7 +62,15 @@ const handleUpdatePassword = async () => {
 </script>
 
 <template>
-  <AuthLayout :video-src="forgotPasswordVideo" :poster-src="authPoster" content-offset-class="md:-translate-y-8">
+  <AuthLayout
+    :video-src="forgotPasswordVideo"
+    :poster-src="authPoster"
+    media-position="82% center"
+    media-eyebrow="NEW PASSWORD"
+    media-title="为账号设置新的安全凭证。"
+    media-description="完成密码更新后，你可以继续回到专属复习工作区。"
+    content-offset-class="md:-translate-y-8"
+  >
     <template #title>New Password</template>
     <template #subtitle>为你的账号设置一个新密码。</template>
 
@@ -75,35 +85,35 @@ const handleUpdatePassword = async () => {
         {{ successMsg }}
       </div>
 
-      <div class="space-y-1">
-        <label for="password" class="auth-label ml-1 text-xs font-semibold uppercase">新密码</label>
-        <input
-          id="password"
-          v-model="password"
-          name="password"
-          type="password"
-          autocomplete="new-password"
-          placeholder="请输入新密码"
-          class="auth-input px-4 py-3"
-          required
-          :disabled="!!successMsg"
-        />
-      </div>
+      <AuthWaveInput
+        id="password"
+        v-model="password"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        label="请输入新密码"
+        required
+        :disabled="!!successMsg"
+      >
+        <template #leading>
+          <Lock />
+        </template>
+      </AuthWaveInput>
 
-      <div class="space-y-1">
-        <label for="confirmPassword" class="auth-label ml-1 text-xs font-semibold uppercase">确认密码</label>
-        <input
-          id="confirmPassword"
-          v-model="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          autocomplete="new-password"
-          placeholder="请再次输入新密码"
-          class="auth-input px-4 py-3"
-          required
-          :disabled="!!successMsg"
-        />
-      </div>
+      <AuthWaveInput
+        id="confirmPassword"
+        v-model="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        autocomplete="new-password"
+        label="请再次输入新密码"
+        required
+        :disabled="!!successMsg"
+      >
+        <template #leading>
+          <Lock />
+        </template>
+      </AuthWaveInput>
 
       <button
         type="submit"

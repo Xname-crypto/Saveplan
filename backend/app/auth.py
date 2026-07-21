@@ -10,13 +10,13 @@ import sqlite3
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-DATABASE_PATH = Path(__file__).resolve().parent / "saveplan.sqlite3"
+from .config import DATABASE_PATH
+
 PBKDF2_ITERATIONS = 260_000
 RESET_TOKEN_MINUTES = 60
 SESSION_DAYS = 30
@@ -85,6 +85,7 @@ def session_expires_at() -> str:
 
 
 def get_connection() -> sqlite3.Connection:
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     return connection

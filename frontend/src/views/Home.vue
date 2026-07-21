@@ -16,11 +16,18 @@ import AppFooter from "@/components/AppFooter.vue"
 import BorderGlow from "@/components/BorderGlow.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
 import DecryptedText from "@/components/DecryptedText.vue"
+import InfiniteMovingCards from "@/components/InfiniteMovingCards.vue"
+import LightRays from "@/components/LightRays.vue"
+import LogoLoop from "@/components/LogoLoop.vue"
 import TiltedCard from "@/components/TiltedCard.vue"
 
 const videoReady = ref(false)
+const pageRoot = ref<HTMLElement | null>(null)
 const revealRoot = ref<HTMLElement | null>(null)
 let revealObserver: IntersectionObserver | null = null
+let scrollFrame = 0
+const heroVideoSrc =
+  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E5%9B%BE%E7%89%87%E4%B8%AD%E7%9A%84%E4%BA%BA%E7%89%A9%E5%9C%A8%E5%86%99%E5%AD%97%E5%AD%A6%E4%B9%A0%EF%BC%8C%E5%9B%BA%E5%AE%9A%E6%9C%BA%E4%BD%8D%EF%BC%8C%E5%9B%BA%E5%AE%9A%E9%95%9C%E5%A4%B4%EF%BC%8C%E4%B8%8D%E8%A6%81%E8%BF%90%E5%8A%A8%E7%9B%B8%E6%9C%BA%EF%BC%8C%E9%AB%98%E8%B4%A8%E9%87%8F_202605250305.mp4"
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
@@ -97,8 +104,72 @@ const outcomes = [
   },
 ]
 
+const userComments = [
+  {
+    quote: "期末前两天把整本错题截图丢进去，题干和解析分得很清楚，我终于不用一张张图手动抄题了。",
+    name: "林同学",
+    title: "大二 / 高数复习",
+    avatar: "/stitch/avatar-lin.svg",
+  },
+  {
+    quote: "最有用的是导出 Markdown，老师发的 PDF 讲义可以快速整理成自己的复习提纲，后面补笔记很顺。",
+    name: "Mia",
+    title: "考研备考 / 专业课",
+    avatar: "/stitch/avatar-mia.svg",
+  },
+  {
+    quote: "以前整理 Anki 卡片要花一整晚，现在先让系统拆题，我只负责校对重点，节奏轻了很多。",
+    name: "陈同学",
+    title: "医学生 / 记忆卡片",
+    avatar: "/stitch/avatar-chen.svg",
+  },
+  {
+    quote: "手写公式识别比我预期稳定，至少不用再对着照片一点点排版，复习时间真的省出来了。",
+    name: "Jason",
+    title: "工科 / 公式资料",
+    avatar: "/stitch/avatar-jason.svg",
+  },
+  {
+    quote: "我最喜欢对照校对那一步，混乱的扫描件变成结构化内容后，漏掉的题目很容易被发现。",
+    name: "周同学",
+    title: "高中冲刺 / 试卷整理",
+    avatar: "/stitch/avatar-zhou.svg",
+  },
+]
+
+const logoLoopItems = [
+  { label: "AI PARSE", icon: Sparkles },
+  { label: "PDF", icon: FileText },
+  { label: "MARKDOWN", icon: PenLine },
+  { label: "ANKI", icon: BookOpenCheck },
+  { label: "OCR", icon: Layers3 },
+  { label: "FORMULA", icon: BrainCircuit },
+  { label: "CLOUD SYNC", icon: UploadCloud },
+]
+
 function handleVideoReady() {
   videoReady.value = true
+}
+
+function updateScrollMotion() {
+  scrollFrame = 0
+
+  const root = pageRoot.value
+  if (!root) return
+
+  const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+  const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll))
+  const heroShift = Math.min(90, window.scrollY * 0.12)
+  const studioShift = Math.sin(progress * Math.PI) * 28
+
+  root.style.setProperty("--home-scroll-progress", progress.toFixed(4))
+  root.style.setProperty("--home-hero-shift", `${heroShift.toFixed(2)}px`)
+  root.style.setProperty("--home-studio-shift", `${studioShift.toFixed(2)}px`)
+}
+
+function requestScrollMotion() {
+  if (scrollFrame) return
+  scrollFrame = window.requestAnimationFrame(updateScrollMotion)
 }
 
 onMounted(() => {
@@ -106,40 +177,49 @@ onMounted(() => {
     revealRoot.value?.querySelectorAll<HTMLElement>(".stitch-reveal") ?? [],
   )
 
-  if (!revealItems.length) return
-
   if (!("IntersectionObserver" in window)) {
     revealItems.forEach((item) => item.classList.add("is-visible"))
-    return
+  } else if (revealItems.length) {
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add("is-visible")
+          revealObserver?.unobserve(entry.target)
+        })
+      },
+      {
+        rootMargin: "0px 0px -14% 0px",
+        threshold: 0.16,
+      },
+    )
+
+    revealItems.forEach((item) => revealObserver?.observe(item))
   }
 
-  revealObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return
-        entry.target.classList.add("is-visible")
-        revealObserver?.unobserve(entry.target)
-      })
-    },
-    {
-      rootMargin: "0px 0px -14% 0px",
-      threshold: 0.16,
-    },
-  )
-
-  revealItems.forEach((item) => revealObserver?.observe(item))
+  updateScrollMotion()
+  window.addEventListener("scroll", requestScrollMotion, { passive: true })
+  window.addEventListener("resize", requestScrollMotion)
 })
 
 onBeforeUnmount(() => {
   revealObserver?.disconnect()
   revealObserver = null
+  window.removeEventListener("scroll", requestScrollMotion)
+  window.removeEventListener("resize", requestScrollMotion)
+
+  if (scrollFrame) {
+    window.cancelAnimationFrame(scrollFrame)
+    scrollFrame = 0
+  }
 })
 </script>
 
 <template>
-  <div class="stitch-page home-page">
+  <div ref="pageRoot" class="stitch-page home-page">
     <CinematicNav />
     <div class="stitch-noise" />
+    <div class="home-scroll-progress" aria-hidden="true" />
 
     <section class="home-hero">
       <div class="home-hero__frame">
@@ -162,7 +242,7 @@ onBeforeUnmount(() => {
           @loadeddata="handleVideoReady"
           @playing="handleVideoReady"
         >
-          <source src="/stitch/asset-03.mp4" type="video/mp4" />
+          <source :src="heroVideoSrc" type="video/mp4" />
         </video>
         <div class="home-hero__shade" />
 
@@ -187,6 +267,21 @@ onBeforeUnmount(() => {
     <main ref="revealRoot">
       <section id="about" class="home-about">
         <div class="home-about__panel stitch-reveal">
+          <LightRays
+            class="home-about__rays"
+            rays-origin="top-center"
+            rays-color="#d6c58d"
+            :rays-speed="0.62"
+            :light-spread="0.78"
+            :ray-length="1.45"
+            :fade-distance="1.1"
+            :saturation="0.86"
+            :follow-mouse="true"
+            :mouse-influence="0.08"
+            :noise-amount="0.18"
+            :distortion="0.22"
+            pulsating
+          />
           <p class="stitch-eyebrow">ABOUT US</p>
           <h2>从混乱到有序，<span>重塑你的学习边界。</span></h2>
           <DecryptedText
@@ -224,6 +319,20 @@ onBeforeUnmount(() => {
             </article>
           </TiltedCard>
         </div>
+      </section>
+
+      <section class="home-logo-loop stitch-reveal" aria-label="Supported study formats">
+        <LogoLoop
+          :logos="logoLoopItems"
+          :speed="88"
+          :logo-height="34"
+          :gap="18"
+          :hover-speed="18"
+          fade-out
+          fade-out-color="#090909"
+          scale-on-hover
+          aria-label="Supported study formats"
+        />
       </section>
 
       <section class="home-features">
@@ -329,6 +438,22 @@ onBeforeUnmount(() => {
             <strong>{{ outcome.value }}</strong>
             <span>{{ outcome.label }}</span>
           </BorderGlow>
+        </div>
+      </section>
+
+      <section class="home-testimonials">
+        <div class="home-section-heading home-testimonials__heading stitch-reveal">
+          <p class="stitch-eyebrow">USER REVIEWS</p>
+          <h2>使用后的真实反馈。</h2>
+        </div>
+
+        <div class="home-testimonials__marquee stitch-reveal stitch-delay-1">
+          <InfiniteMovingCards
+            :items="userComments"
+            direction="left"
+            speed="normal"
+            aria-label="User comments"
+          />
         </div>
       </section>
     </main>

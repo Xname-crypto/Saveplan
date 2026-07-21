@@ -1,22 +1,28 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
+import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import { authClient, getAuthErrorMessage, saveAuthAvatarSource } from "@/services/authClient"
 import {
   ArrowRight,
+  Briefcase,
   Camera,
   Check,
   CheckCircle2,
   Eye,
   EyeOff,
   Loader2,
+  Lock,
+  Mail,
   Sparkles,
   Upload,
+  User,
   XCircle,
 } from "lucide-vue-next"
 
-const registerVideo = "/video/register-visual.mp4?v=auth-balanced-2"
+const registerVideo =
+  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%BA%8C%E6%AC%A1%E5%85%83-%E5%8A%A8%E6%BC%AB.mp4"
 const authPoster = "/video/auth-poster.jpeg"
 
 const router = useRouter()
@@ -26,6 +32,7 @@ const errorMsg = ref("")
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+const identityChoiceRef = ref<HTMLElement | null>(null)
 const isUsernameTouched = ref(false)
 const isJobTouched = ref(false)
 
@@ -42,6 +49,21 @@ const formData = ref({
 })
 
 const isUsernameValid = computed(() => formData.value.username.trim().length >= 3)
+const identityOptions = ["学生", "教师", "备考用户"]
+
+const selectIdentity = (identity: string) => {
+  formData.value.job = identity
+  isJobTouched.value = true
+}
+
+const handleWindowClick = (event: MouseEvent) => {
+  if (currentStep.value !== 2 || !formData.value.job) return
+
+  const target = event.target as Node | null
+  if (target && identityChoiceRef.value?.contains(target)) return
+
+  formData.value.job = ""
+}
 
 const triggerFileInputClick = () => {
   fileInput.value?.click()
@@ -195,7 +217,13 @@ const handleBack = () => {
   void router.push("/login")
 }
 
+onMounted(() => {
+  window.addEventListener("click", handleWindowClick)
+})
+
 onBeforeUnmount(() => {
+  window.removeEventListener("click", handleWindowClick)
+
   if (formData.value.avatarPreview) {
     URL.revokeObjectURL(formData.value.avatarPreview)
   }
@@ -207,7 +235,11 @@ onBeforeUnmount(() => {
     :video-src="registerVideo"
     :poster-src="authPoster"
     :show-back="currentStep > 1"
-    content-offset-class="md:-translate-y-6"
+    media-position="90% center"
+    media-eyebrow="START YOUR SPACE"
+    media-title="创建你的专属复习工作区。"
+    media-description="从账号开始，把题库、笔记和资料整理成更清晰的学习系统。"
+    content-offset-class="md:translate-y-1"
     @back="handleBack"
   >
     <template #title>
@@ -230,74 +262,79 @@ onBeforeUnmount(() => {
         {{ errorMsg }}
       </div>
 
-      <form v-if="currentStep === 1" class="animate-in space-y-5 duration-300 fade-in slide-in-from-right-4" @submit.prevent="handleStep1">
-        <div class="space-y-1">
-          <label class="auth-label ml-1 text-xs font-semibold uppercase">邮箱地址</label>
-          <input
-            v-model="formData.email"
-            type="email"
-            autocomplete="email"
-            placeholder="请输入邮箱"
-            class="auth-input px-4 py-3"
-            required
-          />
-        </div>
+      <form v-if="currentStep === 1" class="register-step-one animate-in duration-300 fade-in slide-in-from-right-4" @submit.prevent="handleStep1">
+        <AuthWaveInput
+          v-model="formData.email"
+          type="email"
+          autocomplete="email"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          label="请输入邮箱"
+          required
+        >
+          <template #leading>
+            <Mail />
+          </template>
+        </AuthWaveInput>
 
-        <div class="space-y-1">
-          <label class="auth-label ml-1 text-xs font-semibold uppercase">密码</label>
-          <div class="relative">
-            <input
-              v-model="formData.password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="••••••••"
-              class="auth-input px-4 py-3 pr-12"
-              required
-            />
+        <AuthWaveInput
+          v-model="formData.password"
+          :type="showPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          label="请输入密码"
+          required
+        >
+          <template #leading>
+            <Lock />
+          </template>
+          <template #trailing>
             <button
               v-show="formData.password"
               type="button"
-              class="auth-link absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
+              class="auth-link focus:outline-none"
               @click="showPassword = !showPassword"
             >
               <EyeOff v-if="!showPassword" class="h-5 w-5" />
               <Eye v-else class="h-5 w-5" />
             </button>
-          </div>
-        </div>
+          </template>
+        </AuthWaveInput>
 
-        <div class="space-y-1">
-          <label class="auth-label ml-1 text-xs font-semibold uppercase">确认密码</label>
-          <div class="relative">
-            <input
-              v-model="formData.confirmPassword"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="••••••••"
-              class="auth-input px-4 py-3 pr-12"
-              required
-            />
+        <AuthWaveInput
+          v-model="formData.confirmPassword"
+          :type="showConfirmPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          label="请确认密码"
+          required
+        >
+          <template #leading>
+            <Lock />
+          </template>
+          <template #trailing>
             <button
               v-show="formData.confirmPassword"
               type="button"
-              class="auth-link absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
+              class="auth-link focus:outline-none"
               @click="showConfirmPassword = !showConfirmPassword"
             >
               <EyeOff v-if="!showConfirmPassword" class="h-5 w-5" />
               <Eye v-else class="h-5 w-5" />
             </button>
-          </div>
-        </div>
+          </template>
+        </AuthWaveInput>
 
         <button
           type="submit"
           :disabled="loading"
-          class="auth-button mt-6 px-4 py-3.5"
+          class="auth-button register-submit-button px-4 py-3.5"
         >
           <Loader2 v-if="loading" class="mr-2 h-5 w-5 animate-spin" />
           {{ loading ? "处理中..." : "继续" }}
           <ArrowRight v-if="!loading" class="ml-2 h-4 w-4" />
         </button>
 
-        <div class="mt-6 text-center text-[0.7rem] text-[rgba(226,218,194,0.34)]">
+        <div class="register-login-row text-center text-[0.7rem] text-[rgba(226,218,194,0.34)]">
           已经注册？
           <router-link to="/login" class="auth-link font-semibold">
             去登录
@@ -324,60 +361,64 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="space-y-1">
-          <label class="auth-label ml-1 text-xs font-semibold uppercase">显示名称</label>
-          <div class="relative">
-            <input
-              v-model="formData.username"
-              type="text"
-              autocomplete="nickname"
-              placeholder="请输入昵称"
-              class="auth-input px-4 py-3 pr-10"
-              :class="[
-                isUsernameValid
-                  ? 'border-green-400/60 focus:border-green-400'
-                  : isUsernameTouched
-                    ? 'border-red-400/70 focus:border-red-400'
-                    : '',
-              ]"
-              @blur="isUsernameTouched = true"
-            />
-            <div class="absolute right-3 top-1/2 -translate-y-1/2">
+          <AuthWaveInput
+            v-model="formData.username"
+            type="text"
+            autocomplete="nickname"
+            label="请输入昵称"
+            :class="[
+              isUsernameValid
+                ? 'border-green-400/60 focus:border-green-400'
+                : isUsernameTouched && formData.username
+                  ? 'border-red-400/70 focus:border-red-400'
+                  : '',
+            ]"
+            @blur="isUsernameTouched = true"
+          >
+            <template #leading>
+              <User />
+            </template>
+            <template #trailing>
               <CheckCircle2 v-if="isUsernameValid" class="h-5 w-5 text-[#c5f6d8]" />
-              <XCircle v-else-if="isUsernameTouched" class="h-5 w-5 text-[#ffc7c7]" />
-            </div>
-          </div>
+              <XCircle v-else-if="isUsernameTouched && formData.username" class="h-5 w-5 text-[#ffc7c7]" />
+            </template>
+          </AuthWaveInput>
           <p v-if="isUsernameTouched && formData.username && !isUsernameValid" class="ml-1 text-xs font-medium text-[#ffc7c7]">
             昵称至少需要 3 个字符。
           </p>
         </div>
 
-        <div class="space-y-1">
-          <label class="auth-label ml-1 text-xs font-semibold uppercase">身份 / 状态</label>
-          <div class="relative">
-            <input
-              v-model="formData.job"
-              type="text"
-              placeholder="学生、教师、备考用户"
-              class="auth-input px-4 py-3 pr-10"
-              :class="[
-                formData.job
-                  ? 'border-green-400/60 focus:border-green-400'
-                  : isJobTouched
-                    ? 'border-red-400/70 focus:border-red-400'
-                    : '',
-              ]"
-              @blur="isJobTouched = true"
-            />
-            <div class="absolute right-3 top-1/2 -translate-y-1/2">
-              <CheckCircle2 v-if="formData.job" class="h-5 w-5 text-[#c5f6d8]" />
-              <XCircle v-else-if="isJobTouched" class="h-5 w-5 text-[#ffc7c7]" />
-            </div>
+        <div
+          ref="identityChoiceRef"
+          class="identity-choice-block"
+          :class="{ 'is-error': isJobTouched && !formData.job, 'is-selected': !!formData.job }"
+        >
+          <div class="identity-choice-title">
+            <Briefcase class="h-5 w-5" />
+            <span>选择身份</span>
           </div>
+          <div class="identity-options" role="radiogroup" aria-label="选择身份">
+            <button
+              v-for="identity in identityOptions"
+              :key="identity"
+              type="button"
+              class="identity-option"
+              :class="{ 'is-selected': formData.job === identity }"
+              :aria-checked="formData.job === identity"
+              role="radio"
+              @click="selectIdentity(identity)"
+            >
+              {{ identity }}
+            </button>
+          </div>
+          <p v-if="isJobTouched && !formData.job" class="identity-choice-error">
+            请选择学生、教师或备考用户。
+          </p>
         </div>
 
         <button
           :disabled="loading"
-          class="auth-button px-4 py-3.5"
+          class="auth-button register-submit-button px-4 py-3.5"
           @click="handleStep2"
         >
           <Loader2 v-if="loading" class="mr-2 h-5 w-5 animate-spin" />
@@ -399,7 +440,7 @@ onBeforeUnmount(() => {
         </p>
 
         <button
-          class="auth-button px-4 py-3.5"
+          class="auth-button register-submit-button px-4 py-3.5"
           @click="handleFinish"
         >
           开始使用
@@ -414,5 +455,97 @@ onBeforeUnmount(() => {
 input::-ms-reveal,
 input::-ms-clear {
   display: none;
+}
+
+.identity-choice-block {
+  display: grid;
+  gap: 0.72rem;
+}
+
+.identity-choice-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+  color: rgba(238, 230, 206, 0.72);
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.5rem;
+  transition: color 180ms ease;
+}
+
+.identity-choice-title svg {
+  flex: 0 0 auto;
+}
+
+.identity-choice-block.is-selected .identity-choice-title {
+  color: #9bd9ff;
+}
+
+.identity-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.58rem;
+}
+
+.identity-option {
+  min-height: 2.75rem;
+  border: 1px solid rgba(226, 218, 194, 0.2);
+  border-radius: 0.62rem;
+  background: rgba(226, 218, 194, 0.035);
+  color: rgba(238, 230, 206, 0.72);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.identity-option:hover {
+  border-color: rgba(155, 217, 255, 0.48);
+  color: #9bd9ff;
+}
+
+.identity-option.is-selected {
+  border-color: #9bd9ff;
+  background: rgba(155, 217, 255, 0.14);
+  color: #9bd9ff;
+  transform: translateY(-1px);
+}
+
+.identity-choice-block.is-error .identity-options {
+  border-bottom: 2px solid rgba(255, 199, 199, 0.72);
+  padding-bottom: 0.55rem;
+}
+
+.identity-choice-error {
+  margin: 0;
+  color: #ffc7c7;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.register-step-one {
+  display: grid;
+  gap: 1.08rem;
+}
+
+.register-submit-button {
+  margin-top: 0.45rem !important;
+  font-size: 0.82rem;
+}
+
+.register-login-row {
+  margin-top: 0.9rem !important;
+  color: rgba(226, 218, 194, 0.38) !important;
+  font-weight: 800;
+}
+
+@media (max-width: 420px) {
+  .identity-options {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

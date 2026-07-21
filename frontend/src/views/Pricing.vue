@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { CheckCircle2 } from "lucide-vue-next"
+import { CheckCircle2, ChevronUp } from "lucide-vue-next"
 import AppFooter from "@/components/AppFooter.vue"
 import BorderGlow from "@/components/BorderGlow.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
+import TargetCursor from "@/components/TargetCursor.vue"
 
 const plans = [
   {
@@ -52,9 +53,18 @@ const faqs = [
     q: "套餐可以随时升级或取消吗？",
     a: "可以。你可以根据备考强度调整套餐，升级后立即解锁对应额度和功能。",
   },
+  {
+    q: "免费额度用完后怎么办？",
+    a: "免费额度用完后可以等待次日刷新，也可以升级到更高套餐获得更多转换次数和导出能力。",
+  },
+  {
+    q: "导出的内容可以继续编辑吗？",
+    a: "可以。导出的 Markdown、结构化 PDF 和 Anki 友好格式都保留清晰层级，方便你继续整理、标注和复习。",
+  },
 ]
 
 const selectedPlan = ref<string | null>(null)
+const openFaqIndex = ref<number | null>(null)
 
 function selectPlan(planName: string) {
   selectedPlan.value = planName
@@ -63,12 +73,23 @@ function selectPlan(planName: string) {
 function clearSelectedPlan() {
   selectedPlan.value = null
 }
+
+function toggleFaq(index: number) {
+  openFaqIndex.value = openFaqIndex.value === index ? null : index
+}
 </script>
 
 <template>
   <div class="stitch-page pricing-page" @click="clearSelectedPlan">
     <CinematicNav />
     <div class="stitch-noise" />
+    <TargetCursor
+      target-selector=".pricing-page .cursor-target"
+      :spin-duration="2"
+      :hover-duration="0.18"
+      :hide-default-cursor="true"
+      :parallax-on="true"
+    />
 
     <main class="pricing-shell">
       <section class="pricing-hero stitch-reveal">
@@ -89,6 +110,7 @@ function clearSelectedPlan() {
             ? {
                 className: [
                   'pricing-card stitch-reveal',
+                  'cursor-target',
                   `stitch-delay-${index + 1}`,
                   { 'is-featured': plan.featured, 'is-selected': selectedPlan === plan.name },
                 ],
@@ -97,6 +119,7 @@ function clearSelectedPlan() {
             : {
                 class: [
                   'pricing-card stitch-reveal',
+                  'cursor-target',
                   `stitch-delay-${index + 1}`,
                   { 'is-featured': plan.featured, 'is-selected': selectedPlan === plan.name },
                 ],
@@ -116,16 +139,36 @@ function clearSelectedPlan() {
               {{ feature }}
             </li>
           </ul>
-          <button type="button">{{ plan.cta }}</button>
+          <button type="button" class="cursor-target">{{ plan.cta }}</button>
         </component>
       </section>
 
       <section class="pricing-faq stitch-reveal stitch-delay-2">
-        <h2>常见问题</h2>
-        <div>
-          <article v-for="item in faqs" :key="item.q">
-            <h3>{{ item.q }}</h3>
-            <p>{{ item.a }}</p>
+        <div class="pricing-faq__header">
+          <p class="stitch-eyebrow">CINEMATIC FAQ</p>
+          <h2>常见问题解答</h2>
+          <p>
+            我们随时准备解答您的任何问题。如果您找不到所需资料，请通过
+            <a href="mailto:support@example.com">support@example.com</a>
+            联系我们
+          </p>
+        </div>
+        <div class="pricing-faq__list">
+          <article
+            v-for="(item, index) in faqs"
+            :key="item.q"
+            :class="['cursor-target', { 'is-open': openFaqIndex === index }]"
+          >
+            <button
+              type="button"
+              class="pricing-faq__question"
+              :aria-expanded="openFaqIndex === index"
+              @click.stop="toggleFaq(index)"
+            >
+              <ChevronUp :size="19" stroke-width="2.4" />
+              <span>{{ item.q }}</span>
+            </button>
+            <p v-show="openFaqIndex === index">{{ item.a }}</p>
           </article>
         </div>
       </section>

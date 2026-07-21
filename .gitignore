@@ -4,6 +4,7 @@ frontend/dist
 frontend/node_modules
 backend/.venv
 backend/venv
+backend/data
 **/__pycache__/
 *.py[cod]
 backend/app/*.sqlite3
@@ -20,5 +21,9 @@ vite.config.d.ts
 *.local
 .env
 .env.*
+!/.env.example
+!/backend/.env.example
 *.zip
 *.log
+.idea/
+.tools/

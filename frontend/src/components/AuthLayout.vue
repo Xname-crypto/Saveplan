@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { ArrowLeft, X } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useRouter } from '@/router';
 
 const router = useRouter();
 const videoReady = ref(false);
 const videoErrored = ref(false);
-const resolvedVideoSrc = ref('');
 const videoRef = ref<HTMLVideoElement | null>(null);
-let bufferTimer: number | undefined;
-let videoRequestId = 0;
 
 const props = defineProps<{
   videoSrc?: string;
   posterSrc?: string;
   showBack?: boolean;
   contentOffsetClass?: string;
+  mediaPosition?: string;
+  mediaEyebrow?: string;
+  mediaTitle?: string;
+  mediaDescription?: string;
 }>();
 
 const posterFromVideo = computed(() => {
@@ -38,7 +39,7 @@ const videoPoster = computed(() => {
   return props.posterSrc || posterFromVideo.value;
 });
 
-const displayVideoSrc = computed(() => resolvedVideoSrc.value || props.videoSrc || '');
+const displayVideoSrc = computed(() => props.videoSrc || '');
 
 defineEmits<{
   (e: 'back'): void
@@ -56,33 +57,23 @@ const goBack = () => {
   void router.push(fallback);
 };
 
-const clearBufferTimer = () => {
-  if (bufferTimer) {
-    window.clearTimeout(bufferTimer);
-    bufferTimer = undefined;
-  }
-};
-
 const resetVideoState = () => {
-  clearBufferTimer();
   videoReady.value = false;
   videoErrored.value = false;
-  resolvedVideoSrc.value = '';
 };
 
-const bufferedAhead = (video: HTMLVideoElement) => {
-  try {
-    const current = video.currentTime || 0;
-    for (let i = 0; i < video.buffered.length; i += 1) {
-      if (video.buffered.start(i) <= current && video.buffered.end(i) >= current) {
-        return video.buffered.end(i) - current;
-      }
-    }
-  } catch (_e) {
-    return 0;
-  }
+const requestVideoPlayback = () => {
+  const video = videoRef.value;
+  if (!video || videoErrored.value) return;
 
-  return 0;
+  video.play().catch(() => {
+    // Muted autoplay can still be interrupted by the browser; the poster remains underneath.
+  });
+};
+
+const handleVideoMetadata = () => {
+  videoErrored.value = false;
+  requestVideoPlayback();
 };
 
 const handleVideoReady = () => {
@@ -90,46 +81,10 @@ const handleVideoReady = () => {
   if (!video || videoErrored.value) return;
 
   videoErrored.value = false;
-  video.play().catch(() => {
-    // Muted autoplay can still be interrupted by the browser; the poster remains underneath.
-  });
+  requestVideoPlayback();
 
-  const duration = Number.isFinite(video.duration) ? video.duration : 0;
-  const requiredBuffer = duration > 0 ? Math.min(2.5, Math.max(1.2, duration * 0.12)) : 1.5;
-
-  if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA || bufferedAhead(video) >= requiredBuffer) {
-    clearBufferTimer();
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
     videoReady.value = true;
-    return;
-  }
-
-  clearBufferTimer();
-  bufferTimer = window.setTimeout(handleVideoReady, 180);
-};
-
-const resolveStorageVideo = async (src: string, requestId: number) => {
-  const hashIndex = src.indexOf('#');
-  const beforeHash = hashIndex >= 0 ? src.slice(0, hashIndex) : src;
-  const queryIndex = beforeHash.indexOf('?');
-  const path = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
-  const match = path.match(/^\/video\/([^/]+\.mp4)$/i);
-
-  if (!match) {
-    resolvedVideoSrc.value = src;
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/public/media/auth-video/${encodeURIComponent(match[1])}`);
-    if (!response.ok) throw new Error('Failed to resolve auth video');
-    const payload = await response.json() as { downloadUrl?: string };
-    if (videoRequestId === requestId) {
-      resolvedVideoSrc.value = payload.downloadUrl || src;
-    }
-  } catch (_error) {
-    if (videoRequestId === requestId) {
-      resolvedVideoSrc.value = src;
-    }
   }
 };
 
@@ -142,14 +97,17 @@ watch(
   () => props.videoSrc,
   (src) => {
     resetVideoState();
-    const requestId = ++videoRequestId;
     if (src) {
-      void resolveStorageVideo(src, requestId);
+      void nextTick(() => {
+        const video = videoRef.value;
+        if (!video) return;
+        video.load();
+        requestVideoPlayback();
+      });
     }
   },
   { immediate: true },
 );
-onBeforeUnmount(clearBufferTimer);
 </script>
 
 <template>
@@ -184,9 +142,9 @@ onBeforeUnmount(clearBufferTimer);
         </button>
 
         <div
-          v-if="videoPoster"
-          class="auth-video-poster absolute inset-0 h-full w-full transition-opacity duration-300"
-          :class="videoReady ? 'opacity-0' : 'opacity-100'"
+          v-if="videoPoster && (!videoReady || videoErrored)"
+          class="auth-video-poster absolute inset-0 h-full w-full"
+          :style="{ '--auth-media-position': props.mediaPosition || 'center' }"
           aria-hidden="true"
         >
           <img
@@ -198,15 +156,19 @@ onBeforeUnmount(clearBufferTimer);
 
         <video
           v-if="displayVideoSrc && !videoErrored"
+          :key="displayVideoSrc"
           ref="videoRef"
-          class="auth-layout-video absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
-          :class="videoReady ? 'opacity-100' : 'opacity-0'"
+          class="auth-layout-video absolute inset-0 h-full w-full object-cover"
+          :class="{ 'is-ready': videoReady }"
+          :style="{ '--auth-media-position': props.mediaPosition || 'center' }"
+          :poster="videoPoster || undefined"
           autoplay
           muted 
           loop 
           preload="auto"
           playsinline
-          :poster="videoPoster || undefined"
+          webkit-playsinline="true"
+          @loadedmetadata="handleVideoMetadata"
           @loadeddata="handleVideoReady"
           @canplay="handleVideoReady"
           @canplaythrough="handleVideoReady"
@@ -219,9 +181,14 @@ onBeforeUnmount(clearBufferTimer);
 
         <div class="auth-media-shade" aria-hidden="true"></div>
         <div class="auth-media-copy">
-          <span>PRECISION WORKFLOW</span>
-          <strong>Master your exams with focused clarity.</strong>
-          <p>Seamlessly import, organize, and generate test banks with cinematic precision.</p>
+          <span>{{ props.mediaEyebrow || "PRECISION WORKFLOW" }}</span>
+          <strong>{{ props.mediaTitle || "Master your exams with focused clarity." }}</strong>
+          <p>
+            {{
+              props.mediaDescription ||
+              "Seamlessly import, organize, and generate test banks with cinematic precision."
+            }}
+          </p>
         </div>
       </div>
 
@@ -239,7 +206,7 @@ onBeforeUnmount(clearBufferTimer);
         </button>
 
         <div class="mx-auto w-full max-w-sm" :class="props.contentOffsetClass">
-          <div class="mb-8 text-center md:text-left">
+          <div class="auth-heading mb-9 text-center">
             <div class="auth-title mb-2 text-2xl font-bold">
               <slot name="title">Welcome</slot>
             </div>
@@ -257,9 +224,9 @@ onBeforeUnmount(clearBufferTimer);
     <footer class="auth-footer" aria-label="Legal links">
       <span>© 2026 题库导入助手. CINEMATIC PRECISION.</span>
       <nav>
-        <a href="#">PRIVACY</a>
-        <a href="#">TERMS</a>
-        <a href="#">SUPPORT</a>
+        <a href="#">隐私政策</a>
+        <a href="#">服务条款</a>
+        <a href="#">帮助支持</a>
       </nav>
     </footer>
   </div>
@@ -268,11 +235,23 @@ onBeforeUnmount(clearBufferTimer);
 <style scoped>
 .auth-layout-video {
   z-index: 1;
+  object-position: var(--auth-media-position, center);
   will-change: opacity, transform;
   transform: translateZ(0);
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+.auth-layout-video.is-ready {
+  opacity: 1;
 }
 
 .auth-video-poster {
   z-index: 0;
 }
+
+.auth-video-poster img {
+  object-position: var(--auth-media-position, center);
+}
+
 </style>

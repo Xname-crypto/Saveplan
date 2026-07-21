@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import os
 import sqlite3
 import shutil
 import subprocess
@@ -17,7 +18,16 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional local configuration helper
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env", encoding="utf-8-sig")
+
 from .auth import AuthUser, get_connection, get_current_user
+from .config import MEDIA_DIR, UPLOAD_DIR
 from .kshuati_converter import (
     ParsedQuestion,
     Subject,
@@ -33,12 +43,17 @@ try:
 except ImportError:  # pragma: no cover - dependency is optional at runtime
     PdfReader = None
 
+try:
+    import requests
+except ImportError:  # pragma: no cover - dependency is optional until OCR is enabled
+    requests = None
+
 
 router = APIRouter(prefix="/api/conversions", tags=["conversions"])
 
-UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
-MEDIA_DIR = Path(__file__).resolve().parent / "conversion_media"
 ALLOWED_SUFFIXES = {".pdf", ".docx", ".doc", ".txt"}
+PADDLE_OCR_JOB_URL = os.getenv("PADDLEOCR_JOB_URL", "https://paddleocr.aistudio-app.com/api/v2/ocr/jobs")
+PADDLE_OCR_MODEL = os.getenv("PADDLEOCR_MODEL", "PaddleOCR-VL-1.6")
 
 
 class ConversionQuestionPayload(BaseModel):
@@ -118,6 +133,15 @@ class OcrResult(BaseModel):
     available: bool = True
 
 
+class CloudOcrStatusResponse(BaseModel):
+    id: str
+    state: Literal["pending", "running", "done", "failed", "unavailable"]
+    message: str
+    total_pages: int | None = None
+    extracted_pages: int | None = None
+    conversion: ConversionDetail | None = None
+
+
 class OcrProvider(Protocol):
     name: str
 
@@ -186,6 +210,13 @@ def init_conversion_db() -> None:
                 issues_json TEXT NOT NULL DEFAULT '[]',
                 assets_json TEXT NOT NULL DEFAULT '[]',
                 export_text TEXT,
+                ocr_provider TEXT,
+                ocr_provider_job_id TEXT,
+                ocr_state TEXT,
+                ocr_total_pages INTEGER NOT NULL DEFAULT 0,
+                ocr_extracted_pages INTEGER NOT NULL DEFAULT 0,
+                ocr_result_url TEXT,
+                ocr_error TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -199,6 +230,20 @@ def init_conversion_db() -> None:
             connection.execute("ALTER TABLE conversions ADD COLUMN assets_json TEXT NOT NULL DEFAULT '[]'")
         if "subject" not in columns:
             connection.execute("ALTER TABLE conversions ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'")
+        if "ocr_provider" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_provider TEXT")
+        if "ocr_provider_job_id" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_provider_job_id TEXT")
+        if "ocr_state" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_state TEXT")
+        if "ocr_total_pages" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_total_pages INTEGER NOT NULL DEFAULT 0")
+        if "ocr_extracted_pages" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_extracted_pages INTEGER NOT NULL DEFAULT 0")
+        if "ocr_result_url" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_result_url TEXT")
+        if "ocr_error" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_error TEXT")
 
 
 def row_to_summary(row: sqlite3.Row) -> ConversionSummary:
@@ -776,6 +821,255 @@ def create_conversion_record(
     return row_to_detail(row)
 
 
+def get_paddle_ocr_token() -> str:
+    return os.getenv("PADDLEOCR_API_TOKEN", "").strip()
+
+
+def make_paddle_ocr_headers() -> dict[str, str]:
+    token = get_paddle_ocr_token()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="未配置 PaddleOCR API Token。请在后端环境变量中设置 PADDLEOCR_API_TOKEN 后重启 API。",
+        )
+    return {"Authorization": f"bearer {token}"}
+
+
+def ensure_cloud_ocr_available() -> None:
+    if requests is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="后端缺少 requests 依赖，无法调用 PaddleOCR 云端接口。请在 backend 中运行 pip install -r requirements.txt。",
+        )
+    make_paddle_ocr_headers()
+
+
+def paddle_ocr_optional_payload() -> dict[str, bool]:
+    return {
+        "useDocOrientationClassify": False,
+        "useDocUnwarping": False,
+        "useChartRecognition": False,
+    }
+
+
+def submit_paddle_ocr_job(path: Path) -> str:
+    ensure_cloud_ocr_available()
+    headers = make_paddle_ocr_headers()
+    data = {
+        "model": PADDLE_OCR_MODEL,
+        "optionalPayload": json.dumps(paddle_ocr_optional_payload(), ensure_ascii=False),
+    }
+
+    with path.open("rb") as file_handle:
+        response = requests.post(  # type: ignore[union-attr]
+            PADDLE_OCR_JOB_URL,
+            headers=headers,
+            data=data,
+            files={"file": file_handle},
+            timeout=60,
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PaddleOCR 任务提交失败：{response.text[:300]}",
+        )
+
+    try:
+        job_id = response.json()["data"]["jobId"]
+    except (KeyError, TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PaddleOCR 返回结果格式异常：{error}",
+        ) from error
+
+    if not job_id:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="PaddleOCR 未返回 jobId。")
+    return str(job_id)
+
+
+def poll_paddle_ocr_job(provider_job_id: str) -> dict[str, object]:
+    ensure_cloud_ocr_available()
+    response = requests.get(  # type: ignore[union-attr]
+        f"{PADDLE_OCR_JOB_URL}/{provider_job_id}",
+        headers=make_paddle_ocr_headers(),
+        timeout=30,
+    )
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PaddleOCR 进度读取失败：{response.text[:300]}",
+        )
+
+    try:
+        data = response.json()["data"]
+    except (KeyError, TypeError, ValueError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PaddleOCR 进度格式异常：{error}",
+        ) from error
+
+    progress = data.get("extractProgress") or {}
+    result_url = data.get("resultUrl") or {}
+    return {
+        "state": data.get("state", "running"),
+        "total_pages": progress.get("totalPages") or 0,
+        "extracted_pages": progress.get("extractedPages") or 0,
+        "json_url": result_url.get("jsonUrl") or "",
+        "error": data.get("errorMsg") or "",
+    }
+
+
+def fetch_paddle_ocr_markdown(json_url: str) -> str:
+    if requests is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="后端缺少 requests 依赖。")
+    if not json_url:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="PaddleOCR 未返回结果下载地址。")
+
+    response = requests.get(json_url, timeout=90)  # type: ignore[union-attr]
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"PaddleOCR 结果下载失败：{response.text[:300]}",
+        )
+
+    markdown_pages: list[str] = []
+    for line in response.text.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            result = json.loads(line).get("result") or {}
+        except json.JSONDecodeError:
+            continue
+        for layout_result in result.get("layoutParsingResults") or []:
+            markdown = (layout_result.get("markdown") or {}).get("text") or ""
+            if markdown.strip():
+                markdown_pages.append(markdown.strip())
+
+    return "\n\n".join(markdown_pages).strip()
+
+
+def try_extract_native_text(
+    path: Path,
+    conversion_id: str,
+) -> tuple[str, list[str]]:
+    try:
+        raw_text, extraction_issues, _assets = extract_text(
+            path,
+            conversion_id=conversion_id,
+            include_assets=False,
+        )
+        return raw_text, extraction_issues
+    except HTTPException as error:
+        return "", [str(error.detail)]
+
+
+def create_cloud_ocr_conversion_record(
+    *,
+    user_id: str,
+    filename: str,
+    stored_path: Path,
+    subject: Subject,
+    provider_job_id: str,
+    raw_text: str,
+    extraction_issues: list[str],
+    conversion_id: str,
+) -> CloudOcrStatusResponse:
+    now = utc_now()
+    issues = [
+        *extraction_issues,
+        "已提交 PaddleOCR 云端识别，完成后会自动进入题目解析和人工校对。",
+    ]
+    with get_connection() as connection:
+        connection.execute(
+            """
+            INSERT INTO conversions (
+                id, user_id, filename, stored_path, source_type, subject, raw_text, text_state,
+                status, questions_json, issues_json, assets_json, ocr_provider, ocr_provider_job_id,
+                ocr_state, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                conversion_id,
+                user_id,
+                filename,
+                str(stored_path),
+                stored_path.suffix.lower().removeprefix("."),
+                subject,
+                raw_text,
+                detect_text_state(raw_text),
+                "ocr_running",
+                "[]",
+                json.dumps(issues, ensure_ascii=False),
+                "[]",
+                "paddleocr-cloud",
+                provider_job_id,
+                "pending",
+                now,
+                now,
+            ),
+        )
+
+    return CloudOcrStatusResponse(
+        id=conversion_id,
+        state="pending",
+        message="PaddleOCR 任务已提交，正在排队识别。",
+        total_pages=0,
+        extracted_pages=0,
+    )
+
+
+def finish_cloud_ocr_conversion(
+    row: sqlite3.Row,
+    poll_data: dict[str, object],
+    user_id: str,
+) -> ConversionDetail:
+    markdown_text = fetch_paddle_ocr_markdown(str(poll_data.get("json_url") or ""))
+    raw_text = markdown_text or row["raw_text"] or ""
+    issues = read_json(row["issues_json"], [])
+    if markdown_text:
+        issues.append("PaddleOCR 识别完成，已使用识别出的 Markdown 文本重新解析题目。")
+    else:
+        issues.append("PaddleOCR 未返回可用 Markdown 文本，已保留原始提取文本。")
+
+    parsed_questions = parse_single_choice_questions(raw_text, subject=row["subject"] or "general")
+    question_payloads = [question_to_payload(question) for question in parsed_questions]
+    if not question_payloads:
+        issues.append("OCR 完成后仍未识别到单选题结构，请在人工校对页手动新增或粘贴文本。")
+
+    status_value = "needs_review" if question_payloads else "needs_attention"
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE conversions
+            SET raw_text = ?, text_state = ?, status = ?, questions_json = ?, issues_json = ?,
+                ocr_state = 'done', ocr_total_pages = ?, ocr_extracted_pages = ?,
+                ocr_result_url = ?, ocr_error = NULL, updated_at = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                raw_text,
+                detect_text_state(raw_text),
+                status_value,
+                json.dumps(question_payloads, ensure_ascii=False),
+                json.dumps(issues, ensure_ascii=False),
+                int(poll_data.get("total_pages") or 0),
+                int(poll_data.get("extracted_pages") or 0),
+                str(poll_data.get("json_url") or ""),
+                utc_now(),
+                row["id"],
+                user_id,
+            ),
+        )
+        updated_row = connection.execute(
+            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
+            (row["id"], user_id),
+        ).fetchone()
+    return row_to_detail(updated_row)
+
+
 @router.post("", response_model=ConversionDetail, status_code=status.HTTP_201_CREATED)
 async def create_conversion(
     current_user: Annotated[AuthUser, Depends(get_current_user)],
@@ -801,6 +1095,29 @@ async def create_conversion(
         assets=assets,
         conversion_id=conversion_id,
         include_assets=include_assets,
+    )
+
+
+@router.post("/ocr", response_model=CloudOcrStatusResponse, status_code=status.HTTP_202_ACCEPTED)
+async def create_cloud_ocr_conversion(
+    current_user: Annotated[AuthUser, Depends(get_current_user)],
+    file: UploadFile = File(...),
+    subject: Subject = Form("general"),
+) -> CloudOcrStatusResponse:
+    ensure_cloud_ocr_available()
+    stored_path = await save_upload(file, current_user.id)
+    conversion_id = str(uuid.uuid4())
+    raw_text, extraction_issues = try_extract_native_text(stored_path, conversion_id)
+    provider_job_id = submit_paddle_ocr_job(stored_path)
+    return create_cloud_ocr_conversion_record(
+        user_id=current_user.id,
+        filename=file.filename or stored_path.name,
+        stored_path=stored_path,
+        subject=subject,
+        provider_job_id=provider_job_id,
+        raw_text=raw_text,
+        extraction_issues=extraction_issues,
+        conversion_id=conversion_id,
     )
 
 
@@ -833,6 +1150,91 @@ def list_conversions(
             (current_user.id,),
         ).fetchall()
     return [row_to_summary(row) for row in rows]
+
+
+@router.get("/{conversion_id}/ocr", response_model=CloudOcrStatusResponse)
+def get_cloud_ocr_status(
+    conversion_id: str,
+    current_user: Annotated[AuthUser, Depends(get_current_user)],
+) -> CloudOcrStatusResponse:
+    row = find_conversion(conversion_id, current_user.id)
+    provider_job_id = row["ocr_provider_job_id"]
+    if not provider_job_id:
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="unavailable",
+            message="该转换任务没有关联 PaddleOCR 云端任务。",
+            conversion=row_to_detail(row),
+        )
+
+    if row["ocr_state"] == "done" or row["status"] != "ocr_running":
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="done",
+            message="PaddleOCR 识别已完成。",
+            total_pages=row["ocr_total_pages"] or 0,
+            extracted_pages=row["ocr_extracted_pages"] or 0,
+            conversion=row_to_detail(row),
+        )
+
+    poll_data = poll_paddle_ocr_job(provider_job_id)
+    ocr_state = str(poll_data.get("state") or "running")
+    total_pages = int(poll_data.get("total_pages") or 0)
+    extracted_pages = int(poll_data.get("extracted_pages") or 0)
+
+    if ocr_state == "done":
+        conversion = finish_cloud_ocr_conversion(row, poll_data, current_user.id)
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="done",
+            message="PaddleOCR 识别完成，已进入人工校对。",
+            total_pages=total_pages,
+            extracted_pages=extracted_pages,
+            conversion=conversion,
+        )
+
+    if ocr_state == "failed":
+        error_message = str(poll_data.get("error") or "PaddleOCR 识别失败。")
+        with get_connection() as connection:
+            connection.execute(
+                """
+                UPDATE conversions
+                SET status = 'needs_attention', ocr_state = 'failed', ocr_error = ?,
+                    ocr_total_pages = ?, ocr_extracted_pages = ?, updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (error_message, total_pages, extracted_pages, utc_now(), conversion_id, current_user.id),
+            )
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="failed",
+            message=error_message,
+            total_pages=total_pages,
+            extracted_pages=extracted_pages,
+        )
+
+    with get_connection() as connection:
+        connection.execute(
+            """
+            UPDATE conversions
+            SET ocr_state = ?, ocr_total_pages = ?, ocr_extracted_pages = ?, updated_at = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (ocr_state, total_pages, extracted_pages, utc_now(), conversion_id, current_user.id),
+        )
+
+    progress_message = (
+        f"PaddleOCR 正在识别第 {extracted_pages} / {total_pages} 页。"
+        if total_pages
+        else "PaddleOCR 正在识别文档，请稍候。"
+    )
+    return CloudOcrStatusResponse(
+        id=conversion_id,
+        state="running" if ocr_state not in {"pending", "running"} else ocr_state,
+        message=progress_message,
+        total_pages=total_pages,
+        extracted_pages=extracted_pages,
+    )
 
 
 @router.get("/{conversion_id}", response_model=ConversionDetail)

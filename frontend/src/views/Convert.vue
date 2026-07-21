@@ -23,6 +23,7 @@ import CinematicNav from "@/components/CinematicNav.vue"
 import {
   conversionClient,
   getConversionErrorMessage,
+  type CloudOcrStatus,
   type ConversionDetail,
   type ConversionAsset,
   type ConversionQuestion,
@@ -31,24 +32,24 @@ import {
 } from "@/services/conversionClient"
 
 const subjects: Array<{ id: Subject; label: string; description: string }> = [
-  { id: "politics", label: "Politics", description: "Pure text questions with analysis." },
-  { id: "math", label: "Math", description: "Formula and symbol friendly mode." },
-  { id: "physics", label: "Physics", description: "For formulas, units and common symbols." },
-  { id: "chemistry", label: "Chemistry", description: "For reactions and chemical formulas." },
-  { id: "biology", label: "Biology", description: "For diagrams and biology terms." },
-  { id: "general", label: "General", description: "Use when the subject is uncertain." },
+  { id: "politics", label: "政治", description: "适合纯文本题目，保留论述语义和解析。" },
+  { id: "math", label: "数学", description: "适合公式、上下标和常见数学符号。" },
+  { id: "physics", label: "物理", description: "适合公式、单位和物理符号。" },
+  { id: "chemistry", label: "化学", description: "适合反应式、化学式和下标内容。" },
+  { id: "biology", label: "生物", description: "适合图表题和生物专有名词。" },
+  { id: "general", label: "通用", description: "不确定学科时使用。" },
 ]
 
 const exportFormats = [
   {
     id: "kshuati",
     label: "口袋刷题助手",
-    description: "Current export format for text import.",
+    description: "生成可复制到口袋刷题助手文本导入页的格式。",
   },
   {
     id: "shiroha",
-    label: "Shiroha 兼容格式",
-    description: "Compatibility preset reserved for later.",
+    label: "出题试卷形式",
+    description: "按普通试卷样式整理题目，适合审核、打印或导出 Word。",
   },
 ]
 
@@ -73,13 +74,17 @@ const deletingHistoryId = ref<string | null>(null)
 const ocrLoadingAssetId = ref<string | null>(null)
 const assetPreviewUrls = ref<Record<string, string>>({})
 const uploadStage = ref("")
+const ocrProgressText = ref("")
 const currentStep = ref(1)
 const showIssueQuestions = ref(true)
 const showValidQuestions = ref(true)
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
+const showCopySuccessDialog = ref(false)
 const filePickState = ref<"idle" | "loading" | "success" | "error">("idle")
 let filePickTimer: number | undefined
 let uploadStageTimer: number | undefined
+let copySuccessTimer: number | undefined
+let ocrPollingCancelled = false
 
 const questions = computed(() => activeConversion.value?.questions ?? [])
 const assets = computed(() => activeConversion.value?.assets ?? [])
@@ -222,6 +227,50 @@ function setError(error: unknown) {
   statusMessage.value = ""
 }
 
+function waitForOcrPoll(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+function updateCloudOcrProgress(status: CloudOcrStatus) {
+  const totalPages = status.total_pages || 0
+  const extractedPages = status.extracted_pages || 0
+  if (status.state === "pending") {
+    uploadStage.value = "OCR 排队"
+    ocrProgressText.value = "PaddleOCR 任务已提交，正在等待识别。"
+  } else if (totalPages > 0) {
+    uploadStage.value = `OCR 识别 ${extractedPages}/${totalPages} 页`
+    ocrProgressText.value = `正在识别第 ${Math.min(extractedPages + 1, totalPages)} 页，共 ${totalPages} 页。`
+  } else {
+    uploadStage.value = "OCR 识别"
+    ocrProgressText.value = status.message || "PaddleOCR 正在识别文档。"
+  }
+  statusMessage.value = status.message || ocrProgressText.value
+}
+
+async function pollCloudOcrConversion(id: string) {
+  while (!ocrPollingCancelled) {
+    const ocrStatus = await conversionClient.getCloudOcrStatus(id)
+    updateCloudOcrProgress(ocrStatus)
+
+    if (ocrStatus.state === "done") {
+      if (!ocrStatus.conversion) {
+        throw new Error("PaddleOCR 已完成，但后端没有返回转换结果。")
+      }
+      return ocrStatus.conversion
+    }
+
+    if (ocrStatus.state === "failed" || ocrStatus.state === "unavailable") {
+      throw new Error(ocrStatus.message || "PaddleOCR 识别失败。")
+    }
+
+    await waitForOcrPoll(5000)
+  }
+
+  throw new Error("OCR 轮询已取消。")
+}
+
 async function loadHistory() {
   isLoadingHistory.value = true
   try {
@@ -312,7 +361,9 @@ async function uploadSelectedFile() {
   }
 
   isUploading.value = true
+  ocrPollingCancelled = false
   errorMessage.value = ""
+  ocrProgressText.value = ""
   uploadStage.value = "上传文件"
   statusMessage.value = "正在上传文件..."
   exportText.value = ""
@@ -326,11 +377,17 @@ async function uploadSelectedFile() {
           : "文件已提交，后端正在提取可复制文本..."
       }
     }, 900)
-    activeConversion.value = await conversionClient.upload(
-      file as File,
-      selectedSubject.value,
-      includeAssetProcessing.value,
-    )
+    if (includeAssetProcessing.value) {
+      const ocrStatus = await conversionClient.startCloudOcr(file as File, selectedSubject.value)
+      updateCloudOcrProgress(ocrStatus)
+      activeConversion.value = await pollCloudOcrConversion(ocrStatus.id)
+    } else {
+      activeConversion.value = await conversionClient.upload(
+        file as File,
+        selectedSubject.value,
+        includeAssetProcessing.value,
+      )
+    }
     uploadStage.value = "解析完成"
     statusMessage.value = `解析完成：识别 ${activeConversion.value.question_count} 道题，${activeConversion.value.issue_count} 个提示。`
     currentStep.value = 3
@@ -850,6 +907,43 @@ async function copyExportText() {
   statusMessage.value = "导入文本已复制。"
 }
 
+async function copyReviewedPaperText() {
+  if (!activeConversion.value || !hasQuestions.value) return
+  isExporting.value = true
+  errorMessage.value = ""
+  statusMessage.value = "正在复制试卷文本..."
+
+  try {
+    await persistQuestions()
+    const paperText = questions.value.map(formatReviewedQuestionForWord).join("\n\n")
+    await navigator.clipboard.writeText(paperText)
+    exportText.value = ""
+    statusMessage.value = ""
+    showCopySuccess()
+  } catch (error) {
+    setError(error)
+  } finally {
+    isExporting.value = false
+  }
+}
+
+function showCopySuccess() {
+  if (copySuccessTimer) window.clearTimeout(copySuccessTimer)
+  showCopySuccessDialog.value = true
+  copySuccessTimer = window.setTimeout(() => {
+    showCopySuccessDialog.value = false
+    copySuccessTimer = undefined
+  }, 1600)
+}
+
+function closeCopySuccess() {
+  if (copySuccessTimer) {
+    window.clearTimeout(copySuccessTimer)
+    copySuccessTimer = undefined
+  }
+  showCopySuccessDialog.value = false
+}
+
 function downloadExportText() {
   if (!exportText.value) return
   const blob = new Blob([exportText.value], { type: "text/plain;charset=utf-8" })
@@ -877,30 +971,104 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;")
 }
 
+function stripTrailingAnswerBlank(value: string) {
+  return value
+    .replace(/\s*(?:\(\s*\)|（\s*）)\s*$/u, "")
+    .trimEnd()
+}
+
+function ensureQuestionStemBlank(value: string) {
+  const trimmedValue = value.trimEnd()
+  const cleanValue = stripTrailingAnswerBlank(trimmedValue)
+  if (/(?:\(\s*\)|（\s*）)/u.test(cleanValue)) return cleanValue
+  if (/(?:\(\s*\)|（\s*）)/u.test(trimmedValue)) return trimmedValue
+  return `${cleanValue}（）`
+}
+
+function normalizeReviewedExportField(value: string) {
+  return (value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("")
+}
+
+function shouldKeepReviewedStemLineBreak(line: string) {
+  return /^[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]/u.test(line)
+}
+
+function joinReviewedTextLine(left: string, right: string) {
+  if (!left) return right
+  if (/[\w)]$/u.test(left) && /^[\w(]/u.test(right)) return `${left} ${right}`
+  return `${left}${right}`
+}
+
+function normalizeReviewedStem(value: string) {
+  const lines = (value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const normalizedLines: string[] = []
+
+  for (const line of lines) {
+    if (!normalizedLines.length || shouldKeepReviewedStemLineBreak(line)) {
+      normalizedLines.push(line)
+    } else {
+      normalizedLines[normalizedLines.length - 1] = joinReviewedTextLine(
+        normalizedLines[normalizedLines.length - 1],
+        line,
+      )
+    }
+  }
+
+  return normalizedLines.join("\n")
+}
+
+function formatReviewedQuestionForWord(question: ConversionQuestion) {
+  const stem = normalizeReviewedStem(stripQuestionNumberPrefix(question.stem || ""))
+  const lines = [
+    `${question.number}.${ensureQuestionStemBlank(stem)}`,
+    ...sortedOptionEntries(question.options).map(([label, value]) => `${label}.${normalizeReviewedExportField(value)}`),
+    `答案:${question.answer?.trim().toUpperCase() || ""}`,
+    `解析:${normalizeReviewedExportField(question.analysis || "")}`,
+  ]
+  return lines.join("\n")
+}
+
+function escapeHtmlWithBreaks(value: string) {
+  return escapeHtml(value).replace(/\r?\n/g, "<br>")
+}
+
 async function downloadReviewedWord() {
   if (!activeConversion.value) return
   await persistQuestions()
   const rows = questions.value
     .map(
-      (question) => `
-        <h2>第 ${question.number} 题</h2>
-        <p><strong>题目：</strong>${escapeHtml(question.stem)}</p>
-        <ol type="A">
-          ${getQuestionOptionLabels(question).map((label) => `<li>${escapeHtml(question.options[label] || "")}</li>`).join("")}
-        </ol>
-        <p><strong>答案：</strong>${escapeHtml(question.answer || "未填写")}</p>
-        <p><strong>解析：</strong>${escapeHtml(question.analysis || "")}</p>
-        <hr />
-      `,
+      (question) => `<div class="question-block">${escapeHtmlWithBreaks(formatReviewedQuestionForWord(question))}</div>`,
     )
     .join("")
   const html = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
       xmlns="http://www.w3.org/TR/REC-html40">
-      <head><meta charset="utf-8"><title>${escapeHtml(activeConversion.value.filename)}</title></head>
+      <head>
+        <meta charset="utf-8">
+        <title>${escapeHtml(activeConversion.value.filename)}</title>
+        <style>
+          body {
+            font-family: "Microsoft YaHei", "SimSun", sans-serif;
+            font-size: 11pt;
+            line-height: 1.35;
+            color: #111111;
+          }
+          .question-block {
+            margin: 0 0 12pt 0;
+            padding: 0;
+            border: 0;
+          }
+        </style>
+      </head>
       <body>
-        <h1>${escapeHtml(activeConversion.value.filename)}</h1>
         ${rows}
       </body>
     </html>
@@ -927,8 +1095,10 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  ocrPollingCancelled = true
   if (uploadStageTimer) window.clearTimeout(uploadStageTimer)
   if (filePickTimer) window.clearTimeout(filePickTimer)
+  if (copySuccessTimer) window.clearTimeout(copySuccessTimer)
   revokeAssetPreviewUrls()
 })
 </script>
@@ -996,6 +1166,7 @@ onBeforeUnmount(() => {
             <div v-if="isUploading" class="upload-panel__progress">
               <i />
               <strong>{{ uploadStage || "准备上传" }}</strong>
+              <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
             </div>
           </label>
 
@@ -1079,6 +1250,28 @@ onBeforeUnmount(() => {
         </div>
 
         <div>
+          <p class="settings-panel__title settings-panel__title--subject">图片 / 公式处理</p>
+          <div class="asset-mode-options">
+            <label :class="['format-option', { 'is-selected': !includeAssetProcessing }]">
+              <input v-model="includeAssetProcessing" type="radio" name="assetMode" :value="false" />
+              <FileText :size="18" />
+              <span>
+                <strong>仅提取文字</strong>
+                <small>忽略文档图片和扫描页，校对区不显示素材处理。</small>
+              </span>
+            </label>
+            <label :class="['format-option', { 'is-selected': includeAssetProcessing }]">
+              <input v-model="includeAssetProcessing" type="radio" name="assetMode" :value="true" />
+              <ScanText :size="18" />
+              <span>
+                <strong>PaddleOCR 图片识别 / 人工转写</strong>
+                <small>扫描件和图片型试卷会先云端识别，并显示页数进度。</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div>
           <p class="settings-panel__title settings-panel__title--subject">学科规则</p>
           <div class="subject-options subject-options--step">
             <label
@@ -1095,25 +1288,11 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div>
-          <p class="settings-panel__title settings-panel__title--subject">图片 / 公式处理</p>
-          <div class="asset-mode-options">
-            <label :class="['format-option', { 'is-selected': !includeAssetProcessing }]">
-              <input v-model="includeAssetProcessing" type="radio" name="assetMode" :value="false" />
-              <FileText :size="18" />
-              <span>
-                <strong>仅提取文字</strong>
-                <small>忽略文档图片和扫描页，校对区不显示素材处理。</small>
-              </span>
-            </label>
-            <label :class="['format-option', { 'is-selected': includeAssetProcessing }]">
-              <input v-model="includeAssetProcessing" type="radio" name="assetMode" :value="true" />
-              <ScanText :size="18" />
-              <span>
-                <strong>图片识别 / 人工转写</strong>
-                <small>保留图片、公式和扫描页，进入校对区后逐项处理。</small>
-              </span>
-            </label>
+        <div v-if="isUploading" class="conversion-ocr-progress" aria-live="polite">
+          <Loader2 class="spin-icon" :size="18" />
+          <div>
+            <strong>{{ uploadStage || "正在解析" }}</strong>
+            <span>{{ ocrProgressText || statusMessage || "文件正在处理中，请稍候。" }}</span>
           </div>
         </div>
 
@@ -1190,9 +1369,9 @@ onBeforeUnmount(() => {
                 <Download :size="16" />
                 导出审核 Word
               </button>
-              <button class="review-panel__primary-action" type="button" :disabled="!hasQuestions || isSaving || (includeAssetProcessing && isSavingAssets) || isExporting" @click="exportKshuati">
-                <Download :size="16" />
-                {{ isExporting ? "生成中" : "生成导入文本" }}
+              <button class="review-panel__primary-action" type="button" :disabled="!hasQuestions || isSaving || (includeAssetProcessing && isSavingAssets) || isExporting" @click="copyReviewedPaperText">
+                <Clipboard :size="16" />
+                {{ isExporting ? "复制中" : "复制试卷文本" }}
               </button>
             </div>
           </header>
@@ -1389,19 +1568,13 @@ onBeforeUnmount(() => {
         </section>
       </section>
 
-      <section v-if="exportText" class="export-panel stitch-reveal">
-        <header>
-          <div>
-            <p class="stitch-eyebrow">EXPORT</p>
-            <h2>口袋刷题文本</h2>
-          </div>
-          <div>
-            <button type="button" @click="copyExportText"><Clipboard :size="16" />复制</button>
-            <button type="button" @click="downloadExportText"><Download :size="16" />下载 TXT</button>
-          </div>
-        </header>
-        <textarea v-model="exportText" rows="12" readonly />
-      </section>
+      <div v-if="showCopySuccessDialog" class="copy-success-modal" role="dialog" aria-modal="true">
+        <div class="copy-success-modal__panel">
+          <CheckCircle2 :size="34" />
+          <strong>复制文本成功</strong>
+          <button type="button" @click="closeCopySuccess">确定</button>
+        </div>
+      </div>
 
       <div v-if="issueDialogQuestion" class="issue-modal" role="dialog" aria-modal="true">
         <div class="issue-modal__panel">

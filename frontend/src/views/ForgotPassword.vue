@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import AuthLayout from "@/components/AuthLayout.vue"
+import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import { authClient, getAuthErrorMessage } from "@/services/authClient"
-import { Loader2 } from "lucide-vue-next"
+import { Loader2, Mail } from "lucide-vue-next"
 
-const forgotPasswordVideo = "/video/fp_v3.mp4?v=auth-balanced-2"
+const forgotPasswordVideo =
+  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B9%A6%E6%9C%AC-%E4%B9%A6%E6%A1%8C-%E4%BA%8C%E6%AC%A1%E5%85%83.mp4"
 const authPoster = "/video/auth-poster.jpeg"
 
 const email = ref("")
@@ -51,11 +53,19 @@ const handleReset = async () => {
 </script>
 
 <template>
-  <AuthLayout :video-src="forgotPasswordVideo" :poster-src="authPoster" content-offset-class="md:-translate-y-8">
+  <AuthLayout
+    :video-src="forgotPasswordVideo"
+    :poster-src="authPoster"
+    media-position="82% center"
+    media-eyebrow="RECOVER ACCESS"
+    media-title="重新找回你的学习入口。"
+    media-description="输入邮箱获取重置链接，恢复访问你的题库和复习资料。"
+    content-offset-class="md:translate-y-4"
+  >
     <template #title>重置访问权限</template>
     <template #subtitle>输入邮箱，接收密码重置链接。</template>
 
-    <form class="space-y-5" @submit.prevent="handleReset">
+    <form class="forgot-form" @submit.prevent="handleReset">
       <div v-if="errorMsg" class="auth-alert auth-alert--error p-3 text-sm">
         {{ errorMsg }}
       </div>
@@ -70,30 +80,33 @@ const handleReset = async () => {
         </router-link>
       </div>
 
-      <div class="space-y-1">
-        <label for="email" class="auth-label ml-1 text-xs font-semibold uppercase">邮箱地址</label>
-        <input
-          id="email"
-          v-model="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          placeholder="请输入邮箱"
-          class="auth-input px-4 py-3"
-          required
-        />
-      </div>
+      <AuthWaveInput
+        id="email"
+        v-model="email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        label="请输入邮箱"
+        required
+      >
+        <template #leading>
+          <Mail />
+        </template>
+      </AuthWaveInput>
 
       <button
         type="submit"
         :disabled="loading"
-        class="auth-button mt-4 px-4 py-3"
+        class="auth-button forgot-submit-button px-4 py-3"
       >
         <Loader2 v-if="loading" class="mr-2 h-5 w-5 animate-spin" />
-        {{ loading ? "SENDING..." : "SEND RESET LINK" }}
+        {{ loading ? "发送中..." : "发送重置链接" }}
       </button>
 
-      <div class="mt-6 text-center text-[0.7rem] text-[rgba(226,218,194,0.34)]">
+      <div class="forgot-login-row text-center text-[0.7rem] text-[rgba(226,218,194,0.34)]">
         <router-link to="/login" class="auth-link inline-flex items-center font-semibold">
           返回登录
         </router-link>
@@ -101,3 +114,21 @@ const handleReset = async () => {
     </form>
   </AuthLayout>
 </template>
+
+<style scoped>
+.forgot-form {
+  display: grid;
+  gap: 1.08rem;
+}
+
+.forgot-submit-button {
+  margin-top: 0.45rem !important;
+  font-size: 0.82rem;
+}
+
+.forgot-login-row {
+  margin-top: 0.9rem !important;
+  color: rgba(226, 218, 194, 0.38) !important;
+  font-weight: 800;
+}
+</style>

@@ -64,6 +64,15 @@ export interface ConversionOcrResult {
   message: string
 }
 
+export interface CloudOcrStatus {
+  id: string
+  state: "pending" | "running" | "done" | "failed" | "unavailable"
+  message: string
+  total_pages?: number | null
+  extracted_pages?: number | null
+  conversion?: ConversionDetail | null
+}
+
 function normalizeConversionSummary(summary: ConversionSummary): ConversionSummary {
   return {
     ...summary,
@@ -142,11 +151,11 @@ function authHeaders() {
   return headers
 }
 
-async function request<T>(path: string, options: RequestInit = {}) {
+async function request<T>(path: string, options: RequestInit = {}, timeoutMs = 45000) {
   const headers = new Headers(options.headers)
   authHeaders().forEach((value, key) => headers.set(key, value))
   const controller = new AbortController()
-  const timeoutId = window.setTimeout(() => controller.abort(), 45000)
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -190,6 +199,24 @@ export const conversionClient = {
       method: "POST",
       body: form,
     }))
+  },
+
+  async startCloudOcr(file: File, subject: Subject = "general") {
+    const form = new FormData()
+    form.append("file", file)
+    form.append("subject", subject)
+    return request<CloudOcrStatus>("/conversions/ocr", {
+      method: "POST",
+      body: form,
+    }, 120000)
+  },
+
+  async getCloudOcrStatus(id: string) {
+    const status = await request<CloudOcrStatus>(`/conversions/${id}/ocr`)
+    return {
+      ...status,
+      conversion: status.conversion ? normalizeConversionDetail(status.conversion) : status.conversion,
+    }
   },
 
   async createFromText(title: string, text: string, subject: Subject = "general") {
