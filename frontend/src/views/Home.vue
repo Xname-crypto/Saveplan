@@ -20,14 +20,14 @@ import InfiniteMovingCards from "@/components/InfiniteMovingCards.vue"
 import LightRays from "@/components/LightRays.vue"
 import LogoLoop from "@/components/LogoLoop.vue"
 import TiltedCard from "@/components/TiltedCard.vue"
+import { VIDEO_ASSETS } from "@/services/videoAssets"
 
 const videoReady = ref(false)
 const pageRoot = ref<HTMLElement | null>(null)
 const revealRoot = ref<HTMLElement | null>(null)
 let revealObserver: IntersectionObserver | null = null
 let scrollFrame = 0
-const heroVideoSrc =
-  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E5%9B%BE%E7%89%87%E4%B8%AD%E7%9A%84%E4%BA%BA%E7%89%A9%E5%9C%A8%E5%86%99%E5%AD%97%E5%AD%A6%E4%B9%A0%EF%BC%8C%E5%9B%BA%E5%AE%9A%E6%9C%BA%E4%BD%8D%EF%BC%8C%E5%9B%BA%E5%AE%9A%E9%95%9C%E5%A4%B4%EF%BC%8C%E4%B8%8D%E8%A6%81%E8%BF%90%E5%8A%A8%E7%9B%B8%E6%9C%BA%EF%BC%8C%E9%AB%98%E8%B4%A8%E9%87%8F_202605250305.mp4"
+const heroVideoSrc = VIDEO_ASSETS.homeHero
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"

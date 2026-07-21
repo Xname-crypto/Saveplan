@@ -5,11 +5,11 @@ import AuthLayout from "@/components/AuthLayout.vue"
 import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import ValidCode from "@/components/ValidCode.vue"
 import { authClient, getAuthErrorMessage } from "@/services/authClient"
+import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-vue-next"
 
-const loginVideo =
-  "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E9%87%8D%E6%96%B0%E5%BC%80%E5%A7%8B2.mp4"
-const authPoster = "/video/auth-poster.jpeg"
+const loginVideo = VIDEO_ASSETS.login
+const authPoster = VIDEO_ASSETS.authPoster
 
 const router = useRouter()
 const route = useRoute()
