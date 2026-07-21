@@ -165,7 +165,7 @@ watch(
           autoplay
           muted 
           loop 
-          preload="auto"
+          preload="metadata"
           playsinline
           webkit-playsinline="true"
           @loadedmetadata="handleVideoMetadata"
