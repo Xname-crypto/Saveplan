@@ -8,7 +8,7 @@ import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Loader2, Lock } from "lucide-vue-next"
 
 const forgotPasswordVideo = VIDEO_ASSETS.forgotPassword
-const authPoster = VIDEO_ASSETS.authPoster
+const authPoster = VIDEO_ASSETS.forgotPasswordPoster
 
 const route = useRoute()
 const router = useRouter()
@@ -65,7 +65,7 @@ const handleUpdatePassword = async () => {
   <AuthLayout
     :video-src="forgotPasswordVideo"
     :poster-src="authPoster"
-    media-position="82% center"
+    media-position="88% center"
     media-eyebrow="NEW PASSWORD"
     media-title="为账号设置新的安全凭证。"
     media-description="完成密码更新后，你可以继续回到专属复习工作区。"

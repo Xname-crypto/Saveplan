@@ -23,7 +23,7 @@ import {
 } from "lucide-vue-next"
 
 const registerVideo = VIDEO_ASSETS.register
-const authPoster = VIDEO_ASSETS.authPoster
+const authPoster = VIDEO_ASSETS.registerPoster
 
 const router = useRouter()
 const currentStep = ref(1)
@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
     :video-src="registerVideo"
     :poster-src="authPoster"
     :show-back="currentStep > 1"
-    media-position="90% center"
+    media-position="88% center"
     media-eyebrow="START YOUR SPACE"
     media-title="创建你的专属复习工作区。"
     media-description="从账号开始，把题库、笔记和资料整理成更清晰的学习系统。"

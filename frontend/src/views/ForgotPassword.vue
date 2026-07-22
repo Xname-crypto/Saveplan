@@ -7,7 +7,7 @@ import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Loader2, Mail } from "lucide-vue-next"
 
 const forgotPasswordVideo = VIDEO_ASSETS.forgotPassword
-const authPoster = VIDEO_ASSETS.authPoster
+const authPoster = VIDEO_ASSETS.forgotPasswordPoster
 
 const email = ref("")
 const loading = ref(false)
@@ -56,7 +56,7 @@ const handleReset = async () => {
   <AuthLayout
     :video-src="forgotPasswordVideo"
     :poster-src="authPoster"
-    media-position="82% center"
+    media-position="88% center"
     media-eyebrow="RECOVER ACCESS"
     media-title="重新找回你的学习入口。"
     media-description="输入邮箱获取重置链接，恢复访问你的题库和复习资料。"

@@ -9,7 +9,7 @@ import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-vue-next"
 
 const loginVideo = VIDEO_ASSETS.login
-const authPoster = VIDEO_ASSETS.authPoster
+const authPoster = VIDEO_ASSETS.loginPoster
 
 const router = useRouter()
 const route = useRoute()
@@ -67,6 +67,7 @@ const updateGeneratedCode = (code: string) => {
   <AuthLayout
     :video-src="loginVideo"
     :poster-src="authPoster"
+    media-position="88% center"
     media-eyebrow="WELCOME BACK"
     media-title="回到你的专注学习现场。"
     media-description="继续整理题库、校对资料，把复习节奏接回上一次的位置。"

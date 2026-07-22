@@ -28,6 +28,7 @@ const revealRoot = ref<HTMLElement | null>(null)
 let revealObserver: IntersectionObserver | null = null
 let scrollFrame = 0
 const heroVideoSrc = VIDEO_ASSETS.homeHero
+const heroPosterSrc = VIDEO_ASSETS.homeHeroPoster
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
@@ -225,7 +226,7 @@ onBeforeUnmount(() => {
       <div class="home-hero__frame">
         <img
           class="home-hero__poster"
-          src="/stitch/asset-02.jpg"
+          :src="heroPosterSrc"
           alt="电影感学习空间"
           fetchpriority="high"
         />
@@ -237,7 +238,7 @@ onBeforeUnmount(() => {
           playsinline
           preload="metadata"
           :class="['home-hero__video', { 'is-ready': videoReady }]"
-          poster="/stitch/asset-02.jpg"
+          :poster="heroPosterSrc"
           @canplay="handleVideoReady"
           @loadeddata="handleVideoReady"
           @playing="handleVideoReady"

@@ -7,8 +7,19 @@ export const VIDEO_ASSETS = {
     "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%BA%8C%E6%AC%A1%E5%85%83-%E5%8A%A8%E6%BC%AB.mp4",
   forgotPassword:
     "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B9%A6%E6%9C%AC-%E4%B9%A6%E6%A1%8C-%E4%BA%8C%E6%AC%A1%E5%85%83.mp4",
+  homeHeroPoster: "/video/home-hero-poster.jpg",
+  loginPoster: "/video/login-poster.jpg",
+  registerPoster: "/video/register-poster.jpg",
+  forgotPasswordPoster: "/video/forgot-password-poster.jpg",
   authPoster: "/video/auth-poster.jpeg",
 } as const
+
+const IMAGE_PRELOAD_ORDER = [
+  VIDEO_ASSETS.homeHeroPoster,
+  VIDEO_ASSETS.loginPoster,
+  VIDEO_ASSETS.registerPoster,
+  VIDEO_ASSETS.forgotPasswordPoster,
+] as const
 
 const VIDEO_PRELOAD_ORDER = [
   VIDEO_ASSETS.homeHero,
@@ -17,8 +28,26 @@ const VIDEO_PRELOAD_ORDER = [
   VIDEO_ASSETS.forgotPassword,
 ] as const
 
+const imagePreloadCache = new Map<string, Promise<void>>()
 const preloadCache = new Map<string, Promise<void>>()
 let queueStarted = false
+
+function preloadImage(src: string): Promise<void> {
+  if (!src || typeof window === "undefined") return Promise.resolve()
+
+  const cached = imagePreloadCache.get(src)
+  if (cached) return cached
+
+  const promise = new Promise<void>((resolve) => {
+    const image = new Image()
+    image.onload = () => resolve()
+    image.onerror = () => resolve()
+    image.src = src
+  })
+
+  imagePreloadCache.set(src, promise)
+  return promise
+}
 
 function preloadVideo(src: string, timeoutMs = 12000): Promise<void> {
   if (!src || typeof document === "undefined") return Promise.resolve()
@@ -67,9 +96,11 @@ export function startVideoPreloadQueue() {
   queueStarted = true
 
   scheduleIdle(() => {
-    void VIDEO_PRELOAD_ORDER.reduce(
-      (previous, src) => previous.then(() => preloadVideo(src)),
-      Promise.resolve(),
-    )
+    void Promise.all(IMAGE_PRELOAD_ORDER.map((src) => preloadImage(src))).finally(() => {
+      void VIDEO_PRELOAD_ORDER.reduce(
+        (previous, src) => previous.then(() => preloadVideo(src)),
+        Promise.resolve(),
+      )
+    })
   })
 }
