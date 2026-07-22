@@ -66,6 +66,25 @@ const faqs = [
 const selectedPlan = ref<string | null>(null)
 const openFaqIndex = ref<number | null>(null)
 
+function getPlanClasses(plan: (typeof plans)[number], index: number) {
+  return [
+    "pricing-card",
+    "stitch-reveal",
+    "cursor-target",
+    `stitch-delay-${index + 1}`,
+    plan.featured ? "is-featured" : "",
+    selectedPlan.value === plan.name ? "is-selected" : "",
+  ].filter(Boolean)
+}
+
+function getFeaturedPlanProps(plan: (typeof plans)[number], index: number) {
+  return {
+    className: getPlanClasses(plan, index),
+    animated: true,
+    backgroundColor: selectedPlan.value === plan.name ? "rgba(45, 42, 36, 0.9)" : "#111",
+  }
+}
+
 function selectPlan(planName: string) {
   selectedPlan.value = planName
 }
@@ -107,22 +126,9 @@ function toggleFaq(index: number) {
           :key="plan.name"
           as="article"
           v-bind="plan.featured
-            ? {
-                className: [
-                  'pricing-card stitch-reveal',
-                  'cursor-target',
-                  `stitch-delay-${index + 1}`,
-                  { 'is-featured': plan.featured, 'is-selected': selectedPlan === plan.name },
-                ],
-                animated: true,
-              }
+            ? getFeaturedPlanProps(plan, index)
             : {
-                class: [
-                  'pricing-card stitch-reveal',
-                  'cursor-target',
-                  `stitch-delay-${index + 1}`,
-                  { 'is-featured': plan.featured, 'is-selected': selectedPlan === plan.name },
-                ],
+                class: getPlanClasses(plan, index),
               }"
           @click.stop="selectPlan(plan.name)"
         >

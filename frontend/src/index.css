@@ -4165,6 +4165,9 @@
   border: 2px solid rgba(235, 228, 207, 0.72);
   background: rgba(45, 42, 36, 0.9);
   transform: scale(1.04);
+  box-shadow:
+    0 0 0 1px rgba(246, 232, 178, 0.22),
+    0 24px 70px rgba(214, 197, 141, 0.2);
 }
 
 .pricing-card__badge {

@@ -1,18 +1,27 @@
 # Save Your Finals
 
-Vue + FastAPI starter for a Chinese study-tool landing page. The frontend is a Vue 3/Vite/Tailwind app, and the backend is a small FastAPI API scaffold.
+Save Your Finals 是一个面向学生和备考用户的题库整理与资料转换工具。项目支持登录注册、资料上传、OCR/AI 转换、题目校对、导出复习资料，并已按前后端分离方式部署到 Zeabur。
 
-## Scripts
+## 项目结构
+
+```text
+frontend/  Vue 3 + Vite 前端页面
+backend/   FastAPI 后端接口
+server/    旧版/辅助服务代码
+```
+
+## 本地运行
+
+安装依赖并启动前端：
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
 
-Run the API in a second terminal:
+另开一个终端启动后端：
 
-```bash
+```powershell
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
@@ -20,82 +29,70 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-## PaddleOCR cloud OCR
+## 环境变量
 
-The converter can use PaddleOCR cloud recognition when the user selects image/OCR processing.
-Create `backend/.env` from `backend/.env.example`, then put your real token in it:
+后端环境变量请从示例文件复制：
 
 ```powershell
 cd backend
 copy .env.example .env
 notepad .env
-uvicorn app.main:app --reload
 ```
 
-Do not commit the PaddleOCR token to GitHub.
+不要把真实的 `.env`、JWT 密钥、PaddleOCR Token 或其他私密配置提交到 GitHub。
 
-## Deploy to Zeabur
-
-Deploy this repository as two Zeabur services from the same GitHub repo.
-
-### 1. Backend service
-
-Create a Python service and set the root directory to `backend`.
-
-Build command:
+常用变量：
 
 ```bash
-pip install -r requirements.txt
-```
-
-Start command:
-
-```bash
-python start.py
-```
-
-Environment variables:
-
-```bash
-SAVEPLAN_JWT_SECRET=replace-with-a-long-random-secret
+SAVEPLAN_JWT_SECRET=替换为足够长的随机密钥
 SAVEPLAN_DATA_DIR=/data
-SAVEPLAN_PUBLIC_ORIGINS=https://your-frontend-domain.zeabur.app
-PADDLEOCR_API_TOKEN=replace-with-your-token
+SAVEPLAN_PUBLIC_ORIGINS=https://saveplan.vip,https://www.saveplan.vip
+PADDLEOCR_API_TOKEN=替换为真实 Token
 PADDLEOCR_MODEL=PaddleOCR-VL-1.6
 PADDLEOCR_JOB_URL=https://paddleocr.aistudio-app.com/api/v2/ocr/jobs
 ```
 
-If you need uploads and the SQLite database to survive redeploys, mount a
-persistent volume at `/data`.
+## 部署到 Zeabur
 
-After deploy, check:
+这个仓库在 Zeabur 中建议拆成两个服务部署。
 
-```bash
-https://your-backend-domain.zeabur.app/api/health
-```
-
-### 2. Frontend service
-
-Create a Vite/Node.js static service and set the root directory to `frontend`.
-
-Build command:
+后端服务：
 
 ```bash
-npm install && npm run build
+Root Directory: backend
+Build Command: pip install -r requirements.txt
+Start Command: python start.py
 ```
 
-Output directory:
+后端健康检查：
+
+```text
+https://你的后端域名/api/health
+```
+
+前端服务：
 
 ```bash
-dist
+Root Directory: frontend
+Build Command: npm install && npm run build
+Output Directory: dist
 ```
 
-Environment variables:
+前端环境变量：
 
 ```bash
-VITE_API_BASE_URL=https://your-backend-domain.zeabur.app/api
+VITE_API_BASE_URL=https://你的后端域名/api
 ```
 
-After both services have their final domains, update
-`SAVEPLAN_PUBLIC_ORIGINS` on the backend with the frontend origin, then
-redeploy the backend.
+## 更新日志
+
+每次修改项目后，请同步更新 [CHANGELOG.md](CHANGELOG.md)，再提交到 GitHub。这样以后在 GitHub 上查看项目历史时，可以直接看到每次改了什么。
+
+推荐提交流程：
+
+```powershell
+git status
+git add README.md CHANGELOG.md 其他修改文件
+git commit -m "简短说明本次修改"
+git push origin main
+```
