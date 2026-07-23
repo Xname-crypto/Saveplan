@@ -666,15 +666,40 @@ input::-ms-clear {
   font-weight: 800;
 }
 
+@media (max-width: 760px) {
+  .preset-avatar-title {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .preset-avatar-grid {
+    display: flex;
+    gap: 0.58rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scroll-snap-type: x proximity;
+  }
+
+  .preset-avatar-option {
+    width: 3.25rem;
+    min-width: 3.25rem;
+    scroll-snap-align: start;
+  }
+
+  .identity-options {
+    gap: 0.42rem;
+  }
+
+  .identity-option {
+    min-height: 3rem;
+    padding: 0 0.35rem;
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width: 420px) {
   .identity-options {
     grid-template-columns: 1fr;
-  }
-
-  .preset-avatar-title {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
   }
 }
 </style>

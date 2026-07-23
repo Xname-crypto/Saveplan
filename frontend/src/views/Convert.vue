@@ -80,6 +80,7 @@ const assetPreviewUrls = ref<Record<string, string>>({})
 const uploadStage = ref("")
 const ocrProgressText = ref("")
 const currentStep = ref(1)
+const mobileStepOnePanel = ref<"upload" | "paste" | "history">("upload")
 const showIssueQuestions = ref(true)
 const showValidQuestions = ref(true)
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
@@ -355,6 +356,7 @@ function handleFileChange(event: Event) {
     errorMessage.value = validationMessage
     filePickState.value = "error"
   } else if (selectedFile.value) {
+    mobileStepOnePanel.value = "upload"
     statusMessage.value = `正在读取 ${selectedFile.value.name}...`
     filePickState.value = "loading"
     filePickTimer = window.setTimeout(() => {
@@ -362,6 +364,7 @@ function handleFileChange(event: Event) {
       statusMessage.value = `已选择 ${selectedFile.value?.name}，下一步请选择转换配置。`
       filePickTimer = window.setTimeout(() => {
         currentStep.value = 2
+        mobileStepOnePanel.value = "upload"
       }, 1100)
     }, 800)
   }
@@ -1159,8 +1162,34 @@ onBeforeUnmount(() => {
       </section>
 
       <section v-show="currentStep === 1" class="step-card step-card--upload stitch-reveal">
+        <div class="mobile-convert-switcher" aria-label="转换输入方式">
+          <button
+            type="button"
+            :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
+            @click="mobileStepOnePanel = 'upload'"
+          >
+            上传
+          </button>
+          <button
+            type="button"
+            :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
+            @click="mobileStepOnePanel = 'paste'"
+          >
+            粘贴
+          </button>
+          <button
+            type="button"
+            :class="{ 'is-active': mobileStepOnePanel === 'history' }"
+            @click="mobileStepOnePanel = 'history'"
+          >
+            历史
+          </button>
+        </div>
         <div class="step-card__main">
-          <label class="upload-panel upload-panel--step" aria-label="上传试卷或题库文档">
+          <label
+            :class="['upload-panel upload-panel--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'upload' }]"
+            aria-label="上传试卷或题库文档"
+          >
             <input
               class="sr-only"
               type="file"
@@ -1188,7 +1217,10 @@ onBeforeUnmount(() => {
             </div>
           </label>
 
-          <section class="paste-panel paste-panel--step" aria-label="粘贴试卷文本">
+          <section
+            :class="['paste-panel paste-panel--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'paste' }]"
+            aria-label="粘贴试卷文本"
+          >
             <div>
               <p class="settings-panel__title">粘贴文本</p>
               <input v-model="pastedTitle" type="text" placeholder="任务名称，例如：政治专题一单选" />
@@ -1206,7 +1238,9 @@ onBeforeUnmount(() => {
           </section>
         </div>
 
-        <aside class="conversion-history conversion-history--step">
+        <aside
+          :class="['conversion-history conversion-history--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'history' }]"
+        >
           <header>
             <History :size="18" />
             <span>转换历史</span>
