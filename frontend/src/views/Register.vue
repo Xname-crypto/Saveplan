@@ -36,6 +36,14 @@ const identityChoiceRef = ref<HTMLElement | null>(null)
 const isUsernameTouched = ref(false)
 const isJobTouched = ref(false)
 
+const presetAvatars = [
+  { id: "lin", label: "Lin", src: "/stitch/avatar-lin.svg" },
+  { id: "mia", label: "Mia", src: "/stitch/avatar-mia.svg" },
+  { id: "chen", label: "Chen", src: "/stitch/avatar-chen.svg" },
+  { id: "jason", label: "Jason", src: "/stitch/avatar-jason.svg" },
+  { id: "zhou", label: "Zhou", src: "/stitch/avatar-zhou.svg" },
+]
+
 const formData = ref({
   email: "",
   password: "",
@@ -46,6 +54,7 @@ const formData = ref({
   avatarFile: null as File | null,
   avatarPreview: "",
   avatarDataUrl: "",
+  avatarPreset: "",
 })
 
 const isUsernameValid = computed(() => formData.value.username.trim().length >= 3)
@@ -69,19 +78,24 @@ const triggerFileInputClick = () => {
   fileInput.value?.click()
 }
 
+const revokeUploadedAvatarPreview = () => {
+  if (formData.value.avatarPreview.startsWith("blob:")) {
+    URL.revokeObjectURL(formData.value.avatarPreview)
+  }
+}
+
 const handleAvatarChange = (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
 
   if (!file) return
 
-  if (formData.value.avatarPreview) {
-    URL.revokeObjectURL(formData.value.avatarPreview)
-  }
+  revokeUploadedAvatarPreview()
 
   formData.value.avatarFile = file
   formData.value.avatarPreview = URL.createObjectURL(file)
   formData.value.avatarDataUrl = ""
+  formData.value.avatarPreset = ""
   void createAvatarDataUrl(file).then((dataUrl) => {
     if (formData.value.avatarFile === file) {
       formData.value.avatarDataUrl = dataUrl
@@ -125,6 +139,18 @@ const createAvatarDataUrl = (file: File) =>
 
     image.src = url
   })
+
+const selectPresetAvatar = (src: string) => {
+  revokeUploadedAvatarPreview()
+  formData.value.avatarFile = null
+  formData.value.avatarPreview = src
+  formData.value.avatarDataUrl = ""
+  formData.value.avatarPreset = src
+
+  if (fileInput.value) {
+    fileInput.value.value = ""
+  }
+}
 
 const handleStep1 = () => {
   if (!formData.value.email || !formData.value.password || !formData.value.confirmPassword) {
@@ -179,8 +205,10 @@ const handleRegistration = async () => {
 
     const bio = formData.value.bio.trim()
     const avatarDataUrl =
+      formData.value.avatarPreset ||
       formData.value.avatarDataUrl ||
       (formData.value.avatarFile ? await createAvatarDataUrl(formData.value.avatarFile) : "")
+    const avatarName = formData.value.avatarFile?.name || formData.value.avatarPreset.split("/").pop() || undefined
 
     const user = await authClient.register({
       email: formData.value.email.trim(),
@@ -188,7 +216,7 @@ const handleRegistration = async () => {
       username: formData.value.username.trim(),
       job: formData.value.job.trim(),
       bio: bio || undefined,
-      avatar_name: formData.value.avatarFile?.name,
+      avatar_name: avatarName,
     })
 
     if (avatarDataUrl) {
@@ -223,10 +251,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("click", handleWindowClick)
-
-  if (formData.value.avatarPreview) {
-    URL.revokeObjectURL(formData.value.avatarPreview)
-  }
+  revokeUploadedAvatarPreview()
 })
 </script>
 
@@ -360,6 +385,28 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <div class="preset-avatar-block">
+          <div class="preset-avatar-title">
+            <span>选择已有头像</span>
+            <small>也可以继续使用上方上传。</small>
+          </div>
+          <div class="preset-avatar-grid" role="radiogroup" aria-label="选择已有头像">
+            <button
+              v-for="avatar in presetAvatars"
+              :key="avatar.id"
+              type="button"
+              class="preset-avatar-option"
+              :class="{ 'is-selected': formData.avatarPreset === avatar.src }"
+              :aria-checked="formData.avatarPreset === avatar.src"
+              role="radio"
+              @click="selectPresetAvatar(avatar.src)"
+            >
+              <img :src="avatar.src" :alt="`${avatar.label} 头像`" />
+              <CheckCircle2 v-if="formData.avatarPreset === avatar.src" class="preset-avatar-check" />
+            </button>
+          </div>
+        </div>
+
         <div class="space-y-1">
           <AuthWaveInput
             v-model="formData.username"
@@ -462,6 +509,82 @@ input::-ms-clear {
   gap: 0.72rem;
 }
 
+.preset-avatar-block {
+  display: grid;
+  gap: 0.72rem;
+  margin-top: -0.8rem;
+}
+
+.preset-avatar-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(238, 230, 206, 0.72);
+}
+
+.preset-avatar-title span {
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.preset-avatar-title small {
+  color: rgba(226, 218, 194, 0.36);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.preset-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.preset-avatar-option {
+  position: relative;
+  display: grid;
+  aspect-ratio: 1;
+  min-width: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(226, 218, 194, 0.18);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.12), transparent 38%),
+    rgba(226, 218, 194, 0.035);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.preset-avatar-option:hover,
+.preset-avatar-option.is-selected {
+  border-color: rgba(155, 217, 255, 0.74);
+  box-shadow:
+    0 0 0 2px rgba(155, 217, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+}
+
+.preset-avatar-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preset-avatar-check {
+  position: absolute;
+  right: 0.1rem;
+  bottom: 0.1rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: #111;
+  color: #9bd9ff;
+}
+
 .identity-choice-title {
   display: inline-flex;
   align-items: center;
@@ -546,6 +669,12 @@ input::-ms-clear {
 @media (max-width: 420px) {
   .identity-options {
     grid-template-columns: 1fr;
+  }
+
+  .preset-avatar-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
 </style>
