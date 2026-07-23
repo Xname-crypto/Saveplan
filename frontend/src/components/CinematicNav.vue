@@ -24,6 +24,8 @@ const currentUser = ref<AuthUser | null>(getStoredAuthUser())
 const avatarLoadFailed = ref(false)
 const isUserMenuOpen = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
+const navRef = ref<HTMLElement | null>(null)
+const isMobileMenuOpen = ref(false)
 const isLoginPromptOpen = ref(false)
 
 const avatarSrc = computed(() => (avatarLoadFailed.value ? "" : getAuthAvatarSource(currentUser.value)))
@@ -63,38 +65,56 @@ const closeUserMenu = () => {
   isUserMenuOpen.value = false
 }
 
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
+  closeMobileMenu()
+}
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+  closeUserMenu()
 }
 
 const goToProfile = () => {
   closeUserMenu()
+  closeMobileMenu()
   void router.push("/profile")
 }
 
 const handleLogout = () => {
   closeUserMenu()
+  closeMobileMenu()
   authClient.logout()
   void router.push("/")
 }
 
 const handleDocumentClick = (event: MouseEvent) => {
-  if (!isUserMenuOpen.value) return
+  if (!isUserMenuOpen.value && !isMobileMenuOpen.value) return
 
   const target = event.target
   if (target instanceof Node && userMenuRef.value?.contains(target)) return
+  if (target instanceof Node && navRef.value?.contains(target)) return
 
   closeUserMenu()
+  closeMobileMenu()
 }
 
 const handleEscape = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     closeUserMenu()
+    closeMobileMenu()
   }
 }
 
 const handleNavLinkClick = (event: MouseEvent, link: (typeof links)[number]) => {
-  if (link.to !== "/profile" || currentUser.value) return
+  if (link.to !== "/profile" || currentUser.value) {
+    closeMobileMenu()
+    return
+  }
 
   event.preventDefault()
   event.stopPropagation()
@@ -103,6 +123,7 @@ const handleNavLinkClick = (event: MouseEvent, link: (typeof links)[number]) => 
   if (isLoginPromptOpen.value) return
 
   isLoginPromptOpen.value = true
+  closeMobileMenu()
   window.alert("请先登录后进入个人中心。")
   void router.push("/login?redirect=/profile")
   window.setTimeout(() => {
@@ -127,8 +148,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header class="cinema-nav">
-    <RouterLink class="cinema-nav__brand" to="/">
+  <header ref="navRef" :class="['cinema-nav', { 'is-mobile-open': isMobileMenuOpen }]">
+    <RouterLink class="cinema-nav__brand" to="/" @click="closeMobileMenu">
       <ShinyText
         text="Save Your Finals"
         :speed="1.85"
@@ -191,9 +212,38 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <RouterLink v-else class="cinema-nav__login" to="/login">登录 / 注册</RouterLink>
-      <button class="cinema-nav__menu" type="button" aria-label="打开菜单">
+      <button
+        class="cinema-nav__menu"
+        type="button"
+        :aria-label="isMobileMenuOpen ? '关闭菜单' : '打开菜单'"
+        :aria-expanded="isMobileMenuOpen"
+        aria-controls="cinema-mobile-menu"
+        @click.stop="toggleMobileMenu"
+      >
         <Menu :size="20" />
       </button>
     </div>
+
+    <nav
+      v-if="isMobileMenuOpen"
+      id="cinema-mobile-menu"
+      class="cinema-nav__mobile"
+      aria-label="移动端导航"
+    >
+      <RouterLink
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to"
+        @click="handleNavLinkClick($event, link)"
+      >
+        {{ link.label }}
+      </RouterLink>
+      <RouterLink v-if="!currentUser" class="cinema-nav__mobile-login" to="/login" @click="closeMobileMenu">
+        登录 / 注册
+      </RouterLink>
+      <button v-else type="button" class="cinema-nav__mobile-login" @click="handleLogout">
+        退出登录
+      </button>
+    </nav>
   </header>
 </template>
