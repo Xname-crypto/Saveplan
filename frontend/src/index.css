@@ -2134,7 +2134,8 @@
   gap: clamp(1.35rem, 2.1vw, 2.05rem);
 }
 
-.stitch-footer nav a {
+.stitch-footer nav a,
+.stitch-footer nav button {
   color: rgba(235, 228, 207, 0.84);
   font-size: 0.72rem;
   font-weight: 800;
@@ -2144,7 +2145,8 @@
   transition: color 180ms ease;
 }
 
-.stitch-footer nav a:hover {
+.stitch-footer nav a:hover,
+.stitch-footer nav button:hover {
   color: #f3ead0;
 }
 

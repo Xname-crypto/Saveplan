@@ -2,6 +2,7 @@
 import { ArrowLeft, X } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRouter } from '@/router';
+import LegalLinks from '@/components/LegalLinks.vue';
 
 const router = useRouter();
 const videoReady = ref(false);
@@ -223,11 +224,7 @@ watch(
 
     <footer class="auth-footer" aria-label="Legal links">
       <span>© 2026 题库导入助手. CINEMATIC PRECISION.</span>
-      <nav>
-        <a href="#">隐私政策</a>
-        <a href="#">服务条款</a>
-        <a href="#">帮助支持</a>
-      </nav>
+      <LegalLinks :include-feedback="false" support-label="帮助支持" />
     </footer>
   </div>
 </template>

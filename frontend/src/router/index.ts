@@ -7,6 +7,7 @@ import {
   type App as VueApp,
   type Component,
 } from "vue"
+import { getStoredAuthUser } from "@/services/authClient"
 
 type QueryValue = string | undefined
 
@@ -36,6 +37,7 @@ const route = reactive<RouteState>({
 })
 
 const activeComponent = shallowRef<Component | null>(null)
+const protectedRoutes = new Set(["/convert"])
 
 function parseQuery(search: string) {
   const params = new URLSearchParams(search)
@@ -50,6 +52,12 @@ function parseQuery(search: string) {
 
 function syncRoute() {
   const fallbackPath = routeLoaders[window.location.pathname] ? window.location.pathname : "/"
+
+  if (!canEnterRoute(fallbackPath)) {
+    redirectToLogin()
+    return
+  }
+
   route.path = fallbackPath
   route.fullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
   route.query = parseQuery(window.location.search)
@@ -65,10 +73,36 @@ async function loadRoute(path: string) {
 
 function normalizeTarget(to: string) {
   if (to.startsWith("http")) {
-    return new URL(to).pathname
+    const url = new URL(to)
+    return `${url.pathname}${url.search}${url.hash}`
   }
 
   return to || "/"
+}
+
+function getTargetPath(target: string) {
+  return new URL(target, window.location.origin).pathname
+}
+
+function getCurrentFullPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}` || "/"
+}
+
+function canEnterRoute(path: string) {
+  return !protectedRoutes.has(path) || !!getStoredAuthUser()
+}
+
+function redirectToLogin(from = getCurrentFullPath()) {
+  window.alert("请先登录后再使用转换功能。")
+  window.history.replaceState(
+    { from },
+    "",
+    `/login?redirect=${encodeURIComponent(from)}`,
+  )
+  route.path = "/login"
+  route.fullPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  route.query = parseQuery(window.location.search)
+  void loadRoute("/login")
 }
 
 export const router = {
@@ -82,7 +116,15 @@ export const router = {
 
   async push(to: string) {
     const target = normalizeTarget(to)
+    const targetPath = getTargetPath(target)
     const from = route.fullPath || `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+    if (!canEnterRoute(targetPath)) {
+      redirectToLogin(target)
+      await Promise.resolve()
+      return
+    }
+
     window.history.pushState({ from }, "", target)
     syncRoute()
     await Promise.resolve()

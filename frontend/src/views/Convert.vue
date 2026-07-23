@@ -20,9 +20,12 @@ import {
 } from "lucide-vue-next"
 import AppFooter from "@/components/AppFooter.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
+import { useRouter } from "@/router"
+import { authClient } from "@/services/authClient"
 import {
   conversionClient,
   getConversionErrorMessage,
+  isConversionAuthError,
   type CloudOcrStatus,
   type ConversionDetail,
   type ConversionAsset,
@@ -31,6 +34,7 @@ import {
   type Subject,
 } from "@/services/conversionClient"
 
+const router = useRouter()
 const subjects: Array<{ id: Subject; label: string; description: string }> = [
   { id: "politics", label: "政治", description: "适合纯文本题目，保留论述语义和解析。" },
   { id: "math", label: "数学", description: "适合公式、上下标和常见数学符号。" },
@@ -85,6 +89,7 @@ let filePickTimer: number | undefined
 let uploadStageTimer: number | undefined
 let copySuccessTimer: number | undefined
 let ocrPollingCancelled = false
+let authRedirectStarted = false
 
 const questions = computed(() => activeConversion.value?.questions ?? [])
 const assets = computed(() => activeConversion.value?.assets ?? [])
@@ -222,7 +227,20 @@ function revokeAssetPreviewUrls() {
   assetPreviewUrls.value = {}
 }
 
+function redirectToLogin(message: string) {
+  if (authRedirectStarted) return
+  authRedirectStarted = true
+  window.alert(message)
+  authClient.logout()
+  void router.push(`/login?redirect=${encodeURIComponent("/convert")}`)
+}
+
 function setError(error: unknown) {
+  if (isConversionAuthError(error)) {
+    redirectToLogin("登录状态已过期，请重新登录后再使用转换功能。")
+    return
+  }
+
   errorMessage.value = getConversionErrorMessage(error)
   statusMessage.value = ""
 }
