@@ -61,7 +61,7 @@ const selectedFile = ref<File | null>(null)
 const selectedSubject = ref<Subject>("politics")
 const selectedExportFormat = ref("kshuati")
 const includeAssetProcessing = ref(false)
-const pastedTitle = ref("粘贴文本")
+const pastedTitle = ref("粘贴试卷文本")
 const pastedText = ref("")
 const activeConversion = ref<ConversionDetail | null>(null)
 const historyItems = ref<ConversionSummary[]>([])
@@ -118,6 +118,8 @@ const subQuestionLinePattern = /^\s*[（(](\d+)[）)]\s*[.。、]?\s*(.*)$/
 const assetStatusLabel = computed(() =>
   includeAssetProcessing.value ? ` · ${assets.value.length} 个待处理素材` : "",
 )
+const canEnterConfig = computed(() => !!selectedFile.value)
+const canEnterReview = computed(() => !!activeConversion.value)
 
 function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
@@ -223,6 +225,40 @@ function validateSelectedFile(file: File | null) {
   return ""
 }
 
+function goToStep(step: 1 | 2 | 3) {
+  if (step === 1) {
+    currentStep.value = 1
+    return
+  }
+
+  if (step === 2 && !canEnterConfig.value) {
+    currentStep.value = 1
+    errorMessage.value = "请先在第 1 步选择文件，或切换到「粘贴文本」直接解析试卷内容。"
+    statusMessage.value = ""
+    return
+  }
+
+  if (step === 3 && !canEnterReview.value) {
+    errorMessage.value = "请先完成文件解析或粘贴文本解析，再进入人工校对。"
+    statusMessage.value = ""
+    return
+  }
+
+  errorMessage.value = ""
+  currentStep.value = step
+}
+
+function switchStepOnePanel(panel: "upload" | "paste" | "history") {
+  mobileStepOnePanel.value = panel
+  errorMessage.value = ""
+  statusMessage.value =
+    panel === "upload"
+      ? "请选择需要转换的 PDF、DOCX、DOC 或 TXT 文件。"
+      : panel === "paste"
+        ? "可以直接粘贴试卷文本或 OCR 识别结果。"
+        : "选择历史记录可以继续校对或导出。"
+}
+
 function revokeAssetPreviewUrls() {
   Object.values(assetPreviewUrls.value).forEach((url) => URL.revokeObjectURL(url))
   assetPreviewUrls.value = {}
@@ -314,6 +350,13 @@ async function loadConversionDetail(id: string) {
     setError(error)
   } finally {
     isLoadingDetail.value = false
+  }
+}
+
+async function openHistoryItem(id: string) {
+  await loadConversionDetail(id)
+  if (activeConversion.value?.id === id) {
+    goToStep(3)
   }
 }
 
@@ -440,7 +483,7 @@ async function createFromPastedText() {
 
   try {
     activeConversion.value = await conversionClient.createFromText(
-      pastedTitle.value.trim() || "粘贴文本",
+      pastedTitle.value.trim() || "粘贴试卷文本",
       pastedText.value,
       selectedSubject.value,
     )
@@ -1138,17 +1181,17 @@ onBeforeUnmount(() => {
       </header>
 
       <nav class="convert-steps" aria-label="转换步骤">
-        <button :class="{ 'is-active': currentStep === 1, 'is-done': activeConversion }" @click="currentStep = 1">
+        <button :class="{ 'is-active': currentStep === 1, 'is-done': selectedFile || activeConversion || pastedText.trim() }" @click="goToStep(1)">
           <span>1</span>
-          <strong>上传文档</strong>
-          <small>PDF / DOC / DOCX / TXT</small>
+          <strong>选择来源</strong>
+          <small>上传或粘贴</small>
         </button>
-        <button :class="{ 'is-active': currentStep === 2 }" @click="currentStep = 2">
+        <button :class="{ 'is-active': currentStep === 2 }" :disabled="!canEnterConfig" @click="goToStep(2)">
           <span>2</span>
           <strong>转换配置</strong>
           <small>格式与学科</small>
         </button>
-        <button :class="{ 'is-active': currentStep === 3 }" :disabled="!activeConversion" @click="currentStep = 3">
+        <button :class="{ 'is-active': currentStep === 3 }" :disabled="!canEnterReview" @click="goToStep(3)">
           <span>3</span>
           <strong>人工校对</strong>
           <small>修错后导出</small>
@@ -1166,23 +1209,26 @@ onBeforeUnmount(() => {
           <button
             type="button"
             :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
-            @click="mobileStepOnePanel = 'upload'"
+            @click="switchStepOnePanel('upload')"
           >
-            上传
+            <UploadCloud :size="16" />
+            上传文件
           </button>
           <button
             type="button"
             :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
-            @click="mobileStepOnePanel = 'paste'"
+            @click="switchStepOnePanel('paste')"
           >
-            粘贴
+            <Clipboard :size="16" />
+            粘贴文本
           </button>
           <button
             type="button"
             :class="{ 'is-active': mobileStepOnePanel === 'history' }"
-            @click="mobileStepOnePanel = 'history'"
+            @click="switchStepOnePanel('history')"
           >
-            历史
+            <History :size="16" />
+            历史记录
           </button>
         </div>
         <div class="step-card__main">
@@ -1222,7 +1268,7 @@ onBeforeUnmount(() => {
             aria-label="粘贴试卷文本"
           >
             <div>
-              <p class="settings-panel__title">粘贴文本</p>
+              <p class="settings-panel__title">粘贴试卷文本</p>
               <input v-model="pastedTitle" type="text" placeholder="任务名称，例如：政治专题一单选" />
               <textarea
                 v-model="pastedText"
@@ -1233,7 +1279,7 @@ onBeforeUnmount(() => {
             <button type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
               <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
               <FileText v-else :size="18" />
-              {{ isUploading ? "解析中" : "解析粘贴文本" }}
+              {{ isUploading ? "解析中" : "解析粘贴试卷文本" }}
             </button>
           </section>
         </div>
@@ -1254,9 +1300,9 @@ onBeforeUnmount(() => {
             :class="['history-item', { 'is-active': activeConversion?.id === item.id }]"
             role="button"
             tabindex="0"
-            @click="loadConversionDetail(item.id); currentStep = 3"
-            @keydown.enter.prevent="loadConversionDetail(item.id); currentStep = 3"
-            @keydown.space.prevent="loadConversionDetail(item.id); currentStep = 3"
+            @click="openHistoryItem(item.id)"
+            @keydown.enter.prevent="openHistoryItem(item.id)"
+            @keydown.space.prevent="openHistoryItem(item.id)"
           >
             <div class="history-item__main">
               <strong>{{ item.filename }}</strong>
@@ -1282,7 +1328,7 @@ onBeforeUnmount(() => {
           <div class="selected-file-strip">
             <FileText :size="17" />
             <span>{{ selectedFile?.name || "尚未选择文件" }}</span>
-            <button type="button" @click="currentStep = 1">重新选择</button>
+            <button type="button" @click="goToStep(1)">重新选择</button>
           </div>
           <div class="format-options format-options--grid">
             <label
@@ -1349,13 +1395,13 @@ onBeforeUnmount(() => {
         </div>
 
         <footer class="step-actions">
-          <button type="button" @click="currentStep = 1">返回上传</button>
+          <button type="button" @click="goToStep(1)">返回选择</button>
           <button class="primary-action" type="button" :disabled="isUploading || !selectedFile" @click="uploadSelectedFile">
             <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
             <UploadCloud v-else :size="18" />
             {{ isUploading ? "解析中" : selectedFile ? "上传并解析" : "请先选择文件" }}
           </button>
-          <button type="button" :disabled="!activeConversion" @click="currentStep = 3">进入校对</button>
+          <button type="button" :disabled="!canEnterReview" @click="goToStep(3)">进入校对</button>
         </footer>
       </section>
 
