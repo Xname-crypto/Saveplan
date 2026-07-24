@@ -667,6 +667,11 @@ input::-ms-clear {
 }
 
 @media (max-width: 760px) {
+  .preset-avatar-block {
+    gap: 0.58rem;
+    margin-top: -0.35rem;
+  }
+
   .preset-avatar-title {
     display: grid;
     gap: 0.25rem;
@@ -688,18 +693,31 @@ input::-ms-clear {
 
   .identity-options {
     gap: 0.42rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid rgba(226, 218, 194, 0.1);
+    border-radius: 999px;
+    padding: 0.28rem;
+    background: rgba(226, 218, 194, 0.035);
   }
 
   .identity-option {
-    min-height: 3rem;
+    min-height: 2.65rem;
+    border-radius: 999px;
     padding: 0 0.35rem;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .identity-choice-block.is-error .identity-options {
+    border-color: rgba(255, 199, 199, 0.42);
+    border-bottom: 1px solid rgba(255, 199, 199, 0.42);
+    padding: 0.28rem;
   }
 }
 
 @media (max-width: 420px) {
   .identity-options {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 </style>

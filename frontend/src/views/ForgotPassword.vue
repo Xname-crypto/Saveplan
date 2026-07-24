@@ -131,4 +131,18 @@ const handleReset = async () => {
   color: rgba(226, 218, 194, 0.38) !important;
   font-weight: 800;
 }
+
+@media (max-width: 760px) {
+  .forgot-form {
+    gap: 0.9rem;
+  }
+
+  .forgot-submit-button {
+    margin-top: 0.15rem !important;
+  }
+
+  .forgot-login-row {
+    margin-top: 0.45rem !important;
+  }
+}
 </style>

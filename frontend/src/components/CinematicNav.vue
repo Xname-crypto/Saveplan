@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
-import { LogOut, Menu, UserRound } from "lucide-vue-next"
+import { BadgeDollarSign, FileText, Home, LogIn, LogOut, Menu, UserRound } from "lucide-vue-next"
 import ShinyText from "@/components/ShinyText.vue"
 import { useRouter } from "@/router"
 import {
@@ -13,10 +13,10 @@ import {
 } from "@/services/authClient"
 
 const links = [
-  { label: "首页", to: "/" },
-  { label: "转换", to: "/convert" },
-  { label: "价格", to: "/pricing" },
-  { label: "个人中心", to: "/profile" },
+  { label: "首页", to: "/", icon: Home, hint: "返回主视觉" },
+  { label: "转换", to: "/convert", icon: FileText, hint: "进入工作台" },
+  { label: "价格", to: "/pricing", icon: BadgeDollarSign, hint: "查看套餐" },
+  { label: "个人中心", to: "/profile", icon: UserRound, hint: "资料与记录" },
 ]
 
 const router = useRouter()
@@ -230,19 +230,35 @@ onBeforeUnmount(() => {
       class="cinema-nav__mobile"
       aria-label="移动端导航"
     >
+      <div class="cinema-nav__mobile-head">
+        <span>快速导航</span>
+        <small>{{ currentUser ? avatarLabel : "未登录" }}</small>
+      </div>
       <RouterLink
         v-for="link in links"
         :key="link.to"
         :to="link.to"
         @click="handleNavLinkClick($event, link)"
       >
-        {{ link.label }}
+        <component :is="link.icon" :size="18" />
+        <span>
+          <strong>{{ link.label }}</strong>
+          <small>{{ link.hint }}</small>
+        </span>
       </RouterLink>
       <RouterLink v-if="!currentUser" class="cinema-nav__mobile-login" to="/login" @click="closeMobileMenu">
-        登录 / 注册
+        <LogIn :size="18" />
+        <span>
+          <strong>登录 / 注册</strong>
+          <small>同步你的题库</small>
+        </span>
       </RouterLink>
       <button v-else type="button" class="cinema-nav__mobile-login" @click="handleLogout">
-        退出登录
+        <LogOut :size="18" />
+        <span>
+          <strong>退出登录</strong>
+          <small>结束当前会话</small>
+        </span>
       </button>
     </nav>
   </header>
