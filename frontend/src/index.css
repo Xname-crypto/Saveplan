@@ -1245,22 +1245,21 @@
 
 .mobile-convert-switcher {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 43rem);
-  gap: 0.45rem;
-  margin: 0.05rem 0 1rem;
+  align-content: start;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .mobile-convert-switcher button {
   display: grid;
-  min-height: 2.85rem;
+  min-height: 4.15rem;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.55rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  padding: 0.38rem 0.68rem;
-  background: transparent;
+  gap: 0.7rem;
+  border: 1px solid rgba(235, 228, 207, 0.08);
+  border-radius: 0.82rem;
+  padding: 0.7rem 0.78rem;
+  background: rgba(235, 228, 207, 0.03);
   color: rgba(235, 228, 207, 0.62);
   cursor: pointer;
   text-align: left;
@@ -1273,8 +1272,8 @@
 
 .mobile-convert-switcher button:hover,
 .mobile-convert-switcher button.is-active {
-  border-color: rgba(214, 197, 141, 0.32);
-  background: rgba(214, 197, 141, 0.11);
+  border-color: rgba(214, 197, 141, 0.42);
+  background: rgba(214, 197, 141, 0.12);
   color: #f1ead5;
 }
 
@@ -2363,6 +2362,17 @@
   box-shadow: none;
 }
 
+.source-workspace {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.24fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.source-workspace--paste {
+  grid-template-columns: minmax(12rem, 0.2fr) minmax(0, 1fr);
+}
+
 .step-card--upload .step-card__main {
   display: block;
 }
@@ -2473,6 +2483,10 @@
 
 .conversion-history--step {
   max-height: 28rem;
+}
+
+.source-workspace > .conversion-history--step {
+  min-height: 18rem;
 }
 
 .review-workspace {
@@ -2850,7 +2864,7 @@
 }
 
 .paste-panel--guided {
-  grid-template-columns: minmax(15.5rem, 0.38fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
   align-items: stretch;
   min-height: 27rem;
   padding: 0;
@@ -2860,10 +2874,10 @@
 .paste-format-guide {
   display: grid;
   align-content: start;
-  gap: 0.7rem;
-  border-right: 1px solid rgba(235, 228, 207, 0.08);
-  padding: 1rem;
-  background: rgba(235, 228, 207, 0.025);
+  gap: 0.78rem;
+  border-left: 1px solid rgba(235, 228, 207, 0.08);
+  padding: 1rem 1rem 1rem 1.05rem;
+  background: rgba(235, 228, 207, 0.018);
 }
 
 .paste-format-guide header {
@@ -2884,11 +2898,11 @@
 
 .paste-format-card {
   display: grid;
-  gap: 0.24rem;
+  gap: 0.55rem;
   border: 1px solid rgba(235, 228, 207, 0.1);
-  border-radius: 0.7rem;
-  padding: 0.72rem 0.78rem;
-  background: rgba(10, 10, 9, 0.42);
+  border-radius: 0.45rem;
+  padding: 0.75rem 0.82rem;
+  background: rgba(235, 228, 207, 0.035);
   color: rgba(235, 228, 207, 0.64);
   cursor: pointer;
   text-align: left;
@@ -2896,9 +2910,17 @@
 
 .paste-format-card:hover,
 .paste-format-card.is-selected {
-  border-color: rgba(214, 197, 141, 0.5);
-  background: rgba(214, 197, 141, 0.11);
+  border-color: rgba(72, 203, 136, 0.8);
+  background: rgba(72, 203, 136, 0.065);
   color: #f1ead5;
+}
+
+.paste-format-card:not(.is-selected) {
+  opacity: 0.54;
+}
+
+.paste-format-card:not(.is-selected):hover {
+  opacity: 0.86;
 }
 
 .paste-format-card strong {
@@ -2907,41 +2929,28 @@
   letter-spacing: 0;
 }
 
-.paste-format-card small {
-  color: rgba(235, 228, 207, 0.48);
-  font-size: 0.7rem;
+.paste-format-card pre {
+  max-height: 7.75rem;
+  overflow: hidden;
+  margin: 0;
+  color: rgba(241, 234, 213, 0.78);
+  font-family: var(--font-body);
+  font-size: 0.73rem;
   font-weight: 700;
   line-height: 1.45;
+  white-space: pre-wrap;
 }
 
-.paste-format-preview {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  border: 1px solid rgba(214, 197, 141, 0.18);
-  border-radius: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(214, 197, 141, 0.065);
+.paste-format-card:not(.is-selected) pre {
+  color: rgba(235, 228, 207, 0.58);
 }
 
-.paste-format-preview span,
 .paste-editor label > span {
   color: rgba(235, 228, 207, 0.5);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.paste-format-preview pre {
-  overflow: auto;
-  margin: 0;
-  color: rgba(241, 234, 213, 0.78);
-  font-family: var(--font-body);
-  font-size: 0.74rem;
-  font-weight: 700;
-  line-height: 1.6;
-  white-space: pre-wrap;
 }
 
 .paste-editor {
@@ -5921,6 +5930,11 @@
     display: block;
   }
 
+  .source-workspace,
+  .source-workspace--paste {
+    grid-template-columns: 1fr;
+  }
+
   .mobile-convert-switcher {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6006,7 +6020,7 @@
 
   .paste-format-guide {
     grid-template-columns: repeat(3, minmax(11.5rem, 72vw));
-    border-right: 0;
+    border-left: 0;
     border-bottom: 1px solid rgba(235, 228, 207, 0.08);
     overflow-x: auto;
     padding: 0.85rem;
@@ -6018,12 +6032,11 @@
     display: none;
   }
 
-  .paste-format-guide header,
-  .paste-format-preview {
+  .paste-format-guide header {
     grid-column: 1 / -1;
   }
 
-  .paste-format-preview pre {
+  .paste-format-card pre {
     max-height: 7rem;
   }
 

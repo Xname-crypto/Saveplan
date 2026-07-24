@@ -1246,174 +1246,173 @@ onBeforeUnmount(() => {
       </section>
 
       <section v-show="currentStep === 1" class="step-card step-card--upload stitch-reveal">
-        <div class="mobile-convert-switcher" aria-label="转换输入方式">
-          <button
-            type="button"
-            :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
-            @click="switchStepOnePanel('upload')"
-          >
-            <span class="source-tab__icon"><UploadCloud :size="17" /></span>
-            <span>
-              <strong>上传文件</strong>
-              <small>PDF / Word / TXT</small>
-            </span>
-          </button>
-          <button
-            type="button"
-            :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
-            @click="switchStepOnePanel('paste')"
-          >
-            <span class="source-tab__icon"><Clipboard :size="17" /></span>
-            <span>
-              <strong>粘贴试卷文本</strong>
-              <small>按示例整理导入</small>
-            </span>
-          </button>
-          <button
-            type="button"
-            :class="{ 'is-active': mobileStepOnePanel === 'history' }"
-            @click="switchStepOnePanel('history')"
-          >
-            <span class="source-tab__icon"><History :size="17" /></span>
-            <span>
-              <strong>历史记录</strong>
-              <small>继续校对旧任务</small>
-            </span>
-          </button>
-        </div>
-        <div v-show="mobileStepOnePanel === 'upload'" class="step-card__main step-card__main--source">
-          <label
-            class="upload-panel upload-panel--step"
-            aria-label="上传试卷或题库文档"
-          >
-            <input
-              class="sr-only"
-              type="file"
-              accept=".pdf,.docx,.txt,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/msword"
-              @change="handleFileChange"
-            />
-            <div class="upload-panel__inner">
-              <UploadCloud :size="52" />
-              <h2>{{ uploadLabel }}</h2>
-              <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
-              <span>浏览文件</span>
-            </div>
-            <div v-if="filePickState === 'loading' || filePickState === 'success'" class="upload-success">
-              <div :class="['upload-success__mark', { 'is-loading': filePickState === 'loading' }]">
-                <Loader2 v-if="filePickState === 'loading'" class="spin-icon" :size="54" />
-                <CheckCircle2 v-else :size="70" />
-              </div>
-              <strong>{{ filePickState === "loading" ? "正在读取文件" : "文件已选择" }}</strong>
-              <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "即将进入转换配置" }}</small>
-            </div>
-            <div v-if="isUploading" class="upload-panel__progress">
-              <i />
-              <strong>{{ uploadStage || "准备上传" }}</strong>
-              <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
-            </div>
-          </label>
-        </div>
-
-        <section
-          v-show="mobileStepOnePanel === 'paste'"
-          class="paste-panel paste-panel--step paste-panel--guided"
-          aria-label="粘贴试卷文本"
-        >
-          <aside class="paste-format-guide" aria-label="粘贴格式示例">
-            <header>
-              <p class="settings-panel__title">匹配格式</p>
-              <span>选择左侧格式后，右侧会按该格式提示你粘贴。</span>
-            </header>
+        <div :class="['source-workspace', { 'source-workspace--paste': mobileStepOnePanel === 'paste' }]">
+          <aside class="mobile-convert-switcher" aria-label="转换输入方式">
             <button
-              v-for="sample in pasteFormatSamples"
-              :key="sample.id"
               type="button"
-              :class="['paste-format-card', { 'is-selected': selectedPasteFormatId === sample.id }]"
-              @click="selectPasteFormat(sample.id)"
+              :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
+              @click="switchStepOnePanel('upload')"
             >
-              <strong>{{ sample.label }}</strong>
-              <small>{{ sample.description }}</small>
+              <span class="source-tab__icon"><UploadCloud :size="17" /></span>
+              <span>
+                <strong>上传文件</strong>
+                <small>PDF / Word / TXT</small>
+              </span>
             </button>
-            <div class="paste-format-preview">
-              <span>转换后预览</span>
-              <pre>{{ selectedPasteFormat.normalizedText }}</pre>
-            </div>
+            <button
+              type="button"
+              :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
+              @click="switchStepOnePanel('paste')"
+            >
+              <span class="source-tab__icon"><Clipboard :size="17" /></span>
+              <span>
+                <strong>粘贴试卷文本</strong>
+                <small>按示例整理导入</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              :class="{ 'is-active': mobileStepOnePanel === 'history' }"
+              @click="switchStepOnePanel('history')"
+            >
+              <span class="source-tab__icon"><History :size="17" /></span>
+              <span>
+                <strong>历史记录</strong>
+                <small>继续校对旧任务</small>
+              </span>
+            </button>
           </aside>
 
-          <div class="paste-editor">
-            <div class="paste-editor__top">
-              <label>
-                <span>任务名称</span>
-                <input v-model="pastedTitle" type="text" placeholder="例如：政治专题一单选" />
-              </label>
-              <label>
-                <span>学科规则</span>
-                <select v-model="selectedSubject" aria-label="粘贴文本学科规则">
-                  <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
-                    {{ subject.label }}
-                  </option>
-                </select>
-              </label>
-            </div>
-            <label class="paste-editor__body">
-              <span>{{ selectedPasteFormat.label }}</span>
-              <textarea
-                v-model="pastedText"
-                rows="14"
-                :placeholder="selectedPasteFormat.placeholder"
-              />
-            </label>
-            <footer class="paste-editor__actions">
-              <button class="paste-sample-button" type="button" @click="fillPasteSample">
-                <Eye :size="17" />
-                填入示例
-              </button>
-              <button class="paste-panel__action" type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
-                <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
-                <FileText v-else :size="18" />
-                {{ isUploading ? "解析中" : "解析粘贴试卷文本" }}
-              </button>
-            </footer>
-          </div>
-        </section>
-
-        <aside
-          v-show="mobileStepOnePanel === 'history'"
-          class="conversion-history conversion-history--step"
-        >
-          <header>
-            <History :size="18" />
-            <span>转换历史</span>
-          </header>
-          <div v-if="isLoadingHistory" class="conversion-empty">正在读取历史...</div>
-          <div v-else-if="!historyItems.length" class="conversion-empty">暂无转换记录</div>
-          <article
-            v-for="item in historyItems"
-            v-else
-            :key="item.id"
-            :class="['history-item', { 'is-active': activeConversion?.id === item.id }]"
-            role="button"
-            tabindex="0"
-            @click="openHistoryItem(item.id)"
-            @keydown.enter.prevent="openHistoryItem(item.id)"
-            @keydown.space.prevent="openHistoryItem(item.id)"
-          >
-            <div class="history-item__main">
-              <strong>{{ item.filename }}</strong>
-              <span>{{ item.question_count }} 题 · {{ item.subject }} · {{ item.issue_count }} 个提示</span>
-            </div>
-            <button
-              class="history-item__delete"
-              type="button"
-              :disabled="deletingHistoryId === item.id"
-              aria-label="删除转换历史"
-              @click.stop="deleteHistoryItem(item)"
+          <div v-show="mobileStepOnePanel === 'upload'" class="step-card__main step-card__main--source">
+            <label
+              class="upload-panel upload-panel--step"
+              aria-label="上传试卷或题库文档"
             >
-              <Loader2 v-if="deletingHistoryId === item.id" class="spin-icon" :size="15" />
-              <Trash2 v-else :size="15" />
-            </button>
-          </article>
-        </aside>
+              <input
+                class="sr-only"
+                type="file"
+                accept=".pdf,.docx,.txt,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/msword"
+                @change="handleFileChange"
+              />
+              <div class="upload-panel__inner">
+                <UploadCloud :size="52" />
+                <h2>{{ uploadLabel }}</h2>
+                <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
+                <span>浏览文件</span>
+              </div>
+              <div v-if="filePickState === 'loading' || filePickState === 'success'" class="upload-success">
+                <div :class="['upload-success__mark', { 'is-loading': filePickState === 'loading' }]">
+                  <Loader2 v-if="filePickState === 'loading'" class="spin-icon" :size="54" />
+                  <CheckCircle2 v-else :size="70" />
+                </div>
+                <strong>{{ filePickState === "loading" ? "正在读取文件" : "文件已选择" }}</strong>
+                <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "即将进入转换配置" }}</small>
+              </div>
+              <div v-if="isUploading" class="upload-panel__progress">
+                <i />
+                <strong>{{ uploadStage || "准备上传" }}</strong>
+                <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
+              </div>
+            </label>
+          </div>
+
+          <section
+            v-show="mobileStepOnePanel === 'paste'"
+            class="paste-panel paste-panel--step paste-panel--guided"
+            aria-label="粘贴试卷文本"
+          >
+            <div class="paste-editor">
+              <div class="paste-editor__top">
+                <label>
+                  <span>任务名称</span>
+                  <input v-model="pastedTitle" type="text" placeholder="例如：政治专题一单选" />
+                </label>
+                <label>
+                  <span>学科规则</span>
+                  <select v-model="selectedSubject" aria-label="粘贴文本学科规则">
+                    <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
+                      {{ subject.label }}
+                    </option>
+                  </select>
+                </label>
+              </div>
+              <label class="paste-editor__body">
+                <span>{{ selectedPasteFormat.label }}</span>
+                <textarea
+                  v-model="pastedText"
+                  rows="14"
+                  :placeholder="selectedPasteFormat.placeholder"
+                />
+              </label>
+              <footer class="paste-editor__actions">
+                <button class="paste-sample-button" type="button" @click="fillPasteSample">
+                  <Eye :size="17" />
+                  填入示例
+                </button>
+                <button class="paste-panel__action" type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
+                  <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
+                  <FileText v-else :size="18" />
+                  {{ isUploading ? "解析中" : "解析粘贴试卷文本" }}
+                </button>
+              </footer>
+            </div>
+
+            <aside class="paste-format-guide" aria-label="粘贴格式示例">
+              <header>
+                <p class="settings-panel__title">匹配格式</p>
+                <span>点击预览卡切换固定格式。</span>
+              </header>
+              <button
+                v-for="sample in pasteFormatSamples"
+                :key="sample.id"
+                type="button"
+                :class="['paste-format-card', { 'is-selected': selectedPasteFormatId === sample.id }]"
+                @click="selectPasteFormat(sample.id)"
+              >
+                <strong>{{ sample.label }}</strong>
+                <pre>{{ sample.rawText }}</pre>
+              </button>
+            </aside>
+          </section>
+
+          <aside
+            v-show="mobileStepOnePanel === 'history'"
+            class="conversion-history conversion-history--step"
+          >
+            <header>
+              <History :size="18" />
+              <span>转换历史</span>
+            </header>
+            <div v-if="isLoadingHistory" class="conversion-empty">正在读取历史...</div>
+            <div v-else-if="!historyItems.length" class="conversion-empty">暂无转换记录</div>
+            <article
+              v-for="item in historyItems"
+              v-else
+              :key="item.id"
+              :class="['history-item', { 'is-active': activeConversion?.id === item.id }]"
+              role="button"
+              tabindex="0"
+              @click="openHistoryItem(item.id)"
+              @keydown.enter.prevent="openHistoryItem(item.id)"
+              @keydown.space.prevent="openHistoryItem(item.id)"
+            >
+              <div class="history-item__main">
+                <strong>{{ item.filename }}</strong>
+                <span>{{ item.question_count }} 题 · {{ item.subject }} · {{ item.issue_count }} 个提示</span>
+              </div>
+              <button
+                class="history-item__delete"
+                type="button"
+                :disabled="deletingHistoryId === item.id"
+                aria-label="删除转换历史"
+                @click.stop="deleteHistoryItem(item)"
+              >
+                <Loader2 v-if="deletingHistoryId === item.id" class="spin-icon" :size="15" />
+                <Trash2 v-else :size="15" />
+              </button>
+            </article>
+          </aside>
+        </div>
       </section>
 
       <section v-show="currentStep === 2" class="step-card step-card--config stitch-reveal">
