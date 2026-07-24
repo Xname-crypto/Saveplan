@@ -57,12 +57,40 @@ const exportFormats = [
   },
 ]
 
+const pasteFormatSamples = [
+  {
+    id: "single-choice",
+    label: "标准单选题",
+    description: "题干、A-D 选项、答案、解析分行粘贴。",
+    placeholder: "适合从 Word、PDF 或 OCR 结果里复制出的普通选择题。",
+    rawText: "1.通常人们在信尾写上“此致敬礼”，这个“此”是指（ ）\nA.信的内容\nB.写信人的谦称\nC.代指后面的敬语\nD.礼貌用语\n答案：A\n解析：这里的“此”是对全信内容的概括。",
+    normalizedText: "第 1 题\n题干：通常人们在信尾写上“此致敬礼”，这个“此”是指？\n选项：A / B / C / D\n答案：A\n解析：保留在校对区，可继续编辑。",
+  },
+  {
+    id: "answer-sheet",
+    label: "答案集中在末尾",
+    description: "题目先连续粘贴，答案和解析放在最后。",
+    placeholder: "适合试卷正文和答案解析分开的材料。",
+    rawText: "1.下列成语使用正确的一项是（ ）\nA.别出心裁\nB.首当其冲\nC.不刊之论\nD.万人空巷\n2.下列句子没有语病的一项是（ ）\nA.通过练习，使他进步很快。\nB.我们讨论并通过了方案。\n答案：1.A 2.B\n解析：1.A 符合语境；2.B 结构完整。",
+    normalizedText: "系统会尝试把末尾答案匹配回题号。\n第 1 题 -> 答案 A\n第 2 题 -> 答案 B\n解析会进入对应题目的解析栏。",
+  },
+  {
+    id: "ocr-cleanup",
+    label: "OCR 待整理文本",
+    description: "允许有空行、噪声字符，解析后再人工校对。",
+    placeholder: "适合扫描件 OCR 后复制出的文本，先导入再修正。",
+    rawText: "1、我国古代四大发明不包括（ ）\nA 造纸术\nB 印刷术\nC 指南针\nD 蒸汽机\n答案 D\n解析 蒸汽机不是我国古代四大发明。",
+    normalizedText: "第 1 题\n自动识别题号、选项和答案\n缺失或不确定内容会在人工校对里提示。",
+  },
+]
+
 const selectedFile = ref<File | null>(null)
 const selectedSubject = ref<Subject>("politics")
 const selectedExportFormat = ref("kshuati")
 const includeAssetProcessing = ref(false)
 const pastedTitle = ref("粘贴试卷文本")
 const pastedText = ref("")
+const selectedPasteFormatId = ref(pasteFormatSamples[0].id)
 const activeConversion = ref<ConversionDetail | null>(null)
 const historyItems = ref<ConversionSummary[]>([])
 const exportText = ref("")
@@ -120,6 +148,9 @@ const assetStatusLabel = computed(() =>
 )
 const canEnterConfig = computed(() => !!selectedFile.value)
 const canEnterReview = computed(() => !!activeConversion.value)
+const selectedPasteFormat = computed(
+  () => pasteFormatSamples.find((sample) => sample.id === selectedPasteFormatId.value) ?? pasteFormatSamples[0],
+)
 
 function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
@@ -250,6 +281,21 @@ function goToStep(step: 1 | 2 | 3) {
 
 function switchStepOnePanel(panel: "upload" | "paste" | "history") {
   mobileStepOnePanel.value = panel
+  errorMessage.value = ""
+  statusMessage.value = ""
+}
+
+function selectPasteFormat(id: string) {
+  selectedPasteFormatId.value = id
+  errorMessage.value = ""
+  statusMessage.value = ""
+}
+
+function fillPasteSample() {
+  pastedText.value = selectedPasteFormat.value.rawText
+  if (!pastedTitle.value.trim() || pastedTitle.value === "粘贴试卷文本") {
+    pastedTitle.value = `${selectedPasteFormat.value.label}示例`
+  }
   errorMessage.value = ""
   statusMessage.value = ""
 }
@@ -1206,29 +1252,38 @@ onBeforeUnmount(() => {
             :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
             @click="switchStepOnePanel('upload')"
           >
-            <UploadCloud :size="16" />
-            上传文件
+            <span class="source-tab__icon"><UploadCloud :size="17" /></span>
+            <span>
+              <strong>上传文件</strong>
+              <small>PDF / Word / TXT</small>
+            </span>
           </button>
           <button
             type="button"
             :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
             @click="switchStepOnePanel('paste')"
           >
-            <Clipboard :size="16" />
-            粘贴文本
+            <span class="source-tab__icon"><Clipboard :size="17" /></span>
+            <span>
+              <strong>粘贴试卷文本</strong>
+              <small>按示例整理导入</small>
+            </span>
           </button>
           <button
             type="button"
             :class="{ 'is-active': mobileStepOnePanel === 'history' }"
             @click="switchStepOnePanel('history')"
           >
-            <History :size="16" />
-            历史记录
+            <span class="source-tab__icon"><History :size="17" /></span>
+            <span>
+              <strong>历史记录</strong>
+              <small>继续校对旧任务</small>
+            </span>
           </button>
         </div>
-        <div class="step-card__main">
+        <div v-show="mobileStepOnePanel === 'upload'" class="step-card__main step-card__main--source">
           <label
-            :class="['upload-panel upload-panel--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'upload' }]"
+            class="upload-panel upload-panel--step"
             aria-label="上传试卷或题库文档"
           >
             <input
@@ -1257,30 +1312,74 @@ onBeforeUnmount(() => {
               <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
             </div>
           </label>
-
-          <section
-            :class="['paste-panel paste-panel--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'paste' }]"
-            aria-label="粘贴试卷文本"
-          >
-            <div>
-              <p class="settings-panel__title">粘贴试卷文本</p>
-              <input v-model="pastedTitle" type="text" placeholder="任务名称，例如：政治专题一单选" />
-              <textarea
-                v-model="pastedText"
-                rows="8"
-                placeholder="把 PDF / Word / OCR 识别出的题目文本粘贴到这里，也可以粘贴末尾的答案及解析。"
-              />
-            </div>
-            <button type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
-              <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
-              <FileText v-else :size="18" />
-              {{ isUploading ? "解析中" : "解析粘贴试卷文本" }}
-            </button>
-          </section>
         </div>
 
+        <section
+          v-show="mobileStepOnePanel === 'paste'"
+          class="paste-panel paste-panel--step paste-panel--guided"
+          aria-label="粘贴试卷文本"
+        >
+          <aside class="paste-format-guide" aria-label="粘贴格式示例">
+            <header>
+              <p class="settings-panel__title">匹配格式</p>
+              <span>选择左侧格式后，右侧会按该格式提示你粘贴。</span>
+            </header>
+            <button
+              v-for="sample in pasteFormatSamples"
+              :key="sample.id"
+              type="button"
+              :class="['paste-format-card', { 'is-selected': selectedPasteFormatId === sample.id }]"
+              @click="selectPasteFormat(sample.id)"
+            >
+              <strong>{{ sample.label }}</strong>
+              <small>{{ sample.description }}</small>
+            </button>
+            <div class="paste-format-preview">
+              <span>转换后预览</span>
+              <pre>{{ selectedPasteFormat.normalizedText }}</pre>
+            </div>
+          </aside>
+
+          <div class="paste-editor">
+            <div class="paste-editor__top">
+              <label>
+                <span>任务名称</span>
+                <input v-model="pastedTitle" type="text" placeholder="例如：政治专题一单选" />
+              </label>
+              <label>
+                <span>学科规则</span>
+                <select v-model="selectedSubject" aria-label="粘贴文本学科规则">
+                  <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
+                    {{ subject.label }}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <label class="paste-editor__body">
+              <span>{{ selectedPasteFormat.label }}</span>
+              <textarea
+                v-model="pastedText"
+                rows="14"
+                :placeholder="selectedPasteFormat.placeholder"
+              />
+            </label>
+            <footer class="paste-editor__actions">
+              <button class="paste-sample-button" type="button" @click="fillPasteSample">
+                <Eye :size="17" />
+                填入示例
+              </button>
+              <button class="paste-panel__action" type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
+                <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
+                <FileText v-else :size="18" />
+                {{ isUploading ? "解析中" : "解析粘贴试卷文本" }}
+              </button>
+            </footer>
+          </div>
+        </section>
+
         <aside
-          :class="['conversion-history conversion-history--step', { 'is-mobile-panel-hidden': mobileStepOnePanel !== 'history' }]"
+          v-show="mobileStepOnePanel === 'history'"
+          class="conversion-history conversion-history--step"
         >
           <header>
             <History :size="18" />
