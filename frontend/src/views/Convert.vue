@@ -251,12 +251,7 @@ function goToStep(step: 1 | 2 | 3) {
 function switchStepOnePanel(panel: "upload" | "paste" | "history") {
   mobileStepOnePanel.value = panel
   errorMessage.value = ""
-  statusMessage.value =
-    panel === "upload"
-      ? "请选择需要转换的 PDF、DOCX、DOC 或 TXT 文件。"
-      : panel === "paste"
-        ? "可以直接粘贴试卷文本或 OCR 识别结果。"
-        : "选择历史记录可以继续校对或导出。"
+  statusMessage.value = ""
 }
 
 function revokeAssetPreviewUrls() {
