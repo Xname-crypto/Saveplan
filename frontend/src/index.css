@@ -5581,43 +5581,30 @@
 
   .outcome-grid {
     display: grid;
-    grid-auto-columns: minmax(12.5rem, 58vw);
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    gap: 0.75rem;
-    overflow-x: auto;
-    overflow-y: visible;
-    margin-right: calc((100vw - 100%) * -0.5);
-    padding: 0.15rem 0.65rem 0.75rem 0;
-    scroll-padding-left: 0;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .outcome-grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  .outcome-grid > * {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+    overflow: visible;
+    margin-right: 0;
+    padding: 0;
   }
 
   .outcome-card,
   .outcome-card:first-child {
-    min-height: 10.5rem;
+    min-height: 8.9rem;
     grid-row: auto;
-    padding: 1.05rem;
+    padding: 0.78rem;
   }
 
   .outcome-card strong {
-    font-size: clamp(2.65rem, 13vw, 4.1rem);
+    font-size: clamp(2.05rem, 10.8vw, 3.25rem);
+    letter-spacing: -0.05em;
   }
 
   .outcome-card span {
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    line-height: 1.32;
+    word-break: keep-all;
   }
 
   .converter-shell {
@@ -6139,7 +6126,27 @@
   }
 
   .outcome-grid {
-    grid-auto-columns: minmax(11.25rem, 66vw);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .outcome-card,
+  .outcome-card:first-child {
+    min-height: 8.2rem;
+    padding: 0.62rem;
+  }
+
+  .outcome-card svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .outcome-card strong {
+    font-size: clamp(1.75rem, 10vw, 2.6rem);
+  }
+
+  .outcome-card span {
+    font-size: 0.58rem;
   }
 
   .outcome-copy h2 {
