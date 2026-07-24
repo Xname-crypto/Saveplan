@@ -5609,17 +5609,77 @@
 
   .pricing-card {
     border-radius: 0.85rem;
-    min-height: auto;
-    padding: 1.35rem;
+    min-height: min(25.5rem, calc(100svh - 14rem));
+    padding: 1.15rem;
   }
 
   .pricing-grid {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-auto-columns: minmax(17.5rem, 82vw);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    gap: 0.75rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    margin-right: calc((100vw - 100%) * -0.5);
+    padding: 0.1rem 0.65rem 0.9rem 0;
+    scroll-padding-left: 0;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pricing-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pricing-grid > * {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .pricing-card:hover,
   .pricing-card.is-selected {
     transform: none;
+  }
+
+  .pricing-card__badge {
+    top: 0.72rem;
+    right: 0.72rem;
+    border-radius: 999px;
+    padding: 0.28rem 0.62rem;
+  }
+
+  .pricing-card > p {
+    margin-bottom: 0.45rem;
+    font-size: 0.68rem;
+  }
+
+  .pricing-card h2 {
+    font-size: clamp(1.55rem, 7vw, 2.05rem);
+  }
+
+  .pricing-card__price {
+    margin: 1rem 0 0.9rem;
+  }
+
+  .pricing-card__price strong {
+    font-size: 2.35rem;
+  }
+
+  .pricing-card ul {
+    gap: 0.65rem;
+  }
+
+  .pricing-card li {
+    gap: 0.55rem;
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  .pricing-card button {
+    margin-top: 1.15rem;
+    width: 100%;
   }
 
   .pricing-faq {
