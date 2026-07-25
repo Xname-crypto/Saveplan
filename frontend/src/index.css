@@ -2910,9 +2910,18 @@
 
 .paste-format-card:hover,
 .paste-format-card.is-selected {
-  border-color: rgba(72, 203, 136, 0.8);
-  background: rgba(72, 203, 136, 0.065);
+  border-color: rgba(214, 197, 141, 0.58);
+  background:
+    linear-gradient(145deg, rgba(214, 197, 141, 0.16), rgba(214, 197, 141, 0.055)),
+    rgba(20, 19, 16, 0.82);
   color: #f1ead5;
+}
+
+.paste-format-card.is-selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(246, 232, 178, 0.08),
+    0 16px 34px rgba(0, 0, 0, 0.18);
 }
 
 .paste-format-card:not(.is-selected) {
