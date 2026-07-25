@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clipboard,
   Download,
-  Eye,
   FileText,
   History,
   Image,
@@ -279,15 +278,6 @@ function switchStepOnePanel(panel: "upload" | "paste" | "history") {
 
 function selectPasteFormat(id: string) {
   selectedPasteFormatId.value = id
-  errorMessage.value = ""
-  statusMessage.value = ""
-}
-
-function fillPasteSample() {
-  pastedText.value = selectedPasteFormat.value.rawText
-  if (!pastedTitle.value.trim() || pastedTitle.value === "粘贴试卷文本") {
-    pastedTitle.value = `${selectedPasteFormat.value.label}示例`
-  }
   errorMessage.value = ""
   statusMessage.value = ""
 }
@@ -1314,20 +1304,6 @@ onBeforeUnmount(() => {
             aria-label="粘贴试卷文本"
           >
             <div class="paste-editor">
-              <div class="paste-editor__top">
-                <label>
-                  <span>任务名称</span>
-                  <input v-model="pastedTitle" type="text" placeholder="例如：政治专题一单选" />
-                </label>
-                <label>
-                  <span>学科规则</span>
-                  <select v-model="selectedSubject" aria-label="粘贴文本学科规则">
-                    <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
-                      {{ subject.label }}
-                    </option>
-                  </select>
-                </label>
-              </div>
               <label class="paste-editor__body">
                 <span>{{ selectedPasteFormat.label }}</span>
                 <textarea
@@ -1337,10 +1313,6 @@ onBeforeUnmount(() => {
                 />
               </label>
               <footer class="paste-editor__actions">
-                <button class="paste-sample-button" type="button" @click="fillPasteSample">
-                  <Eye :size="17" />
-                  填入示例
-                </button>
                 <button class="paste-panel__action" type="button" :disabled="isUploading || !pastedText.trim()" @click="createFromPastedText">
                   <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
                   <FileText v-else :size="18" />
