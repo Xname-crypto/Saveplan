@@ -74,14 +74,6 @@ const pasteFormatSamples = [
     rawText: "1.下列成语使用正确的一项是（ ）\nA.别出心裁\nB.首当其冲\nC.不刊之论\nD.万人空巷\n2.下列句子没有语病的一项是（ ）\nA.通过练习，使他进步很快。\nB.我们讨论并通过了方案。\n答案：1.A 2.B\n解析：1.A 符合语境；2.B 结构完整。",
     normalizedText: "系统会尝试把末尾答案匹配回题号。\n第 1 题 -> 答案 A\n第 2 题 -> 答案 B\n解析会进入对应题目的解析栏。",
   },
-  {
-    id: "ocr-cleanup",
-    label: "OCR 待整理文本",
-    description: "允许有空行、噪声字符，解析后再人工校对。",
-    placeholder: "适合扫描件 OCR 后复制出的文本，先导入再修正。",
-    rawText: "1、我国古代四大发明不包括（ ）\nA 造纸术\nB 印刷术\nC 指南针\nD 蒸汽机\n答案 D\n解析 蒸汽机不是我国古代四大发明。",
-    normalizedText: "第 1 题\n自动识别题号、选项和答案\n缺失或不确定内容会在人工校对里提示。",
-  },
 ]
 
 const selectedFile = ref<File | null>(null)
