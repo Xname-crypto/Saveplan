@@ -2990,21 +2990,43 @@
 
 .paste-panel__action {
   display: inline-flex;
+  width: min(100%, 13.5rem);
   min-height: 2.65rem;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   border: 0;
   border-radius: 999px;
+  padding: 0 1.18rem;
   background: #d6c58d;
   color: #17150f;
   cursor: pointer;
+  font-size: 0.86rem;
   font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 14px 30px rgba(214, 197, 141, 0.18);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.paste-panel__action:hover:not(:disabled) {
+  background: #eee4bd;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 18px 38px rgba(214, 197, 141, 0.24);
+  transform: translateY(-1px);
 }
 
 .paste-panel__action:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+  box-shadow: none;
+  transform: none;
 }
 
 .settings-panel__title {
