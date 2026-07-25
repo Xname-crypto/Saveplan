@@ -1246,12 +1246,16 @@
 .mobile-convert-switcher {
   display: grid;
   align-content: start;
+  align-self: start;
   gap: 0.55rem;
+  width: 100%;
   min-width: 0;
+  grid-auto-rows: 4.15rem;
 }
 
 .mobile-convert-switcher button {
   display: grid;
+  height: 4.15rem;
   min-height: 4.15rem;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -2364,13 +2368,13 @@
 
 .source-workspace {
   display: grid;
-  grid-template-columns: minmax(12rem, 0.24fr) minmax(0, 1fr);
+  grid-template-columns: 13rem minmax(0, 1fr);
   align-items: stretch;
   gap: 1rem;
 }
 
 .source-workspace--paste {
-  grid-template-columns: minmax(12rem, 0.2fr) minmax(0, 1fr);
+  grid-template-columns: 13rem minmax(0, 1fr);
 }
 
 .step-card--upload .step-card__main {
@@ -5954,10 +5958,12 @@
     border-radius: 0;
     padding: 0;
     background: transparent;
+    grid-auto-rows: 2.75rem;
   }
 
   .mobile-convert-switcher button {
     display: grid;
+    height: 2.75rem;
     min-height: 2.75rem;
     grid-template-columns: 1fr;
     justify-items: center;
