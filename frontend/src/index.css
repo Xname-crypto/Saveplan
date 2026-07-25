@@ -4865,6 +4865,13 @@
   line-height: 1;
 }
 
+.profile-card aside span {
+  display: block;
+  color: rgba(235, 228, 207, 0.48);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .profile-card aside button {
   width: 100%;
   min-height: 2.35rem;
@@ -4894,6 +4901,14 @@
   font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 500;
+}
+
+.history-panel__title p {
+  max-width: 28rem;
+  margin: 0.35rem 0 0;
+  color: rgba(235, 228, 207, 0.42);
+  font-size: 0.82rem;
+  line-height: 1.62;
 }
 
 .history-tools {
@@ -4982,7 +4997,7 @@
 
 .material-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(9.6rem, auto) auto auto;
   align-items: center;
   gap: 0.9rem;
   padding: 0.9rem 1rem;
@@ -5019,15 +5034,55 @@
 }
 
 .material-row > span {
+  justify-self: start;
   padding: 0.32rem 0.66rem;
   background: rgba(214, 197, 141, 0.12);
   color: #d6c58d;
   font-size: 0.7rem;
+  white-space: nowrap;
 }
 
-.material-row > span.is-processing {
+.material-row > span.is-processing,
+.material-row__status.is-processing {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(235, 228, 207, 0.42);
+}
+
+.material-row__status.is-success {
+  background: rgba(214, 197, 141, 0.14);
+  color: #e8d99d;
+}
+
+.material-row__status.is-review {
+  background: rgba(235, 228, 207, 0.08);
+  color: #ebe4cf;
+}
+
+.material-row__status.is-attention {
+  background: rgba(243, 168, 120, 0.13);
+  color: #f3a878;
+}
+
+.material-row__credits {
+  display: grid;
+  gap: 0.28rem;
+  justify-items: end;
+  color: rgba(235, 228, 207, 0.44);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.material-row__credits span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.material-row__credits strong {
+  color: #d6c58d;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .material-row__actions {
@@ -5071,6 +5126,11 @@
 
 .history-empty span {
   font-size: 0.82rem;
+}
+
+.history-empty--error strong,
+.history-empty--error span {
+  color: #f3a878;
 }
 
 .profile-pagination {
@@ -6258,10 +6318,15 @@
     padding: 0.85rem;
   }
 
+  .material-row__credits,
   .material-row > span,
   .material-row__actions {
     grid-column: 2;
     justify-content: flex-start;
+  }
+
+  .material-row__credits {
+    justify-items: start;
   }
 
   .material-row__meta h3,

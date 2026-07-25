@@ -13,6 +13,7 @@ export interface AuthUser {
   interests: string[]
   avatar_name?: string
   avatar_url?: string
+  credits?: number
   created_at: string
 }
 
@@ -243,7 +244,13 @@ export const authClient = {
   },
 
   async me() {
-    return request<AuthUser>("/auth/me")
+    const user = await request<AuthUser>("/auth/me")
+    const avatarUrl = getStoredAvatarSource(user)
+    const hydratedUser = avatarUrl ? { ...user, avatar_url: avatarUrl } : user
+
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(hydratedUser))
+    emitAuthSessionChange(hydratedUser)
+    return hydratedUser
   },
 
   logout() {

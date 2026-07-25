@@ -38,6 +38,8 @@ export interface ConversionSummary {
   status: string
   question_count: number
   issue_count: number
+  credits_spent: number
+  credits_after: number
   created_at: string
   updated_at: string
 }
@@ -80,6 +82,8 @@ function normalizeConversionSummary(summary: ConversionSummary): ConversionSumma
     status: summary.status ?? "",
     question_count: summary.question_count ?? 0,
     issue_count: summary.issue_count ?? 0,
+    credits_spent: summary.credits_spent ?? 0,
+    credits_after: summary.credits_after ?? 0,
   }
 }
 

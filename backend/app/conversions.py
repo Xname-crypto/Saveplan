@@ -52,6 +52,7 @@ except ImportError:  # pragma: no cover - dependency is optional until OCR is en
 router = APIRouter(prefix="/api/conversions", tags=["conversions"])
 
 ALLOWED_SUFFIXES = {".pdf", ".docx", ".doc", ".txt"}
+CONVERSION_CREDIT_COST = 1
 PADDLE_OCR_JOB_URL = os.getenv("PADDLEOCR_JOB_URL", "https://paddleocr.aistudio-app.com/api/v2/ocr/jobs")
 PADDLE_OCR_MODEL = os.getenv("PADDLEOCR_MODEL", "PaddleOCR-VL-1.6")
 
@@ -96,6 +97,8 @@ class ConversionSummary(BaseModel):
     status: str
     question_count: int
     issue_count: int
+    credits_spent: int = 0
+    credits_after: int = 0
     created_at: str
     updated_at: str
 
@@ -217,6 +220,8 @@ def init_conversion_db() -> None:
                 ocr_extracted_pages INTEGER NOT NULL DEFAULT 0,
                 ocr_result_url TEXT,
                 ocr_error TEXT,
+                credits_spent INTEGER NOT NULL DEFAULT 0,
+                credits_after INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -244,6 +249,10 @@ def init_conversion_db() -> None:
             connection.execute("ALTER TABLE conversions ADD COLUMN ocr_result_url TEXT")
         if "ocr_error" not in columns:
             connection.execute("ALTER TABLE conversions ADD COLUMN ocr_error TEXT")
+        if "credits_spent" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN credits_spent INTEGER NOT NULL DEFAULT 0")
+        if "credits_after" not in columns:
+            connection.execute("ALTER TABLE conversions ADD COLUMN credits_after INTEGER NOT NULL DEFAULT 0")
 
 
 def row_to_summary(row: sqlite3.Row) -> ConversionSummary:
@@ -256,6 +265,8 @@ def row_to_summary(row: sqlite3.Row) -> ConversionSummary:
         status=row["status"],
         question_count=len(questions),
         issue_count=len(issues),
+        credits_spent=int(row["credits_spent"] or 0),
+        credits_after=int(row["credits_after"] or 0),
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
@@ -456,6 +467,26 @@ def with_preview_urls(conversion_id: str, assets: list[dict[str, object]]) -> li
             asset_copy["preview_url"] = None
         updated_assets.append(asset_copy)
     return updated_assets
+
+
+def charge_conversion_credits(connection: sqlite3.Connection, user_id: str) -> tuple[int, int]:
+    row = connection.execute("SELECT credits FROM users WHERE id = ?", (user_id,)).fetchone()
+    if row is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="登录状态已失效，请重新登录。")
+
+    credits_before = int(row["credits"] or 0)
+    if credits_before < CONVERSION_CREDIT_COST:
+        raise HTTPException(
+            status_code=402,
+            detail="积分不足，无法创建新的转换任务。",
+        )
+
+    credits_after = credits_before - CONVERSION_CREDIT_COST
+    connection.execute(
+        "UPDATE users SET credits = ? WHERE id = ?",
+        (credits_after, user_id),
+    )
+    return CONVERSION_CREDIT_COST, credits_after
 
 
 async def save_upload(file: UploadFile, user_id: str) -> Path:
@@ -788,13 +819,15 @@ def create_conversion_record(
     status_value = "needs_review" if question_payloads else "needs_attention"
 
     with get_connection() as connection:
+        credits_spent, credits_after = charge_conversion_credits(connection, user_id)
         connection.execute(
             """
             INSERT INTO conversions (
                 id, user_id, filename, stored_path, source_type, subject, raw_text, text_state,
-                status, questions_json, issues_json, assets_json, created_at, updated_at
+                status, questions_json, issues_json, assets_json, credits_spent, credits_after,
+                created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 conversion_id,
@@ -809,6 +842,8 @@ def create_conversion_record(
                 json.dumps(question_payloads, ensure_ascii=False),
                 json.dumps(issues, ensure_ascii=False),
                 json.dumps(with_preview_urls(conversion_id, asset_payloads), ensure_ascii=False),
+                credits_spent,
+                credits_after,
                 now,
                 now,
             ),
@@ -982,14 +1017,15 @@ def create_cloud_ocr_conversion_record(
         "已提交 PaddleOCR 云端识别，完成后会自动进入题目解析和人工校对。",
     ]
     with get_connection() as connection:
+        credits_spent, credits_after = charge_conversion_credits(connection, user_id)
         connection.execute(
             """
             INSERT INTO conversions (
                 id, user_id, filename, stored_path, source_type, subject, raw_text, text_state,
                 status, questions_json, issues_json, assets_json, ocr_provider, ocr_provider_job_id,
-                ocr_state, created_at, updated_at
+                ocr_state, credits_spent, credits_after, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 conversion_id,
@@ -1007,6 +1043,8 @@ def create_cloud_ocr_conversion_record(
                 "paddleocr-cloud",
                 provider_job_id,
                 "pending",
+                credits_spent,
+                credits_after,
                 now,
                 now,
             ),
