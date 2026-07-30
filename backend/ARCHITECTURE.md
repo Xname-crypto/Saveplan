@@ -91,6 +91,10 @@ GET  /api/auth/me
 
 `backend/app/auth.py` 只保留兼容入口，向旧转换模块继续暴露 `AuthUser`、`get_current_user` 和旧 SQLite `get_connection()`。转换模块完成迁移后，这个兼容层可以进一步瘦身。
 
+## 转换记录与积分
+
+转换记录保存到 SQLAlchemy `conversions` 表，积分流水保存到 `point_transactions` 表。普通用户每次创建文件转换、文本转换或云端 OCR 转换时，后端会按 `SAVEPLAN_CONVERSION_POINT_COST` 扣除积分，并把扣除后的余额写入积分流水。新注册用户的初始积分由 `SAVEPLAN_INITIAL_USER_POINTS` 控制。
+
 ## 数据库与迁移
 
 生产环境使用 PostgreSQL：

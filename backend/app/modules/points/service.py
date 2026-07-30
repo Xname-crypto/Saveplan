@@ -33,3 +33,24 @@ class PointService:
                 admin_id=admin_id,
             )
         )
+
+    def record_conversion_charge(
+        self,
+        *,
+        user_id: str,
+        amount: int,
+        balance_after: int,
+        reason: str,
+        conversion_id: str,
+    ) -> PointTransaction:
+        return self.crud.create(
+            PointTransaction(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                amount=amount,
+                balance_after=balance_after,
+                reason=reason,
+                source="conversion",
+                conversion_id=conversion_id,
+            )
+        )

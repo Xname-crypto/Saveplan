@@ -4,6 +4,7 @@
 
 ## 2026-07-31
 
+- 将转换记录切换到 SQLAlchemy/PostgreSQL 表，转换创建、历史列表、详情、校对保存、素材保存、删除和导出均接入新数据库，并为个人中心展示本次扣除积分与剩余积分。
 - 将普通用户认证迁移到 `modules/auth` 四层结构，注册、登录、找回密码、重置密码和 `/api/auth/me` 改为使用 SQLAlchemy 用户表与密码重置表。
 - 新建 `codex/admin-rbac-postgres` 后端升级分支，引入 PostgreSQL、SQLAlchemy 2.x、Alembic、管理员独立登录、RBAC 权限、审计日志和模块四层约定。
 - 新增后端架构说明文档，明确后端模块必须按 `controller.py -> service.py -> crud.py -> model.py` 分层组织。

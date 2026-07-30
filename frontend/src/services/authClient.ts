@@ -13,6 +13,8 @@ export interface AuthUser {
   interests: string[]
   avatar_name?: string
   avatar_url?: string
+  points?: number
+  credits?: number
   created_at: string
 }
 

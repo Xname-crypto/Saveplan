@@ -1227,6 +1227,7 @@ onBeforeUnmount(() => {
             <div class="history-item__main">
               <strong>{{ item.filename }}</strong>
               <span>{{ item.question_count }} 题 · {{ item.subject }} · {{ item.issue_count }} 个提示</span>
+              <span>扣除 {{ item.points_charged ?? 0 }} 积分 · 剩余 {{ item.point_balance_after ?? "暂无记录" }} 积分</span>
             </div>
             <button
               class="history-item__delete"

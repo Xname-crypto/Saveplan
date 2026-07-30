@@ -23,18 +23,21 @@ import {
   isAuthSessionInvalid,
   type AuthUser,
 } from "@/services/authClient"
+import { conversionClient, type ConversionSummary } from "@/services/conversionClient"
 
 type MaterialStatus = "已完成" | "处理中"
 type StatusFilter = "all" | MaterialStatus
 
 interface MaterialItem {
-  id: number
+  id: string
   name: string
   date: string
   size: string
   status: MaterialStatus
   disabled: boolean
   type: string
+  pointsCharged: number
+  balanceAfter?: number | null
 }
 
 const pageSize = 3
@@ -135,13 +138,45 @@ function handleAvatarError() {
   avatarLoadFailed.value = true
 }
 
+function formatHistoryDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value || "-"
+
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
+
+function conversionStatusToMaterialStatus(item: ConversionSummary): MaterialStatus {
+  return item.status === "exported" || item.status === "reviewed"
+    ? (filterOptions[1].value as MaterialStatus)
+    : (filterOptions[2].value as MaterialStatus)
+}
+
+function conversionToMaterial(item: ConversionSummary): MaterialItem {
+  return {
+    id: item.id,
+    name: item.filename,
+    date: formatHistoryDate(item.created_at),
+    size: `${item.question_count} 题 / ${item.issue_count} 个提示`,
+    status: conversionStatusToMaterialStatus(item),
+    disabled: false,
+    type: item.subject,
+    pointsCharged: item.points_charged ?? 0,
+    balanceAfter: item.point_balance_after,
+  }
+}
+
 async function loadProfile() {
   isLoadingProfile.value = true
   profileError.value = ""
 
   try {
-    const user = await authClient.me()
+    const [user, conversions] = await Promise.all([authClient.me(), conversionClient.list()])
     updateCurrentUser(user)
+    materials.value = conversions.map(conversionToMaterial)
   } catch (error) {
     profileError.value = getAuthErrorMessage(error)
     if (isAuthSessionInvalid(error)) {
@@ -180,6 +215,8 @@ function downloadMaterial(item: MaterialItem) {
     `上传日期：${item.date}`,
     `文件大小：${item.size}`,
     `转换状态：${item.status}`,
+    `扣除积分：${item.pointsCharged}`,
+    `剩余积分：${item.balanceAfter ?? "暂无记录"}`,
   ].join("\n")
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
   const url = URL.createObjectURL(blob)
@@ -193,11 +230,17 @@ function downloadMaterial(item: MaterialItem) {
   URL.revokeObjectURL(url)
 }
 
-function deleteMaterial(item: MaterialItem) {
+async function deleteMaterial(item: MaterialItem) {
   const confirmed = window.confirm(`确定删除「${item.name}」吗？`)
   if (!confirmed) return
 
-  materials.value = materials.value.filter((material) => material.id !== item.id)
+  try {
+    await conversionClient.delete(item.id)
+    materials.value = materials.value.filter((material) => material.id !== item.id)
+  } catch (error) {
+    profileError.value = getAuthErrorMessage(error)
+    return
+  }
 
   if (selectedMaterial.value?.id === item.id) {
     closePreview()
@@ -290,6 +333,7 @@ onBeforeUnmount(() => {
             <div class="material-row__icon"><FileText :size="22" /></div>
             <div class="material-row__meta">
               <h3>{{ item.name }}</h3>
+              <p>扣除 {{ item.pointsCharged }} 积分 · 剩余 {{ item.balanceAfter ?? "暂无记录" }} 积分</p>
               <p>Uploaded: {{ item.date }} · Size: {{ item.size }}</p>
             </div>
             <span :class="{ 'is-processing': item.status === '处理中' }">{{ item.status }}</span>
@@ -350,6 +394,14 @@ onBeforeUnmount(() => {
           <div>
             <dt>转换状态</dt>
             <dd>{{ selectedMaterial.status }}</dd>
+          </div>
+          <div>
+            <dt>扣除积分</dt>
+            <dd>{{ selectedMaterial.pointsCharged }}</dd>
+          </div>
+          <div>
+            <dt>剩余积分</dt>
+            <dd>{{ selectedMaterial.balanceAfter ?? "暂无记录" }}</dd>
           </div>
         </dl>
         <button type="button" @click="downloadMaterial(selectedMaterial)">导出资料</button>

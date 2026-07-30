@@ -11,6 +11,8 @@ class AuthUser(BaseModel):
     bio: str | None = None
     interests: list[str] = Field(default_factory=list)
     avatar_name: str | None = None
+    points: int = 0
+    credits: int = 0
     created_at: str
 
 

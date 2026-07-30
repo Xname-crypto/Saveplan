@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import mimetypes
 import os
-import sqlite3
 import shutil
 import subprocess
 import tempfile
@@ -17,6 +16,8 @@ from xml.etree import ElementTree
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 try:
     from dotenv import load_dotenv
@@ -26,8 +27,9 @@ except ImportError:  # pragma: no cover - optional local configuration helper
 if load_dotenv is not None:
     load_dotenv(Path(__file__).resolve().parents[1] / ".env", encoding="utf-8-sig")
 
-from .auth import AuthUser, get_connection, get_current_user
-from .config import MEDIA_DIR, UPLOAD_DIR
+from .auth import AuthUser, get_current_user
+from .config import CONVERSION_POINT_COST, INITIAL_USER_POINTS, MEDIA_DIR, UPLOAD_DIR
+from .database.session import get_db
 from .kshuati_converter import (
     ParsedQuestion,
     Subject,
@@ -37,6 +39,10 @@ from .kshuati_converter import (
     sorted_option_labels,
     validate_single_choice_question,
 )
+from .modules.conversions.model import Conversion
+from .modules.points.model import PointTransaction
+from .modules.points.service import PointService
+from .modules.users.model import User
 
 try:
     from pypdf import PdfReader
@@ -96,6 +102,8 @@ class ConversionSummary(BaseModel):
     status: str
     question_count: int
     issue_count: int
+    points_charged: int = 0
+    point_balance_after: int | None = None
     created_at: str
     updated_at: str
 
@@ -193,94 +201,63 @@ def utc_now() -> str:
 
 
 def init_conversion_db() -> None:
-    with get_connection() as connection:
-        connection.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS conversions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                filename TEXT NOT NULL,
-                stored_path TEXT,
-                source_type TEXT NOT NULL,
-                subject TEXT NOT NULL DEFAULT 'general',
-                raw_text TEXT NOT NULL DEFAULT '',
-                text_state TEXT NOT NULL DEFAULT 'text',
-                status TEXT NOT NULL,
-                questions_json TEXT NOT NULL DEFAULT '[]',
-                issues_json TEXT NOT NULL DEFAULT '[]',
-                assets_json TEXT NOT NULL DEFAULT '[]',
-                export_text TEXT,
-                ocr_provider TEXT,
-                ocr_provider_job_id TEXT,
-                ocr_state TEXT,
-                ocr_total_pages INTEGER NOT NULL DEFAULT 0,
-                ocr_extracted_pages INTEGER NOT NULL DEFAULT 0,
-                ocr_result_url TEXT,
-                ocr_error TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );
-            """
-        )
-        columns = {
-            row["name"] for row in connection.execute("PRAGMA table_info(conversions)").fetchall()
-        }
-        if "assets_json" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN assets_json TEXT NOT NULL DEFAULT '[]'")
-        if "subject" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'")
-        if "ocr_provider" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_provider TEXT")
-        if "ocr_provider_job_id" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_provider_job_id TEXT")
-        if "ocr_state" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_state TEXT")
-        if "ocr_total_pages" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_total_pages INTEGER NOT NULL DEFAULT 0")
-        if "ocr_extracted_pages" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_extracted_pages INTEGER NOT NULL DEFAULT 0")
-        if "ocr_result_url" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_result_url TEXT")
-        if "ocr_error" not in columns:
-            connection.execute("ALTER TABLE conversions ADD COLUMN ocr_error TEXT")
+    """Compatibility no-op.
+
+    Conversion records now live in the SQLAlchemy-managed conversions table.
+    Production schema changes are handled by Alembic.
+    """
+    return None
 
 
-def row_to_summary(row: sqlite3.Row) -> ConversionSummary:
-    questions = read_json(row["questions_json"], [])
+def record_value(record: Conversion, key: str):
+    return getattr(record, key)
+
+
+def record_iso(value: datetime | str) -> str:
+    return value.isoformat() if isinstance(value, datetime) else value
+
+
+def row_to_summary(row: Conversion) -> ConversionSummary:
+    questions = read_json(record_value(row, "questions_json"), [])
     issues = collect_issue_list(row)
     return ConversionSummary(
-        id=row["id"],
-        filename=row["filename"],
-        subject=row["subject"] if row["subject"] else "general",
-        status=row["status"],
+        id=record_value(row, "id"),
+        filename=record_value(row, "filename"),
+        subject=record_value(row, "subject") if record_value(row, "subject") else "general",
+        status=record_value(row, "status"),
         question_count=len(questions),
         issue_count=len(issues),
-        created_at=row["created_at"],
-        updated_at=row["updated_at"],
+        points_charged=record_value(row, "points_charged") or 0,
+        point_balance_after=getattr(row, "point_balance_after", None),
+        created_at=record_iso(record_value(row, "created_at")),
+        updated_at=record_iso(record_value(row, "updated_at")),
     )
 
 
-def row_to_detail(row: sqlite3.Row) -> ConversionDetail:
-    questions = read_json(row["questions_json"], [])
-    assets = read_json(row["assets_json"], [])
+def row_to_detail(row: Conversion) -> ConversionDetail:
+    questions = read_json(record_value(row, "questions_json"), [])
+    assets = read_json(record_value(row, "assets_json"), [])
     issues = collect_issue_list(row)
     summary = row_to_summary(row)
     return ConversionDetail(
         **summary.model_dump(),
-        text_state=row["text_state"],
-        raw_text=row["raw_text"],
+        text_state=record_value(row, "text_state"),
+        raw_text=record_value(row, "raw_text"),
         issues=issues,
         questions=[ConversionQuestionPayload(**question) for question in questions],
         assets=[ConversionAssetPayload(**asset) for asset in assets],
-        export_text=row["export_text"],
+        export_text=record_value(row, "export_text"),
     )
 
 
 def read_json(value: str, fallback):
+    if isinstance(value, type(fallback)):
+        return value
+    if value is None:
+        return fallback
     try:
         parsed = json.loads(value or "")
-    except json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         return fallback
     return parsed if isinstance(parsed, type(fallback)) else fallback
 
@@ -395,10 +372,10 @@ def run_tesseract_ocr(image_path: Path, subject: Subject) -> tuple[str, str]:
     return result.transcript, result.message
 
 
-def collect_issue_list(row: sqlite3.Row) -> list[str]:
-    task_issues = read_json(row["issues_json"], [])
+def collect_issue_list(row: Conversion) -> list[str]:
+    task_issues = read_json(record_value(row, "issues_json"), [])
     question_issues: list[str] = []
-    for question in read_json(row["questions_json"], []):
+    for question in read_json(record_value(row, "questions_json"), []):
         number = question.get("number", "?") if isinstance(question, dict) else "?"
         for issue in question.get("issues", []) if isinstance(question, dict) else []:
             question_issues.append(f"第{number}题：{issue}")
@@ -456,6 +433,42 @@ def with_preview_urls(conversion_id: str, assets: list[dict[str, object]]) -> li
             asset_copy["preview_url"] = None
         updated_assets.append(asset_copy)
     return updated_assets
+
+
+def ensure_conversion_points_available(db: Session, user_id: str) -> User:
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="登录状态已失效，请重新登录。")
+    if CONVERSION_POINT_COST > 0 and user.point_balance < CONVERSION_POINT_COST and user.point_balance == 0:
+        existing_transaction = db.scalar(
+            select(PointTransaction).where(PointTransaction.user_id == user_id).limit(1)
+        )
+        if existing_transaction is None and INITIAL_USER_POINTS >= CONVERSION_POINT_COST:
+            user.point_balance = INITIAL_USER_POINTS
+    if CONVERSION_POINT_COST > 0 and user.point_balance < CONVERSION_POINT_COST:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="积分不足，请先充值或联系管理员调整积分。",
+        )
+    return user
+
+
+def attach_point_balances(db: Session, conversions: list[Conversion]) -> list[Conversion]:
+    conversion_ids = [item.id for item in conversions]
+    if not conversion_ids:
+        return conversions
+
+    transactions = db.scalars(
+        select(PointTransaction).where(PointTransaction.conversion_id.in_(conversion_ids))
+    ).all()
+    balance_by_conversion = {
+        transaction.conversion_id: transaction.balance_after
+        for transaction in transactions
+        if transaction.conversion_id
+    }
+    for conversion in conversions:
+        conversion.point_balance_after = balance_by_conversion.get(conversion.id)
+    return conversions
 
 
 async def save_upload(file: UploadFile, user_id: str) -> Path:
@@ -755,6 +768,7 @@ def extract_docx_text(
 
 def create_conversion_record(
     *,
+    db: Session,
     user_id: str,
     filename: str,
     source_type: str,
@@ -786,39 +800,43 @@ def create_conversion_record(
 
     now = utc_now()
     status_value = "needs_review" if question_payloads else "needs_attention"
+    user = ensure_conversion_points_available(db, user_id)
+    points_charged = max(CONVERSION_POINT_COST, 0)
+    point_balance_after: int | None = None
+    if points_charged:
+        user.point_balance -= points_charged
+        point_balance_after = user.point_balance
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            INSERT INTO conversions (
-                id, user_id, filename, stored_path, source_type, subject, raw_text, text_state,
-                status, questions_json, issues_json, assets_json, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                conversion_id,
-                user_id,
-                filename,
-                stored_path,
-                source_type,
-                subject,
-                raw_text,
-                text_state,
-                status_value,
-                json.dumps(question_payloads, ensure_ascii=False),
-                json.dumps(issues, ensure_ascii=False),
-                json.dumps(with_preview_urls(conversion_id, asset_payloads), ensure_ascii=False),
-                now,
-                now,
-            ),
+    conversion = Conversion(
+        id=conversion_id,
+        user_id=user_id,
+        filename=filename,
+        stored_path=stored_path,
+        source_type=source_type,
+        subject=subject,
+        raw_text=raw_text,
+        text_state=text_state,
+        status=status_value,
+        questions_json=question_payloads,
+        issues_json=issues,
+        assets_json=with_preview_urls(conversion_id, asset_payloads),
+        points_charged=points_charged,
+        created_at=datetime.fromisoformat(now),
+        updated_at=datetime.fromisoformat(now),
+    )
+    db.add(conversion)
+    if points_charged:
+        PointService(db).record_conversion_charge(
+            user_id=user_id,
+            amount=-points_charged,
+            balance_after=user.point_balance,
+            reason=f"转换任务扣除：{filename}",
+            conversion_id=conversion_id,
         )
-        row = connection.execute(
-            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
-            (conversion_id, user_id),
-        ).fetchone()
-
-    return row_to_detail(row)
+    db.commit()
+    db.refresh(conversion)
+    conversion.point_balance_after = point_balance_after
+    return row_to_detail(conversion)
 
 
 def get_paddle_ocr_token() -> str:
@@ -967,6 +985,7 @@ def try_extract_native_text(
 
 def create_cloud_ocr_conversion_record(
     *,
+    db: Session,
     user_id: str,
     filename: str,
     stored_path: Path,
@@ -981,36 +1000,41 @@ def create_cloud_ocr_conversion_record(
         *extraction_issues,
         "已提交 PaddleOCR 云端识别，完成后会自动进入题目解析和人工校对。",
     ]
-    with get_connection() as connection:
-        connection.execute(
-            """
-            INSERT INTO conversions (
-                id, user_id, filename, stored_path, source_type, subject, raw_text, text_state,
-                status, questions_json, issues_json, assets_json, ocr_provider, ocr_provider_job_id,
-                ocr_state, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                conversion_id,
-                user_id,
-                filename,
-                str(stored_path),
-                stored_path.suffix.lower().removeprefix("."),
-                subject,
-                raw_text,
-                detect_text_state(raw_text),
-                "ocr_running",
-                "[]",
-                json.dumps(issues, ensure_ascii=False),
-                "[]",
-                "paddleocr-cloud",
-                provider_job_id,
-                "pending",
-                now,
-                now,
-            ),
+    user = ensure_conversion_points_available(db, user_id)
+    points_charged = max(CONVERSION_POINT_COST, 0)
+    if points_charged:
+        user.point_balance -= points_charged
+
+    conversion = Conversion(
+        id=conversion_id,
+        user_id=user_id,
+        filename=filename,
+        stored_path=str(stored_path),
+        source_type=stored_path.suffix.lower().removeprefix("."),
+        subject=subject,
+        raw_text=raw_text,
+        text_state=detect_text_state(raw_text),
+        status="ocr_running",
+        questions_json=[],
+        issues_json=issues,
+        assets_json=[],
+        ocr_provider="paddleocr-cloud",
+        ocr_provider_job_id=provider_job_id,
+        ocr_state="pending",
+        points_charged=points_charged,
+        created_at=datetime.fromisoformat(now),
+        updated_at=datetime.fromisoformat(now),
+    )
+    db.add(conversion)
+    if points_charged:
+        PointService(db).record_conversion_charge(
+            user_id=user_id,
+            amount=-points_charged,
+            balance_after=user.point_balance,
+            reason=f"云端 OCR 转换扣除：{filename}",
+            conversion_id=conversion_id,
         )
+    db.commit()
 
     return CloudOcrStatusResponse(
         id=conversion_id,
@@ -1022,61 +1046,51 @@ def create_cloud_ocr_conversion_record(
 
 
 def finish_cloud_ocr_conversion(
-    row: sqlite3.Row,
+    row: Conversion,
     poll_data: dict[str, object],
     user_id: str,
+    db: Session,
 ) -> ConversionDetail:
     markdown_text = fetch_paddle_ocr_markdown(str(poll_data.get("json_url") or ""))
-    raw_text = markdown_text or row["raw_text"] or ""
-    issues = read_json(row["issues_json"], [])
+    raw_text = markdown_text or row.raw_text or ""
+    issues = read_json(row.issues_json, [])
     if markdown_text:
         issues.append("PaddleOCR 识别完成，已使用识别出的 Markdown 文本重新解析题目。")
     else:
         issues.append("PaddleOCR 未返回可用 Markdown 文本，已保留原始提取文本。")
 
-    parsed_questions = parse_single_choice_questions(raw_text, subject=row["subject"] or "general")
+    parsed_questions = parse_single_choice_questions(raw_text, subject=row.subject or "general")
     question_payloads = [question_to_payload(question) for question in parsed_questions]
     if not question_payloads:
         issues.append("OCR 完成后仍未识别到单选题结构，请在人工校对页手动新增或粘贴文本。")
 
     status_value = "needs_review" if question_payloads else "needs_attention"
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET raw_text = ?, text_state = ?, status = ?, questions_json = ?, issues_json = ?,
-                ocr_state = 'done', ocr_total_pages = ?, ocr_extracted_pages = ?,
-                ocr_result_url = ?, ocr_error = NULL, updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (
-                raw_text,
-                detect_text_state(raw_text),
-                status_value,
-                json.dumps(question_payloads, ensure_ascii=False),
-                json.dumps(issues, ensure_ascii=False),
-                int(poll_data.get("total_pages") or 0),
-                int(poll_data.get("extracted_pages") or 0),
-                str(poll_data.get("json_url") or ""),
-                utc_now(),
-                row["id"],
-                user_id,
-            ),
-        )
-        updated_row = connection.execute(
-            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
-            (row["id"], user_id),
-        ).fetchone()
-    return row_to_detail(updated_row)
+    row.raw_text = raw_text
+    row.text_state = detect_text_state(raw_text)
+    row.status = status_value
+    row.questions_json = question_payloads
+    row.issues_json = issues
+    row.ocr_state = "done"
+    row.ocr_total_pages = int(poll_data.get("total_pages") or 0)
+    row.ocr_extracted_pages = int(poll_data.get("extracted_pages") or 0)
+    row.ocr_result_url = str(poll_data.get("json_url") or "")
+    row.ocr_error = None
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    attach_point_balances(db, [row])
+    return row_to_detail(row)
 
 
 @router.post("", response_model=ConversionDetail, status_code=status.HTTP_201_CREATED)
 async def create_conversion(
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
     file: UploadFile = File(...),
     subject: Subject = Form("general"),
     include_assets: bool = Form(True),
 ) -> ConversionDetail:
+    ensure_conversion_points_available(db, current_user.id)
     stored_path = await save_upload(file, current_user.id)
     conversion_id = str(uuid.uuid4())
     raw_text, extraction_issues, assets = extract_text(
@@ -1085,6 +1099,7 @@ async def create_conversion(
         include_assets=include_assets,
     )
     return create_conversion_record(
+        db=db,
         user_id=current_user.id,
         filename=file.filename or stored_path.name,
         stored_path=str(stored_path),
@@ -1101,15 +1116,18 @@ async def create_conversion(
 @router.post("/ocr", response_model=CloudOcrStatusResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_cloud_ocr_conversion(
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
     file: UploadFile = File(...),
     subject: Subject = Form("general"),
 ) -> CloudOcrStatusResponse:
     ensure_cloud_ocr_available()
+    ensure_conversion_points_available(db, current_user.id)
     stored_path = await save_upload(file, current_user.id)
     conversion_id = str(uuid.uuid4())
     raw_text, extraction_issues = try_extract_native_text(stored_path, conversion_id)
     provider_job_id = submit_paddle_ocr_job(stored_path)
     return create_cloud_ocr_conversion_record(
+        db=db,
         user_id=current_user.id,
         filename=file.filename or stored_path.name,
         stored_path=stored_path,
@@ -1125,8 +1143,10 @@ async def create_cloud_ocr_conversion(
 def create_text_conversion(
     payload: TextConversionRequest,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ConversionDetail:
     return create_conversion_record(
+        db=db,
         user_id=current_user.id,
         filename=payload.title.strip() or "粘贴文本",
         stored_path=None,
@@ -1139,16 +1159,16 @@ def create_text_conversion(
 @router.get("", response_model=list[ConversionSummary])
 def list_conversions(
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> list[ConversionSummary]:
-    with get_connection() as connection:
-        rows = connection.execute(
-            """
-            SELECT * FROM conversions
-            WHERE user_id = ?
-            ORDER BY datetime(created_at) DESC
-            """,
-            (current_user.id,),
-        ).fetchall()
+    rows = list(
+        db.scalars(
+            select(Conversion)
+            .where(Conversion.user_id == current_user.id)
+            .order_by(Conversion.created_at.desc())
+        ).all()
+    )
+    attach_point_balances(db, rows)
     return [row_to_summary(row) for row in rows]
 
 
@@ -1156,9 +1176,10 @@ def list_conversions(
 def get_cloud_ocr_status(
     conversion_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> CloudOcrStatusResponse:
-    row = find_conversion(conversion_id, current_user.id)
-    provider_job_id = row["ocr_provider_job_id"]
+    row = find_conversion(db, conversion_id, current_user.id)
+    provider_job_id = row.ocr_provider_job_id
     if not provider_job_id:
         return CloudOcrStatusResponse(
             id=conversion_id,
@@ -1167,13 +1188,13 @@ def get_cloud_ocr_status(
             conversion=row_to_detail(row),
         )
 
-    if row["ocr_state"] == "done" or row["status"] != "ocr_running":
+    if row.ocr_state == "done" or row.status != "ocr_running":
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="done",
             message="PaddleOCR 识别已完成。",
-            total_pages=row["ocr_total_pages"] or 0,
-            extracted_pages=row["ocr_extracted_pages"] or 0,
+            total_pages=row.ocr_total_pages or 0,
+            extracted_pages=row.ocr_extracted_pages or 0,
             conversion=row_to_detail(row),
         )
 
@@ -1183,7 +1204,7 @@ def get_cloud_ocr_status(
     extracted_pages = int(poll_data.get("extracted_pages") or 0)
 
     if ocr_state == "done":
-        conversion = finish_cloud_ocr_conversion(row, poll_data, current_user.id)
+        conversion = finish_cloud_ocr_conversion(row, poll_data, current_user.id, db)
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="done",
@@ -1195,16 +1216,13 @@ def get_cloud_ocr_status(
 
     if ocr_state == "failed":
         error_message = str(poll_data.get("error") or "PaddleOCR 识别失败。")
-        with get_connection() as connection:
-            connection.execute(
-                """
-                UPDATE conversions
-                SET status = 'needs_attention', ocr_state = 'failed', ocr_error = ?,
-                    ocr_total_pages = ?, ocr_extracted_pages = ?, updated_at = ?
-                WHERE id = ? AND user_id = ?
-                """,
-                (error_message, total_pages, extracted_pages, utc_now(), conversion_id, current_user.id),
-            )
+        row.status = "needs_attention"
+        row.ocr_state = "failed"
+        row.ocr_error = error_message
+        row.ocr_total_pages = total_pages
+        row.ocr_extracted_pages = extracted_pages
+        row.updated_at = datetime.now(timezone.utc)
+        db.commit()
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="failed",
@@ -1213,15 +1231,11 @@ def get_cloud_ocr_status(
             extracted_pages=extracted_pages,
         )
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET ocr_state = ?, ocr_total_pages = ?, ocr_extracted_pages = ?, updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (ocr_state, total_pages, extracted_pages, utc_now(), conversion_id, current_user.id),
-        )
+    row.ocr_state = ocr_state
+    row.ocr_total_pages = total_pages
+    row.ocr_extracted_pages = extracted_pages
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
 
     progress_message = (
         f"PaddleOCR 正在识别第 {extracted_pages} / {total_pages} 页。"
@@ -1241,8 +1255,10 @@ def get_cloud_ocr_status(
 def get_conversion(
     conversion_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ConversionDetail:
-    row = find_conversion(conversion_id, current_user.id)
+    row = find_conversion(db, conversion_id, current_user.id)
+    attach_point_balances(db, [row])
     return row_to_detail(row)
 
 
@@ -1251,8 +1267,9 @@ def update_questions(
     conversion_id: str,
     payload: list[ConversionQuestionPayload],
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ConversionDetail:
-    find_conversion(conversion_id, current_user.id)
+    row = find_conversion(db, conversion_id, current_user.id)
     normalized = []
     for index, question in enumerate(payload, 1):
         data = question.model_dump()
@@ -1274,25 +1291,13 @@ def update_questions(
         )
         normalized.append(data)
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET questions_json = ?, export_text = NULL, status = ?, updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (
-                json.dumps(normalized, ensure_ascii=False),
-                "reviewed",
-                utc_now(),
-                conversion_id,
-                current_user.id,
-            ),
-        )
-        row = connection.execute(
-            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
-            (conversion_id, current_user.id),
-        ).fetchone()
+    row.questions_json = normalized
+    row.export_text = None
+    row.status = "reviewed"
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    attach_point_balances(db, [row])
     return row_to_detail(row)
 
 
@@ -1301,30 +1306,19 @@ def update_assets(
     conversion_id: str,
     payload: list[ConversionAssetPayload],
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ConversionDetail:
-    find_conversion(conversion_id, current_user.id)
+    row = find_conversion(db, conversion_id, current_user.id)
     normalized = []
     for asset in payload:
         normalized.append(normalize_asset_payload(conversion_id, asset))
 
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET assets_json = ?, export_text = NULL, updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (
-                json.dumps(normalized, ensure_ascii=False),
-                utc_now(),
-                conversion_id,
-                current_user.id,
-            ),
-        )
-        row = connection.execute(
-            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
-            (conversion_id, current_user.id),
-        ).fetchone()
+    row.assets_json = normalized
+    row.export_text = None
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    attach_point_balances(db, [row])
     return row_to_detail(row)
 
 
@@ -1333,9 +1327,10 @@ def ocr_asset(
     conversion_id: str,
     asset_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> OcrAssetResponse:
-    row = find_conversion(conversion_id, current_user.id)
-    assets = [ConversionAssetPayload(**item) for item in read_json(row["assets_json"], [])]
+    row = find_conversion(db, conversion_id, current_user.id)
+    assets = [ConversionAssetPayload(**item) for item in read_json(row.assets_json, [])]
     asset_index = next((index for index, item in enumerate(assets) if item.id == asset_id), None)
     if asset_index is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="素材不存在。")
@@ -1350,8 +1345,8 @@ def ocr_asset(
         if media_root not in image_path.parents or not image_path.exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="素材文件不存在。")
 
-        provider = get_ocr_provider(row["subject"] or "general")
-        result = provider.recognize(image_path, row["subject"] or "general")
+        provider = get_ocr_provider(row.subject or "general")
+        result = provider.recognize(image_path, row.subject or "general")
         message = result.message
         if result.transcript:
             asset.transcript = result.transcript
@@ -1362,20 +1357,10 @@ def ocr_asset(
     normalized_assets = [
         normalize_asset_payload(conversion_id, item) for item in assets
     ]
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET assets_json = ?, export_text = NULL, updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (
-                json.dumps(normalized_assets, ensure_ascii=False),
-                utc_now(),
-                conversion_id,
-                current_user.id,
-            ),
-        )
+    row.assets_json = normalized_assets
+    row.export_text = None
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
 
     return OcrAssetResponse(
         asset=ConversionAssetPayload(**normalized_assets[asset_index]),
@@ -1388,9 +1373,10 @@ def preview_asset(
     conversion_id: str,
     asset_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> FileResponse:
-    row = find_conversion(conversion_id, current_user.id)
-    assets = [ConversionAssetPayload(**item) for item in read_json(row["assets_json"], [])]
+    row = find_conversion(db, conversion_id, current_user.id)
+    assets = [ConversionAssetPayload(**item) for item in read_json(row.assets_json, [])]
     asset = next((item for item in assets if item.id == asset_id), None)
     if asset is None or not asset.stored_path:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="素材不存在或不可预览。")
@@ -1413,15 +1399,12 @@ def preview_asset(
 def delete_conversion(
     conversion_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, bool]:
-    row = find_conversion(conversion_id, current_user.id)
-    stored_path = row["stored_path"]
-
-    with get_connection() as connection:
-        connection.execute(
-            "DELETE FROM conversions WHERE id = ? AND user_id = ?",
-            (conversion_id, current_user.id),
-        )
+    row = find_conversion(db, conversion_id, current_user.id)
+    stored_path = row.stored_path
+    db.delete(row)
+    db.commit()
 
     if stored_path:
         path = Path(stored_path)
@@ -1439,23 +1422,18 @@ def delete_conversion(
 def export_conversion(
     conversion_id: str,
     current_user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ConversionExportResponse:
-    row = find_conversion(conversion_id, current_user.id)
-    question_payloads = [ConversionQuestionPayload(**item) for item in read_json(row["questions_json"], [])]
-    asset_payloads = [ConversionAssetPayload(**item) for item in read_json(row["assets_json"], [])]
+    row = find_conversion(db, conversion_id, current_user.id)
+    question_payloads = [ConversionQuestionPayload(**item) for item in read_json(row.questions_json, [])]
+    asset_payloads = [ConversionAssetPayload(**item) for item in read_json(row.assets_json, [])]
     questions = [payload_to_question(payload) for payload in question_payloads]
     apply_asset_transcripts(questions, asset_payloads)
-    export_text = export_kshuati_text(questions, subject=row["subject"] or "general")
-
-    with get_connection() as connection:
-        connection.execute(
-            """
-            UPDATE conversions
-            SET export_text = ?, status = 'exported', updated_at = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (export_text, utc_now(), conversion_id, current_user.id),
-        )
+    export_text = export_kshuati_text(questions, subject=row.subject or "general")
+    row.export_text = export_text
+    row.status = "exported"
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
 
     return ConversionExportResponse(
         export_text=export_text,
@@ -1464,12 +1442,13 @@ def export_conversion(
     )
 
 
-def find_conversion(conversion_id: str, user_id: str) -> sqlite3.Row:
-    with get_connection() as connection:
-        row = connection.execute(
-            "SELECT * FROM conversions WHERE id = ? AND user_id = ?",
-            (conversion_id, user_id),
-        ).fetchone()
+def find_conversion(db: Session, conversion_id: str, user_id: str) -> Conversion:
+    row = db.scalar(
+        select(Conversion).where(
+            Conversion.id == conversion_id,
+            Conversion.user_id == user_id,
+        )
+    )
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="转换任务不存在。")
     return row

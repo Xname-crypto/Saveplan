@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
-from ...config import JWT_SECRET
+from ...config import INITIAL_USER_POINTS, JWT_SECRET
 from ...core.security import create_token, hash_password, utc_now, verify_password, verify_token
 from ...database.session import get_db
 from ..users.model import User
@@ -38,6 +38,7 @@ def normalize_email(email: str) -> str:
 
 
 def user_to_schema(user: User) -> AuthUser:
+    points = user.point_balance or 0
     return AuthUser(
         id=user.id,
         email=user.email,
@@ -46,6 +47,8 @@ def user_to_schema(user: User) -> AuthUser:
         bio=user.bio,
         interests=user.interests if isinstance(user.interests, list) else [],
         avatar_name=user.avatar_name,
+        points=points,
+        credits=points,
         created_at=user.created_at.isoformat(),
     )
 
@@ -87,6 +90,7 @@ class AuthService:
                 bio=payload.bio,
                 interests=payload.interests,
                 avatar_name=payload.avatar_name,
+                point_balance=INITIAL_USER_POINTS,
             )
         )
         self.db.commit()
