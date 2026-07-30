@@ -38,9 +38,9 @@ Save Your Finals 是一个面向学生、备考用户和小型学习社区的题
 | 层级 | 技术 |
 | --- | --- |
 | 前端 | Vue 3、Vite、TypeScript、Tailwind CSS、lucide-vue-next、GSAP、OGL |
-| 后端 | FastAPI、Uvicorn、Pydantic、python-multipart、pypdf、requests、python-dotenv |
-| 数据库 | SQLite（当前版本），后续可按规模迁移到 PostgreSQL 或 MySQL |
-| 认证与安全 | PBKDF2 密码哈希、JWT/Token 登录态、CORS 来源控制、用户数据隔离 |
+| 后端 | FastAPI、Uvicorn、Pydantic、SQLAlchemy 2.x、Alembic、python-multipart、pypdf、requests、python-dotenv |
+| 数据库 | PostgreSQL（生产推荐），本地开发保留 SQLite fallback |
+| 认证与安全 | PBKDF2 密码哈希、JWT/Token 登录态、RBAC 权限、管理员独立登录、审计日志、CORS 来源控制、用户数据隔离 |
 | 部署 | Zeabur 前端静态服务、Zeabur Python 后端服务、自定义域名 `saveplan.vip` |
 | 工程管理 | npm、pip、requirements.txt、CHANGELOG.md、v2-mobile-responsive 分支 |
 
@@ -123,6 +123,8 @@ npm run build
 ## 后端开发规范
 
 - 所有需要登录的接口必须从请求中校验用户身份。
+- 管理后台接口必须使用独立管理员登录和 RBAC 权限校验。
+- 新增后端模块必须遵循 `controller.py -> service.py -> crud.py -> model.py` 的模块四层约定，详见 [backend/ARCHITECTURE.md](backend/ARCHITECTURE.md)。
 - 积分扣除、转换历史和上传文件记录由后端保存，前端只负责展示。
 - 不要把真实 `.env`、JWT 密钥、OCR Token 或其他私密配置提交到 GitHub。
 - 生产环境必须配置强随机 `SAVEPLAN_JWT_SECRET` 和正确的 `SAVEPLAN_PUBLIC_ORIGINS`。
@@ -206,7 +208,11 @@ notepad .env
 常用后端变量：
 
 ```bash
+SAVEPLAN_DATABASE_URL=postgresql+psycopg://saveplan:password@localhost:5432/saveplan
 SAVEPLAN_JWT_SECRET=替换为足够长的随机密钥
+SAVEPLAN_ADMIN_JWT_SECRET=替换为另一段足够长的随机密钥
+SAVEPLAN_ADMIN_EMAIL=admin@saveplan.vip
+SAVEPLAN_ADMIN_PASSWORD=替换为强管理员密码
 SAVEPLAN_DATA_DIR=/data
 SAVEPLAN_PUBLIC_ORIGINS=https://saveplan.vip,https://www.saveplan.vip
 PADDLEOCR_API_TOKEN=替换为真实 Token
@@ -224,10 +230,18 @@ VITE_API_BASE_URL=https://你的后端域名/api
 
 ## 数据库与存储
 
-- 当前版本使用 SQLite 保存用户、积分、转换记录等数据。
+- 生产环境推荐使用 PostgreSQL 保存用户、积分、转换记录、管理员、角色权限和审计日志。
+- 本地开发在未配置 `SAVEPLAN_DATABASE_URL` 时会 fallback 到 SQLite，方便快速调试。
 - 上传文件和转换相关文件保存到后端数据目录中。
 - Zeabur 部署时建议将 `SAVEPLAN_DATA_DIR` 指向持久化目录，例如 `/data`。
-- 当用户量、转换任务量或管理员后台需求增加后，可迁移到 PostgreSQL 或 MySQL。
+- 数据库结构通过 Alembic 迁移维护。
+
+迁移命令：
+
+```powershell
+cd G:\Saveplan\backend
+alembic -c alembic.ini upgrade head
+```
 
 ---
 

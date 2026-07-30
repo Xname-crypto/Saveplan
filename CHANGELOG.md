@@ -2,6 +2,11 @@
 
 这个文件记录 Save Your Finals 每次重要修改。以后每次提交代码前，先在最上方新增一条记录。
 
+## 2026-07-31
+
+- 新建 `codex/admin-rbac-postgres` 后端升级分支，引入 PostgreSQL、SQLAlchemy 2.x、Alembic、管理员独立登录、RBAC 权限、审计日志和模块四层约定。
+- 新增后端架构说明文档，明确后端模块必须按 `controller.py -> service.py -> crud.py -> model.py` 分层组织。
+
 ## 2026-07-30
 
 - 按 `rebort-hub/fastapiwebadmin` 的 GitHub 展示规范重构 README，补充居中标题区、分隔线、技术栈表格、注释式仓库结构、开发规范、快速开始、生产部署、常见问题、截图说明和相关链接。

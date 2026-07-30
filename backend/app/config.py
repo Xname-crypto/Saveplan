@@ -30,9 +30,26 @@ def csv_env(name: str, default: tuple[str, ...] = ()) -> list[str]:
 
 
 DATA_DIR = path_from_env("SAVEPLAN_DATA_DIR", APP_DIR)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE_PATH = DATA_DIR / "saveplan.sqlite3"
+ORM_DATABASE_PATH = DATA_DIR / "saveplan-admin.sqlite3"
+DATABASE_URL = (
+    os.getenv("SAVEPLAN_DATABASE_URL")
+    or os.getenv("DATABASE_URL")
+    or f"sqlite:///{ORM_DATABASE_PATH.as_posix()}"
+)
 UPLOAD_DIR = DATA_DIR / "uploads"
 MEDIA_DIR = DATA_DIR / "conversion_media"
+AUTO_CREATE_TABLES = os.getenv("SAVEPLAN_AUTO_CREATE_TABLES", "true").lower() == "true"
+
+ADMIN_JWT_SECRET = os.getenv("SAVEPLAN_ADMIN_JWT_SECRET") or os.getenv(
+    "SAVEPLAN_JWT_SECRET",
+    "saveplan-local-dev-admin-jwt-secret",
+)
+ADMIN_SESSION_MINUTES = int(os.getenv("SAVEPLAN_ADMIN_SESSION_MINUTES", "720"))
+ADMIN_BOOTSTRAP_EMAIL = os.getenv("SAVEPLAN_ADMIN_EMAIL")
+ADMIN_BOOTSTRAP_PASSWORD = os.getenv("SAVEPLAN_ADMIN_PASSWORD")
+ADMIN_BOOTSTRAP_USERNAME = os.getenv("SAVEPLAN_ADMIN_USERNAME", "Saveplan Admin")
 
 DEFAULT_CORS_ORIGINS = (
     "http://localhost:5173",

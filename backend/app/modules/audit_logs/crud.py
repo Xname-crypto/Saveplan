@@ -1,0 +1,20 @@
+from __future__ import annotations
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .model import AuditLog
+
+
+class AuditLogCrud:
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def create(self, log: AuditLog) -> AuditLog:
+        self.db.add(log)
+        self.db.flush()
+        return log
+
+    def list_recent(self, limit: int = 100) -> list[AuditLog]:
+        statement = select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
+        return list(self.db.scalars(statement).all())
