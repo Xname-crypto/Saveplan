@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { LogOut, Menu, UserRound } from "lucide-vue-next"
 import ShinyText from "@/components/ShinyText.vue"
+import ThemeSwitch from "@/components/ThemeSwitch.vue"
 import { useRouter } from "@/router"
 import {
   AUTH_SESSION_CHANGE_EVENT,
@@ -11,6 +12,7 @@ import {
   getStoredAuthUser,
   type AuthUser,
 } from "@/services/authClient"
+import { useTheme } from "@/services/theme"
 
 const links = [
   { label: "首页", to: "/" },
@@ -20,6 +22,7 @@ const links = [
 ]
 
 const router = useRouter()
+const { theme, toggleTheme } = useTheme()
 const currentUser = ref<AuthUser | null>(getStoredAuthUser())
 const avatarLoadFailed = ref(false)
 const isUserMenuOpen = ref(false)
@@ -35,6 +38,10 @@ const profileCredits = computed(() => {
 
   return new Intl.NumberFormat("zh-CN").format(credits)
 })
+const isDayTheme = computed(() => theme.value === "day")
+const brandColor = computed(() => (isDayTheme.value ? "#1f2937" : "#958b72"))
+const brandShineColor = computed(() => (isDayTheme.value ? "#f8fafc" : "#fffdf4"))
+const themeToggleLabel = computed(() => (isDayTheme.value ? "切换到夜晚版本" : "切换到白天版本"))
 
 const updateCurrentUser = (user: AuthUser | null) => {
   currentUser.value = user
@@ -134,8 +141,8 @@ onBeforeUnmount(() => {
         :speed="1.85"
         :delay="0.15"
         :spread="100"
-        color="#958b72"
-        shine-color="#fffdf4"
+        :color="brandColor"
+        :shine-color="brandShineColor"
         direction="left"
         pause-on-hover
         class-name="cinema-nav__brand-name"
@@ -156,6 +163,7 @@ onBeforeUnmount(() => {
     </nav>
 
     <div class="cinema-nav__actions">
+      <ThemeSwitch :checked="!isDayTheme" :ariaLabel="themeToggleLabel" @change="toggleTheme" />
       <div v-if="currentUser" ref="userMenuRef" class="cinema-nav__user">
         <button
           class="cinema-nav__avatar"

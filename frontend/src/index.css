@@ -5481,3 +5481,555 @@
   filter: brightness(1.04);
   transform: translateY(-1px);
 }
+
+html[data-theme="day"] {
+  --background: 42 33% 98%;
+  --foreground: 210 17% 16%;
+  --muted-foreground: 214 13% 42%;
+  --primary: 210 17% 16%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 205 32% 39%;
+  --muted: 42 20% 93%;
+  --accent: 205 44% 47%;
+  --border: 215 18% 83%;
+  --input: 215 18% 83%;
+  --ring: 205 44% 47%;
+}
+
+html[data-theme="day"],
+html[data-theme="day"] body {
+  background: #f8faf7;
+  color: #1f2933;
+}
+
+html[data-theme="day"] body {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(237, 246, 246, 0.68) 48%, #f8faf7),
+    #f8faf7;
+}
+
+html[data-theme="day"] .stitch-page,
+html[data-theme="day"] .pricing-page,
+html[data-theme="day"] .profile-page,
+html[data-theme="day"] .auth-screen {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(77, 132, 164, 0.13), transparent 28rem),
+    radial-gradient(circle at 84% 7%, rgba(201, 225, 205, 0.42), transparent 27rem),
+    linear-gradient(180deg, #fbfcf8 0%, #eef7f6 52%, #f8faf7 100%);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .stitch-noise {
+  opacity: 0.12;
+  mix-blend-mode: multiply;
+}
+
+html[data-theme="day"] .home-scroll-progress {
+  background: linear-gradient(90deg, rgba(77, 132, 164, 0.18), #345d75);
+}
+
+html[data-theme="day"] .cinema-nav {
+  color: #1f2933;
+  border-color: rgba(31, 41, 51, 0.2);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 20px 56px rgba(44, 64, 82, 0.14);
+}
+
+html[data-theme="day"] .cinema-nav__brand i {
+  background: rgba(31, 41, 51, 0.24);
+}
+
+html[data-theme="day"] .cinema-nav__brand small,
+html[data-theme="day"] .cinema-nav__links a {
+  color: rgba(31, 41, 51, 0.58);
+}
+
+html[data-theme="day"] .cinema-nav__brand-name {
+  text-shadow: none;
+}
+
+html[data-theme="day"] .cinema-nav__links a:hover,
+html[data-theme="day"] .cinema-nav__links a.is-active {
+  color: #111827;
+  border-color: rgba(52, 93, 117, 0.58);
+}
+
+html[data-theme="day"] .cinema-nav__menu {
+  border-color: rgba(31, 41, 51, 0.16);
+  background: rgba(248, 250, 247, 0.82);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .cinema-nav__menu:hover {
+  border-color: rgba(52, 93, 117, 0.38);
+  background: #eef7f6;
+}
+
+html[data-theme="day"] .cinema-nav__login,
+html[data-theme="day"] .hero-cta,
+html[data-theme="day"] .primary-action,
+html[data-theme="day"] .step-actions .primary-action,
+html[data-theme="day"] .paste-panel button,
+html[data-theme="day"] .pricing-card.is-selected button {
+  background: #1f2933;
+  color: #ffffff;
+  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.16);
+}
+
+html[data-theme="day"] .cinema-nav__login:hover,
+html[data-theme="day"] .hero-cta:hover,
+html[data-theme="day"] .primary-action:hover,
+html[data-theme="day"] .step-actions .primary-action:hover,
+html[data-theme="day"] .paste-panel button:hover,
+html[data-theme="day"] .pricing-card.is-selected button:hover {
+  background: #345d75;
+  color: #ffffff;
+}
+
+html[data-theme="day"] .cinema-nav__avatar {
+  border-color: rgba(31, 41, 51, 0.16);
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.72), transparent 0.72rem),
+    #eef7f6;
+  color: #1f2933;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 12px 28px rgba(44, 64, 82, 0.12);
+}
+
+html[data-theme="day"] .cinema-nav__user-card,
+html[data-theme="day"] .cinema-nav__user-card-arrow {
+  border-color: rgba(31, 41, 51, 0.13);
+  background: rgba(255, 255, 255, 0.96);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .cinema-nav__user-card header strong,
+html[data-theme="day"] .cinema-nav__credits strong,
+html[data-theme="day"] .cinema-nav__user-card > button:hover {
+  color: #111827;
+}
+
+html[data-theme="day"] .cinema-nav__user-card header span,
+html[data-theme="day"] .cinema-nav__credits span,
+html[data-theme="day"] .cinema-nav__user-card > button {
+  color: rgba(31, 41, 51, 0.64);
+}
+
+html[data-theme="day"] .cinema-nav__credits {
+  border-color: rgba(52, 93, 117, 0.16);
+  background: rgba(238, 247, 246, 0.9);
+}
+
+html[data-theme="day"] .home-hero {
+  padding: 1rem 1rem 0;
+}
+
+html[data-theme="day"] .home-hero__frame {
+  background: #e5edf0;
+  box-shadow:
+    inset 0 0 0 1px rgba(31, 41, 51, 0.1),
+    0 30px 90px rgba(44, 64, 82, 0.16);
+}
+
+html[data-theme="day"] .home-hero__poster,
+html[data-theme="day"] .home-hero__video {
+  filter: saturate(1.03) contrast(1.02) brightness(1.03);
+}
+
+html[data-theme="day"] .home-hero__shade {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 38%, rgba(32, 43, 54, 0.46)),
+    radial-gradient(circle at 78% 76%, rgba(255, 255, 255, 0.34), transparent 24rem);
+}
+
+html[data-theme="day"] .home-hero__content h1 {
+  color: #ffffff;
+  text-shadow: 0 12px 32px rgba(31, 41, 51, 0.34);
+}
+
+html[data-theme="day"] .home-hero__content aside p {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 8px 24px rgba(31, 41, 51, 0.22);
+}
+
+html[data-theme="day"] .stitch-eyebrow,
+html[data-theme="day"] .home-about .stitch-eyebrow,
+html[data-theme="day"] .pricing-faq__header .stitch-eyebrow,
+html[data-theme="day"] .converter-hero h1 span,
+html[data-theme="day"] .pricing-card > p {
+  color: #345d75;
+}
+
+html[data-theme="day"] .home-section-heading h2,
+html[data-theme="day"] .home-about h2,
+html[data-theme="day"] .home-about h2 span,
+html[data-theme="day"] .converter-hero h1,
+html[data-theme="day"] .pricing-hero h1,
+html[data-theme="day"] .pricing-faq h2,
+html[data-theme="day"] .profile-topbar h1,
+html[data-theme="day"] .profile-card h2,
+html[data-theme="day"] .history-panel__header h2,
+html[data-theme="day"] .process-card h3,
+html[data-theme="day"] .feature-card h3,
+html[data-theme="day"] .converter-features h3,
+html[data-theme="day"] .studio-card h3,
+html[data-theme="day"] .outcome-copy h2,
+html[data-theme="day"] .outcome-card strong,
+html[data-theme="day"] .pricing-card h2,
+html[data-theme="day"] .pricing-card__price strong,
+html[data-theme="day"] .upload-panel h2,
+html[data-theme="day"] .format-option strong,
+html[data-theme="day"] .subject-option strong,
+html[data-theme="day"] .history-item strong,
+html[data-theme="day"] .conversion-ocr-progress strong {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .home-about__copy,
+html[data-theme="day"] .process-card p,
+html[data-theme="day"] .feature-card li,
+html[data-theme="day"] .converter-features p,
+html[data-theme="day"] .studio-card > span,
+html[data-theme="day"] .studio-card li,
+html[data-theme="day"] .outcome-copy > p:last-of-type,
+html[data-theme="day"] .outcome-card span,
+html[data-theme="day"] .converter-hero > p:last-child,
+html[data-theme="day"] .pricing-hero > p:last-child,
+html[data-theme="day"] .pricing-faq__header > p:last-child,
+html[data-theme="day"] .pricing-faq article > p,
+html[data-theme="day"] .pricing-card li,
+html[data-theme="day"] .pricing-card__price span,
+html[data-theme="day"] .profile-topbar p:last-child,
+html[data-theme="day"] .profile-card p,
+html[data-theme="day"] .upload-panel p,
+html[data-theme="day"] .format-option small,
+html[data-theme="day"] .subject-option small,
+html[data-theme="day"] .history-item span,
+html[data-theme="day"] .conversion-ocr-progress span {
+  color: rgba(31, 41, 51, 0.66);
+}
+
+html[data-theme="day"] .home-about__panel,
+html[data-theme="day"] .process-card,
+html[data-theme="day"] .feature-card,
+html[data-theme="day"] .studio-card,
+html[data-theme="day"] .outcome-card,
+html[data-theme="day"] .outcome-copy,
+html[data-theme="day"] .pricing-card,
+html[data-theme="day"] .pricing-faq article,
+html[data-theme="day"] .history-panel,
+html[data-theme="day"] .profile-card,
+html[data-theme="day"] .settings-panel,
+html[data-theme="day"] .upload-panel,
+html[data-theme="day"] .paste-panel,
+html[data-theme="day"] .step-card,
+html[data-theme="day"] .conversion-history,
+html[data-theme="day"] .review-panel,
+html[data-theme="day"] .export-panel,
+html[data-theme="day"] .auth-card,
+html[data-theme="day"] .auth-form-panel {
+  border-color: rgba(31, 41, 51, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 250, 247, 0.78)),
+    rgba(255, 255, 255, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 22px 60px rgba(44, 64, 82, 0.1);
+}
+
+html[data-theme="day"] .home-about__panel::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.22), transparent 48%, rgba(238, 247, 246, 0.48)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(248, 250, 247, 0.46));
+}
+
+html[data-theme="day"] .home-about__rays {
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+html[data-theme="day"] .process-card svg,
+html[data-theme="day"] .feature-card svg,
+html[data-theme="day"] .converter-features svg,
+html[data-theme="day"] .outcome-card svg,
+html[data-theme="day"] .studio-card li svg,
+html[data-theme="day"] .conversion-alert svg,
+html[data-theme="day"] .conversion-ocr-progress svg,
+html[data-theme="day"] .pricing-card li svg,
+html[data-theme="day"] .pricing-faq article.is-open .pricing-faq__question svg,
+html[data-theme="day"] .selected-file-strip button {
+  color: #345d75;
+}
+
+html[data-theme="day"] .process-card span {
+  color: rgba(52, 93, 117, 0.2);
+}
+
+html[data-theme="day"] .feature-video {
+  border-color: rgba(31, 41, 51, 0.12);
+  background: #e6ecea;
+}
+
+html[data-theme="day"] .feature-video::after {
+  background: linear-gradient(180deg, transparent, rgba(31, 41, 51, 0.48));
+}
+
+html[data-theme="day"] .feature-card a,
+html[data-theme="day"] .feature-card__link-spacer,
+html[data-theme="day"] .pricing-faq__header a,
+html[data-theme="day"] .profile-card aside strong {
+  color: #345d75;
+}
+
+html[data-theme="day"] .home-studio::before,
+html[data-theme="day"] .home-testimonials::before {
+  border-color: rgba(52, 93, 117, 0.09);
+  background: radial-gradient(circle, rgba(112, 156, 177, 0.13), transparent 68%);
+}
+
+html[data-theme="day"] .studio-board__rail {
+  background: linear-gradient(90deg, transparent, rgba(52, 93, 117, 0.38), transparent);
+}
+
+html[data-theme="day"] .studio-board__rail::after {
+  background: linear-gradient(90deg, transparent, rgba(112, 156, 177, 0.72), transparent);
+}
+
+html[data-theme="day"] .studio-board__rail span {
+  background: #345d75;
+  box-shadow: 0 0 30px rgba(52, 93, 117, 0.28);
+}
+
+html[data-theme="day"] .studio-card p {
+  color: rgba(52, 93, 117, 0.72);
+}
+
+html[data-theme="day"] .studio-card li,
+html[data-theme="day"] .subject-option,
+html[data-theme="day"] .format-option,
+html[data-theme="day"] .history-item,
+html[data-theme="day"] .profile-card aside,
+html[data-theme="day"] .selected-file-strip,
+html[data-theme="day"] .conversion-alert,
+html[data-theme="day"] .conversion-ocr-progress,
+html[data-theme="day"] .convert-steps button {
+  border-color: rgba(31, 41, 51, 0.11);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+html[data-theme="day"] .studio-card:hover,
+html[data-theme="day"] .format-option.is-selected,
+html[data-theme="day"] .format-option:hover,
+html[data-theme="day"] .subject-option.is-selected,
+html[data-theme="day"] .subject-option:hover,
+html[data-theme="day"] .history-item:hover,
+html[data-theme="day"] .history-item:focus-visible,
+html[data-theme="day"] .history-item.is-active,
+html[data-theme="day"] .pricing-faq article:hover,
+html[data-theme="day"] .pricing-faq article.is-open,
+html[data-theme="day"] .convert-steps button.is-active {
+  border-color: rgba(52, 93, 117, 0.28);
+  background: rgba(238, 247, 246, 0.86);
+}
+
+html[data-theme="day"] .convert-steps button.is-active {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .convert-steps button.is-done span,
+html[data-theme="day"] .upload-success__mark {
+  background: #345d75;
+  color: #ffffff;
+}
+
+html[data-theme="day"] .convert-steps span {
+  border-color: rgba(52, 93, 117, 0.32);
+  color: #345d75;
+}
+
+html[data-theme="day"] .convert-steps small,
+html[data-theme="day"] .settings-panel__title,
+html[data-theme="day"] .conversion-history header {
+  color: rgba(31, 41, 51, 0.56);
+}
+
+html[data-theme="day"] .step-actions,
+html[data-theme="day"] .settings-panel__title {
+  border-color: rgba(31, 41, 51, 0.1);
+}
+
+html[data-theme="day"] .step-actions button,
+html[data-theme="day"] .profile-topbar__actions button,
+html[data-theme="day"] .material-row__actions button,
+html[data-theme="day"] .profile-pagination button,
+html[data-theme="day"] .profile-card aside button,
+html[data-theme="day"] .pricing-card button {
+  border-color: rgba(31, 41, 51, 0.16);
+  background: rgba(255, 255, 255, 0.56);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .step-actions button:hover,
+html[data-theme="day"] .profile-topbar__actions button:hover,
+html[data-theme="day"] .material-row__actions button:hover,
+html[data-theme="day"] .profile-pagination button:hover,
+html[data-theme="day"] .profile-card aside button:hover,
+html[data-theme="day"] .pricing-card button:hover {
+  border-color: rgba(52, 93, 117, 0.32);
+  background: #eef7f6;
+  color: #111827;
+}
+
+html[data-theme="day"] .paste-panel input,
+html[data-theme="day"] .paste-panel textarea,
+html[data-theme="day"] .auth-input {
+  border-color: rgba(31, 41, 51, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: #1f2933;
+  -webkit-text-fill-color: #1f2933;
+  caret-color: #345d75;
+}
+
+html[data-theme="day"] .paste-panel input:focus,
+html[data-theme="day"] .paste-panel textarea:focus,
+html[data-theme="day"] .auth-input:focus {
+  border-color: #345d75;
+  box-shadow: 0 1px 0 rgba(52, 93, 117, 0.28);
+}
+
+html[data-theme="day"] .auth-input::placeholder {
+  color: rgba(31, 41, 51, 0.56);
+  -webkit-text-fill-color: rgba(31, 41, 51, 0.56);
+}
+
+html[data-theme="day"] .auth-label,
+html[data-theme="day"] .auth-link,
+html[data-theme="day"] .auth-subtitle,
+html[data-theme="day"] .auth-footer,
+html[data-theme="day"] .auth-footer a {
+  color: rgba(31, 41, 51, 0.58);
+}
+
+html[data-theme="day"] .space-y-1:has(.auth-input:focus) .auth-label,
+html[data-theme="day"] .space-y-1:has(.auth-input:not(:placeholder-shown)) .auth-label,
+html[data-theme="day"] .auth-link:hover {
+  color: #345d75;
+}
+
+html[data-theme="day"] .auth-title,
+html[data-theme="day"] .auth-register-title,
+html[data-theme="day"] .auth-brand span,
+html[data-theme="day"] .auth-media-copy strong {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .auth-brand i {
+  background: rgba(31, 41, 51, 0.18);
+}
+
+html[data-theme="day"] .auth-brand small,
+html[data-theme="day"] .auth-media-copy span,
+html[data-theme="day"] .auth-register-subtitle,
+html[data-theme="day"] .auth-media-copy p {
+  color: rgba(31, 41, 51, 0.58);
+}
+
+html[data-theme="day"] .auth-help-button,
+html[data-theme="day"] .auth-icon-button {
+  border-color: rgba(31, 41, 51, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .auth-button,
+html[data-theme="day"] .auth-form-panel form .auth-button {
+  border-color: #1f2933 !important;
+  background: #1f2933 !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 34px rgba(31, 41, 51, 0.16) !important;
+}
+
+html[data-theme="day"] .auth-button:hover,
+html[data-theme="day"] .auth-form-panel form .auth-button:hover {
+  background: #345d75 !important;
+}
+
+html[data-theme="day"] .auth-alert {
+  border-color: rgba(31, 41, 51, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  color: #1f2933;
+}
+
+html[data-theme="day"] .profile-avatar {
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.72), transparent 1rem),
+    #eef7f6;
+  color: #1f2933;
+}
+
+html[data-theme="day"] .profile-card > div:not(.profile-avatar) span {
+  border-color: rgba(31, 41, 51, 0.14);
+  color: #1f2933;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+html[data-theme="day"] .pricing-card.is-selected {
+  border-color: rgba(31, 41, 51, 0.72);
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(52, 93, 117, 0.16),
+    0 30px 70px rgba(44, 64, 82, 0.16);
+}
+
+html[data-theme="day"] .pricing-card__badge {
+  background: #1f2933;
+  color: #ffffff;
+}
+
+html[data-theme="day"] .pricing-quote {
+  border-color: rgba(31, 41, 51, 0.12);
+  background: #e8efef;
+}
+
+html[data-theme="day"] .pricing-quote img {
+  opacity: 0.38;
+}
+
+html[data-theme="day"] .pricing-quote div {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+html[data-theme="day"] .pricing-quote p {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .stitch-footer {
+  border-color: rgba(31, 41, 51, 0.1);
+  background: #ffffff;
+  color: rgba(31, 41, 51, 0.66);
+}
+
+html[data-theme="day"] .stitch-footer strong,
+html[data-theme="day"] .stitch-footer nav a,
+html[data-theme="day"] .stitch-footer nav button {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .stitch-footer__brand span,
+html[data-theme="day"] .stitch-footer__copy {
+  color: rgba(31, 41, 51, 0.62);
+}
+
+html[data-theme="day"] .review-sidebar {
+  border-color: rgba(31, 41, 51, 0.14);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+html[data-theme="day"] .question-map button {
+  border-color: rgba(31, 41, 51, 0.18);
+  background: #ffffff;
+}
+
+html[data-theme="day"] .question-map button.has-issue {
+  border-color: rgba(163, 91, 39, 0.35);
+  background: #fff6de;
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import {
   ArrowRight,
   BookOpenCheck,
@@ -20,15 +20,19 @@ import InfiniteMovingCards from "@/components/InfiniteMovingCards.vue"
 import LightRays from "@/components/LightRays.vue"
 import LogoLoop from "@/components/LogoLoop.vue"
 import TiltedCard from "@/components/TiltedCard.vue"
+import { useTheme } from "@/services/theme"
 import { VIDEO_ASSETS } from "@/services/videoAssets"
 
 const videoReady = ref(false)
 const pageRoot = ref<HTMLElement | null>(null)
 const revealRoot = ref<HTMLElement | null>(null)
+const { theme } = useTheme()
 let revealObserver: IntersectionObserver | null = null
 let scrollFrame = 0
-const heroVideoSrc = VIDEO_ASSETS.homeHero
-const heroPosterSrc = VIDEO_ASSETS.homeHeroPoster
+const heroVideoSrc = computed(() =>
+  theme.value === "day" ? VIDEO_ASSETS.homeHeroDay : VIDEO_ASSETS.homeHero,
+)
+const heroPosterSrc = computed(() => (theme.value === "day" ? "" : VIDEO_ASSETS.homeHeroPoster))
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
@@ -152,6 +156,10 @@ function handleVideoReady() {
   videoReady.value = true
 }
 
+watch(heroVideoSrc, () => {
+  videoReady.value = false
+})
+
 function updateScrollMotion() {
   scrollFrame = 0
 
@@ -225,12 +233,14 @@ onBeforeUnmount(() => {
     <section class="home-hero">
       <div class="home-hero__frame">
         <img
+          v-if="heroPosterSrc"
           class="home-hero__poster"
           :src="heroPosterSrc"
           alt="电影感学习空间"
           fetchpriority="high"
         />
         <video
+          :key="heroVideoSrc"
           aria-hidden="true"
           autoplay
           loop
