@@ -30,6 +30,7 @@ backend/app/
 ├─ database/             # SQLAlchemy Base、Engine、Session
 ├─ modules/
 │  ├─ admin_auth/        # 管理员独立登录
+│  ├─ auth/              # 普通用户注册、登录、密码重置
 │  ├─ audit_logs/        # 管理员操作审计
 │  ├─ conversions/       # 转换记录管理
 │  ├─ points/            # 积分流水
@@ -69,6 +70,26 @@ require_permission("audit_logs:read")
 | `rbac:read` | 查看角色权限 |
 | `rbac:manage` | 管理角色权限 |
 | `audit_logs:read` | 查看审计日志 |
+
+## 普通用户认证
+
+普通用户认证模块位于：
+
+```text
+backend/app/modules/auth/
+```
+
+对外接口保持不变：
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+GET  /api/auth/me
+```
+
+`backend/app/auth.py` 只保留兼容入口，向旧转换模块继续暴露 `AuthUser`、`get_current_user` 和旧 SQLite `get_connection()`。转换模块完成迁移后，这个兼容层可以进一步瘦身。
 
 ## 数据库与迁移
 

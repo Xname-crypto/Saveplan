@@ -26,9 +26,11 @@ SessionLocal = sessionmaker(
     bind=engine,
     expire_on_commit=False,
 )
+_tables_initialized = False
 
 
 def get_db() -> Generator[Session, None, None]:
+    ensure_database_initialized()
     db = SessionLocal()
     try:
         yield db
@@ -37,8 +39,16 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_database() -> None:
+    global _tables_initialized
     if not AUTO_CREATE_TABLES:
         return
     from . import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    _tables_initialized = True
+
+
+def ensure_database_initialized() -> None:
+    if _tables_initialized:
+        return
+    init_database()

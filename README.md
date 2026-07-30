@@ -124,6 +124,7 @@ npm run build
 
 - 所有需要登录的接口必须从请求中校验用户身份。
 - 管理后台接口必须使用独立管理员登录和 RBAC 权限校验。
+- 普通用户认证已迁移到 `backend/app/modules/auth/`，对外 API 路径保持 `/api/auth/*` 不变。
 - 新增后端模块必须遵循 `controller.py -> service.py -> crud.py -> model.py` 的模块四层约定，详见 [backend/ARCHITECTURE.md](backend/ARCHITECTURE.md)。
 - 积分扣除、转换历史和上传文件记录由后端保存，前端只负责展示。
 - 不要把真实 `.env`、JWT 密钥、OCR Token 或其他私密配置提交到 GitHub。

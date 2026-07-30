@@ -46,6 +46,7 @@ ADMIN_JWT_SECRET = os.getenv("SAVEPLAN_ADMIN_JWT_SECRET") or os.getenv(
     "SAVEPLAN_JWT_SECRET",
     "saveplan-local-dev-admin-jwt-secret",
 )
+JWT_SECRET = os.getenv("SAVEPLAN_JWT_SECRET", "saveplan-local-dev-jwt-secret")
 ADMIN_SESSION_MINUTES = int(os.getenv("SAVEPLAN_ADMIN_SESSION_MINUTES", "720"))
 ADMIN_BOOTSTRAP_EMAIL = os.getenv("SAVEPLAN_ADMIN_EMAIL")
 ADMIN_BOOTSTRAP_PASSWORD = os.getenv("SAVEPLAN_ADMIN_PASSWORD")
