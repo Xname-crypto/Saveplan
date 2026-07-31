@@ -308,4 +308,65 @@ onMounted(() => {
   width: 1.18rem;
   height: 1.18rem;
 }
+
+:global(html[data-theme="day"]) .auth-wave-field__top {
+  color: rgba(31, 41, 51, 0.64);
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control input {
+  border-bottom-color: rgba(52, 93, 117, 0.32) !important;
+  color: #1f2933 !important;
+  -webkit-text-fill-color: #1f2933 !important;
+  caret-color: #345d75;
+  text-shadow: none !important;
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control input:focus,
+:global(html[data-theme="day"]) .auth-wave-field__control input:not(:placeholder-shown),
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill,
+:global(html[data-theme="day"]) .auth-wave-field__control.has-value input {
+  border-bottom-color: #68bdf0 !important;
+  box-shadow:
+    0 1px 0 rgba(104, 189, 240, 0.72),
+    0 9px 22px rgba(52, 93, 117, 0.08) !important;
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill,
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill:hover,
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill:focus,
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill:active {
+  color: #1f2933 !important;
+  -webkit-text-fill-color: #1f2933 !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  caret-color: #345d75 !important;
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control label {
+  color: rgba(52, 93, 117, 0.74);
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control input:focus + label span,
+:global(html[data-theme="day"]) .auth-wave-field__control input:not(:placeholder-shown) + label span,
+:global(html[data-theme="day"]) .auth-wave-field__control input:-webkit-autofill + label span,
+:global(html[data-theme="day"]) .auth-wave-field__control.has-value label span {
+  color: #68bdf0;
+  text-shadow: 0 0 14px rgba(104, 189, 240, 0.22);
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__leading,
+:global(html[data-theme="day"]) .auth-wave-field__trailing {
+  color: rgba(52, 93, 117, 0.62);
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__control:has(input:focus) .auth-wave-field__leading,
+:global(html[data-theme="day"]) .auth-wave-field__control:has(input:not(:placeholder-shown)) .auth-wave-field__leading,
+:global(html[data-theme="day"]) .auth-wave-field__control:has(input:-webkit-autofill) .auth-wave-field__leading,
+:global(html[data-theme="day"]) .auth-wave-field__control.has-value .auth-wave-field__leading {
+  color: #68bdf0;
+  filter: drop-shadow(0 0 8px rgba(104, 189, 240, 0.26));
+}
+
+:global(html[data-theme="day"]) .auth-wave-field__trailing :deep(button) {
+  color: #345d75;
+}
 </style>
