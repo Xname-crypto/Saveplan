@@ -37,8 +37,8 @@ const isDayTheme = computed(() => theme.value === "day")
 const homeGlowColor = computed(() => (isDayTheme.value ? "204 54 39" : "46 88 78"))
 const homeGlowIntensity = computed(() => (isDayTheme.value ? 1.1 : 1.75))
 const homeGlowRadius = computed(() => (isDayTheme.value ? 42 : 58))
-const aboutRayColor = computed(() => (isDayTheme.value ? "#5f90a8" : "#d6c58d"))
-const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.54 : 0.95))
+const aboutRayColor = computed(() => (isDayTheme.value ? "#345d75" : "#d6c58d"))
+const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.82 : 0.95))
 const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#090909"))
 
 const aboutText =
@@ -289,15 +289,15 @@ onBeforeUnmount(() => {
             class="home-about__rays"
             rays-origin="top-center"
             :rays-color="aboutRayColor"
-            :rays-speed="0.62"
-            :light-spread="isDayTheme ? 0.92 : 0.78"
-            :ray-length="1.45"
-            :fade-distance="1.1"
-            :saturation="isDayTheme ? 0.72 : 0.86"
+            :rays-speed="isDayTheme ? 1.08 : 0.62"
+            :light-spread="isDayTheme ? 0.68 : 0.78"
+            :ray-length="isDayTheme ? 1.68 : 1.45"
+            :fade-distance="isDayTheme ? 1.22 : 1.1"
+            :saturation="isDayTheme ? 1.08 : 0.86"
             :follow-mouse="true"
-            :mouse-influence="0.08"
-            :noise-amount="isDayTheme ? 0.08 : 0.18"
-            :distortion="isDayTheme ? 0.12 : 0.22"
+            :mouse-influence="isDayTheme ? 0.12 : 0.08"
+            :noise-amount="isDayTheme ? 0.14 : 0.18"
+            :distortion="isDayTheme ? 0.24 : 0.22"
             :style="{ opacity: aboutRayOpacity }"
             pulsating
           />
@@ -305,9 +305,10 @@ onBeforeUnmount(() => {
           <h2>从混乱到有序，<span>重塑你的学习边界。</span></h2>
           <DecryptedText
             :text="aboutText"
-            :speed="28"
+            :speed="isDayTheme ? 16 : 28"
             :sequential="true"
-            :use-original-chars-only="true"
+            :use-original-chars-only="!isDayTheme"
+            characters="学习效率转换题库AI0123456789"
             reveal-direction="start"
             animate-on="view"
             parent-class-name="home-about__copy"
