@@ -200,6 +200,46 @@ img.infinite-moving-cards__avatar {
   white-space: nowrap;
 }
 
+:global(html[data-theme="day"] .infinite-moving-cards) {
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__item) {
+  border-color: rgba(31, 41, 51, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 251, 250, 0.9)),
+    #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 18px 44px rgba(44, 64, 82, 0.1);
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__quote-icon) {
+  border-color: rgba(52, 93, 117, 0.44);
+  color: #345d75;
+  background: rgba(238, 247, 246, 0.82);
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__item p) {
+  color: rgba(31, 41, 51, 0.82);
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__item footer) {
+  border-color: rgba(31, 41, 51, 0.1);
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__avatar) {
+  border-color: rgba(52, 93, 117, 0.18);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.95), transparent 23%),
+    linear-gradient(140deg, #c9e1cd, #e7d3a0 54%, #8ab2c8);
+  color: #1f2933;
+}
+
+:global(html[data-theme="day"] .infinite-moving-cards__item strong) {
+  color: #1f2933;
+}
+
 @keyframes infinite-moving-cards-scroll {
   to {
     transform: translate3d(calc(-50% - 0.5rem), 0, 0);

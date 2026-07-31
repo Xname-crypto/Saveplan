@@ -342,6 +342,30 @@ watch(
   transform: scale(1.08);
 }
 
+:global(html[data-theme="day"] .logo-loop__item) {
+  border-color: rgba(52, 93, 117, 0.14);
+  background: rgba(255, 255, 255, 0.68);
+  color: rgba(52, 93, 117, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 10px 24px rgba(44, 64, 82, 0.06);
+}
+
+:global(html[data-theme="day"] .logo-loop__icon) {
+  color: rgba(52, 93, 117, 0.8);
+}
+
+:global(html[data-theme="day"] .logo-loop--scale .logo-loop__item:hover) {
+  border-color: rgba(52, 93, 117, 0.34);
+  background: #ffffff;
+  color: #1f2933;
+  transform: scale(1.04);
+}
+
+:global(html[data-theme="day"] .logo-loop--scale .logo-loop__item:hover .logo-loop__icon) {
+  color: #345d75;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .logo-loop {
     overflow: visible;
