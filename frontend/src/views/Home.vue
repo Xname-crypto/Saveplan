@@ -270,6 +270,35 @@ onBeforeUnmount(() => {
             <h1>在方寸之间，<br />让效率起航。</h1>
           </div>
           <aside>
+            <div class="hero-preview-card" aria-label="AI conversion preview">
+              <span class="hero-preview-card__icon" aria-hidden="true">
+                <FileText :size="34" />
+                <Sparkles :size="16" />
+              </span>
+
+              <div class="hero-preview-card__body">
+                <span class="hero-preview-card__status">
+                  <i />
+                  AI 正在整理
+                </span>
+                <h2>把混乱资料变成复习卡片</h2>
+                <p>
+                  上传试卷、截图或手写公式，自动拆分题干、选项、答案和解析。
+                </p>
+
+                <div class="hero-preview-card__flow" aria-hidden="true">
+                  <span>PDF 试卷</span>
+                  <span>OCR</span>
+                  <span>Anki</span>
+                </div>
+              </div>
+
+              <RouterLink class="hero-preview-card__link" to="/convert">查看转换流程</RouterLink>
+              <RouterLink class="hero-preview-card__action" to="/convert">
+                立即开始
+                <ArrowRight :size="15" />
+              </RouterLink>
+            </div>
             <p>
               我们相信，每个备考的人都值得更高效的学习方式。海量试卷和资料不该成为负担，而应该成为你前进的燃料。
             </p>
