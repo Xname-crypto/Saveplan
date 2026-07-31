@@ -1047,7 +1047,10 @@
 .cinema-nav__theme-float {
   position: fixed;
   top: calc(1.15rem + (3.7rem - 2.5em) / 2);
-  right: 1rem;
+  left: min(
+    calc(100vw - 4.875rem),
+    calc(50% + min(calc(100vw - 8rem), 1040px) / 2 + 0.75rem)
+  );
   z-index: 65;
 }
 
@@ -5023,6 +5026,7 @@
 
   .cinema-nav__theme-float {
     top: 4.85rem;
+    left: auto;
     right: 0.85rem;
   }
 
