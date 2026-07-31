@@ -46,16 +46,8 @@ defineEmits<{
   (e: 'back'): void
 }>();
 
-const goBack = () => {
-  const from = window.history.state?.from;
-  const fallback = '/';
-
-  if (typeof from === 'string' && from && from !== window.location.href && !from.startsWith('/login') && !from.startsWith('/register') && !from.startsWith('/forgot-password') && !from.startsWith('/reset-password')) {
-    void router.push(from);
-    return;
-  }
-
-  void router.push(fallback);
+const closeAuth = () => {
+  void router.push('/');
 };
 
 const resetVideoState = () => {
@@ -198,7 +190,7 @@ watch(
         <!-- Close Button -->
         <button 
           type="button"
-          @click="goBack"
+          @click.stop="closeAuth"
           class="auth-icon-button absolute top-6 right-6 z-20 p-2 transition-all"
           aria-label="关闭"
           title="关闭"
