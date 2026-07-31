@@ -163,7 +163,6 @@ onBeforeUnmount(() => {
     </nav>
 
     <div class="cinema-nav__actions">
-      <ThemeSwitch :checked="!isDayTheme" :ariaLabel="themeToggleLabel" @change="toggleTheme" />
       <div v-if="currentUser" ref="userMenuRef" class="cinema-nav__user">
         <button
           class="cinema-nav__avatar"
@@ -199,6 +198,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <RouterLink v-else class="cinema-nav__login" to="/login">登录 / 注册</RouterLink>
+      <ThemeSwitch :checked="!isDayTheme" :ariaLabel="themeToggleLabel" @change="toggleTheme" />
       <button class="cinema-nav__menu" type="button" aria-label="打开菜单">
         <Menu :size="20" />
       </button>
