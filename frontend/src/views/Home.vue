@@ -44,6 +44,25 @@ const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#09090
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
 
+const insideChips = [
+  "PDF 试卷",
+  "课堂截图",
+  "手写公式",
+  "Word 讲义",
+  "OCR",
+  "错题本",
+  "Anki",
+  "Markdown",
+  "知识点",
+  "解析",
+]
+
+const insideMetrics = [
+  { value: "03", label: "导出格式" },
+  { value: "24h", label: "云端留存" },
+  { value: "AI", label: "自动拆题" },
+]
+
 const features = [
   {
     title: "智能转换 (01)",
@@ -295,6 +314,74 @@ onBeforeUnmount(() => {
 
     <main ref="revealRoot">
       <section id="about" class="home-about">
+        <div class="home-inside stitch-reveal" aria-labelledby="home-inside-title">
+          <div class="home-inside__heading">
+            <h2 id="home-inside-title">What's inside</h2>
+            <p>从上传到复习，核心能力都在这里。</p>
+          </div>
+
+          <div class="home-inside__grid">
+            <article class="home-inside-card home-inside-card--wide home-inside-card--chips">
+              <div class="home-inside-card__visual home-inside-card__visual--chips" aria-hidden="true">
+                <span v-for="chip in insideChips" :key="chip">{{ chip }}</span>
+              </div>
+              <h3>多格式资料入口</h3>
+              <p>试卷、截图、讲义和手写内容集中导入，自动进入同一套 AI 整理流程。</p>
+            </article>
+
+            <article class="home-inside-card home-inside-card--orbit">
+              <div class="home-inside-orbit" aria-hidden="true">
+                <span><UploadCloud :size="17" /></span>
+                <span><BrainCircuit :size="17" /></span>
+                <span><Layers3 :size="17" /></span>
+                <span><BookOpenCheck :size="17" /></span>
+                <strong><Sparkles :size="26" /></strong>
+              </div>
+              <h3>流程清晰可控</h3>
+              <p>上传、识别、校对、导出分层处理，不用在一堆混乱资料里反复找答案。</p>
+            </article>
+
+            <article class="home-inside-card home-inside-card--stack">
+              <div class="home-inside-stack" aria-hidden="true">
+                <span><FileText :size="18" /> PDF</span>
+                <span><PenLine :size="18" /> Markdown</span>
+                <span><BookOpenCheck :size="18" /> Anki</span>
+              </div>
+              <h3>复习格式就绪</h3>
+              <p>整理后的题目可以直接导出，适配刷题、背诵和二次编辑。</p>
+            </article>
+
+            <article class="home-inside-card home-inside-card--code">
+              <div class="home-inside-code" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <pre>$ ai parse exam.pdf
+1 识别题干与选项
+2 对齐答案解析
+3 生成复习卡片</pre>
+              </div>
+              <h3>AI 结构化拆题</h3>
+              <p>把题干、选项、答案、解析拆成清晰字段，减少后期手动校对量。</p>
+            </article>
+
+            <article class="home-inside-card home-inside-card--stats">
+              <div class="home-inside-stats" aria-hidden="true">
+                <strong>3.4x</strong>
+                <svg viewBox="0 0 220 84" role="img">
+                  <path d="M4 68 C 38 64, 56 54, 86 50 S 136 34, 166 27 S 199 17, 216 10" />
+                </svg>
+              </div>
+              <div class="home-inside-metrics" aria-hidden="true">
+                <span v-for="metric in insideMetrics" :key="metric.label">
+                  <b>{{ metric.value }}</b>
+                  {{ metric.label }}
+                </span>
+              </div>
+              <h3>复习准备更快</h3>
+              <p>把整理资料的时间压缩下来，让用户更快进入真正的复习状态。</p>
+            </article>
+          </div>
+        </div>
+
         <div class="home-about__layout">
           <div class="home-about__panel stitch-reveal">
             <LightRays
