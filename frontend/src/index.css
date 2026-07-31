@@ -5761,7 +5761,7 @@ html[data-theme="day"] .selected-file-strip button {
 }
 
 html[data-theme="day"] .process-card span {
-  color: rgba(52, 93, 117, 0.2);
+  color: #1f2933;
 }
 
 html[data-theme="day"] .feature-video {
@@ -6084,7 +6084,7 @@ html[data-theme="day"] .process-card {
 }
 
 html[data-theme="day"] .process-card span {
-  color: rgba(52, 93, 117, 0.28);
+  color: #1f2933;
 }
 
 html[data-theme="day"] .converter-shell,
