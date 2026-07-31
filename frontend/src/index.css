@@ -6347,3 +6347,199 @@ html[data-theme="day"] .profile-pagination button.is-active {
 html[data-theme="day"] .profile-card::after {
   background: rgba(112, 156, 177, 0.12);
 }
+
+html[data-theme="day"] .border-glow-card__outer {
+  mix-blend-mode: normal !important;
+}
+
+html[data-theme="day"] .border-glow-card__rim {
+  filter: drop-shadow(0 0 10px rgba(52, 93, 117, 0.16));
+}
+
+html[data-theme="day"] .home-scroll-progress {
+  height: 3px;
+  box-shadow:
+    0 0 20px rgba(52, 93, 117, 0.34),
+    0 0 42px rgba(112, 156, 177, 0.18);
+}
+
+html[data-theme="day"] .hero-cta::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.75),
+    rgba(112, 156, 177, 0.45),
+    transparent
+  );
+}
+
+html[data-theme="day"] .home-about__copy-char--encrypted {
+  color: #345d75;
+  text-shadow: 0 0 0.65rem rgba(52, 93, 117, 0.26);
+}
+
+html[data-theme="day"] .home-about__panel:hover,
+html[data-theme="day"] .process-card:hover,
+html[data-theme="day"] .feature-card:hover,
+html[data-theme="day"] .studio-card:hover,
+html[data-theme="day"] .outcome-card:hover,
+html[data-theme="day"] .pricing-card:hover,
+html[data-theme="day"] .profile-card:hover,
+html[data-theme="day"] .material-row:hover,
+html[data-theme="day"] .history-item:hover {
+  border-color: rgba(52, 93, 117, 0.34) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 24px 60px rgba(44, 64, 82, 0.14),
+    0 0 0 1px rgba(52, 93, 117, 0.08) !important;
+}
+
+html[data-theme="day"] .feature-video:hover {
+  border-color: rgba(52, 93, 117, 0.3);
+  box-shadow: 0 22px 56px rgba(44, 64, 82, 0.16);
+}
+
+html[data-theme="day"] .feature-video:hover video,
+html[data-theme="day"] .feature-video:hover img {
+  filter: saturate(1.08) contrast(1.04) brightness(1.04);
+}
+
+html[data-theme="day"] .studio-board__rail {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(52, 93, 117, 0.46), transparent);
+}
+
+html[data-theme="day"] .studio-board__rail::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(52, 93, 117, 0.9),
+    rgba(255, 255, 255, 0.92),
+    transparent
+  );
+  box-shadow: 0 0 22px rgba(52, 93, 117, 0.24);
+}
+
+html[data-theme="day"] .studio-board__rail span {
+  box-shadow:
+    0 0 0 6px rgba(52, 93, 117, 0.1),
+    0 0 28px rgba(52, 93, 117, 0.34);
+}
+
+html[data-theme="day"] .upload-panel::before {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(112, 156, 177, 0.3), transparent 44%),
+    linear-gradient(135deg, rgba(52, 93, 117, 0.18), transparent 52%);
+}
+
+html[data-theme="day"] .upload-panel:hover .upload-panel__inner,
+html[data-theme="day"] .format-option.is-selected,
+html[data-theme="day"] .subject-option.is-selected,
+html[data-theme="day"] .convert-steps button.is-active {
+  box-shadow:
+    0 0 0 3px rgba(52, 93, 117, 0.08),
+    0 18px 42px rgba(44, 64, 82, 0.12);
+}
+
+html[data-theme="day"] .upload-panel:hover .upload-panel__inner > svg {
+  color: #345d75;
+  filter: drop-shadow(0 0 12px rgba(52, 93, 117, 0.24));
+}
+
+html[data-theme="day"] .upload-panel span {
+  border-color: rgba(52, 93, 117, 0.22);
+  background: rgba(255, 255, 255, 0.72);
+  color: #345d75;
+}
+
+html[data-theme="day"] .upload-panel__progress {
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid rgba(52, 93, 117, 0.14);
+}
+
+html[data-theme="day"] .upload-panel__progress i {
+  background: linear-gradient(90deg, #345d75, #8ab2c8, #345d75);
+  box-shadow: 0 0 18px rgba(52, 93, 117, 0.28);
+}
+
+html[data-theme="day"] .upload-panel__progress strong {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .upload-panel__progress span {
+  color: rgba(31, 41, 51, 0.62);
+}
+
+html[data-theme="day"] .spin-icon {
+  color: #345d75;
+  filter: drop-shadow(0 0 7px rgba(52, 93, 117, 0.24));
+}
+
+html[data-theme="day"] .conversion-ocr-progress {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 16px 38px rgba(44, 64, 82, 0.1);
+}
+
+html[data-theme="day"] .pricing-card.is-featured,
+html[data-theme="day"] .pricing-card.is-selected,
+html[data-theme="day"] .pricing-faq article.is-open {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 24px 64px rgba(52, 93, 117, 0.16),
+    0 0 0 3px rgba(52, 93, 117, 0.08) !important;
+}
+
+html[data-theme="day"] .pricing-card button:hover,
+html[data-theme="day"] .profile-topbar__actions button:hover,
+html[data-theme="day"] .material-row__actions button:hover,
+html[data-theme="day"] .profile-pagination button:hover,
+html[data-theme="day"] .history-tools > button:hover,
+html[data-theme="day"] .history-filter__trigger:hover {
+  transform: translateY(-0.08rem);
+  box-shadow: 0 12px 28px rgba(44, 64, 82, 0.11);
+}
+
+html[data-theme="day"] .pricing-card__badge {
+  box-shadow: 0 12px 28px rgba(31, 41, 51, 0.18);
+}
+
+html[data-theme="day"] .profile-card::after {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 26% 22%, rgba(112, 156, 177, 0.2), transparent 46%),
+    linear-gradient(135deg, rgba(52, 93, 117, 0.08), transparent 58%);
+}
+
+html[data-theme="day"] .profile-pagination button.is-active,
+html[data-theme="day"] .history-filter__trigger.is-active,
+html[data-theme="day"] .material-row > span {
+  box-shadow: 0 0 0 3px rgba(52, 93, 117, 0.08);
+}
+
+html[data-theme="day"] .material-row__icon,
+html[data-theme="day"] .profile-card__avatar,
+html[data-theme="day"] .profile-avatar {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 12px 30px rgba(52, 93, 117, 0.12);
+}
+
+@media (max-width: 980px) {
+  html[data-theme="day"] .studio-board__rail {
+    inset: 9% auto 9% 2rem;
+    width: 1px;
+    height: auto;
+    background: linear-gradient(180deg, transparent, rgba(52, 93, 117, 0.46), transparent);
+  }
+
+  html[data-theme="day"] .studio-board__rail::after {
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(52, 93, 117, 0.9),
+      rgba(255, 255, 255, 0.92),
+      transparent
+    );
+  }
+}

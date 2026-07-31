@@ -33,6 +33,13 @@ const heroVideoSrc = computed(() =>
   theme.value === "day" ? VIDEO_ASSETS.homeHeroDay : VIDEO_ASSETS.homeHero,
 )
 const heroPosterSrc = computed(() => (theme.value === "day" ? "" : VIDEO_ASSETS.homeHeroPoster))
+const isDayTheme = computed(() => theme.value === "day")
+const homeGlowColor = computed(() => (isDayTheme.value ? "204 54 39" : "46 88 78"))
+const homeGlowIntensity = computed(() => (isDayTheme.value ? 1.1 : 1.75))
+const homeGlowRadius = computed(() => (isDayTheme.value ? 42 : 58))
+const aboutRayColor = computed(() => (isDayTheme.value ? "#5f90a8" : "#d6c58d"))
+const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.54 : 0.95))
+const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#090909"))
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
@@ -281,16 +288,17 @@ onBeforeUnmount(() => {
           <LightRays
             class="home-about__rays"
             rays-origin="top-center"
-            rays-color="#d6c58d"
+            :rays-color="aboutRayColor"
             :rays-speed="0.62"
-            :light-spread="0.78"
+            :light-spread="isDayTheme ? 0.92 : 0.78"
             :ray-length="1.45"
             :fade-distance="1.1"
-            :saturation="0.86"
+            :saturation="isDayTheme ? 0.72 : 0.86"
             :follow-mouse="true"
             :mouse-influence="0.08"
-            :noise-amount="0.18"
-            :distortion="0.22"
+            :noise-amount="isDayTheme ? 0.08 : 0.18"
+            :distortion="isDayTheme ? 0.12 : 0.22"
+            :style="{ opacity: aboutRayOpacity }"
             pulsating
           />
           <p class="stitch-eyebrow">ABOUT US</p>
@@ -340,7 +348,7 @@ onBeforeUnmount(() => {
           :gap="18"
           :hover-speed="18"
           fade-out
-          fade-out-color="#090909"
+          :fade-out-color="logoLoopFadeColor"
           scale-on-hover
           aria-label="Supported study formats"
         />
@@ -367,6 +375,9 @@ onBeforeUnmount(() => {
             as="article"
             :class-name="['feature-card stitch-reveal', `stitch-delay-${index + 1}`]"
             :animated="true"
+            :glow-color="homeGlowColor"
+            :glow-intensity="homeGlowIntensity"
+            :glow-radius="homeGlowRadius"
           >
             <PenLine :size="34" />
             <h3>{{ feature.title }}</h3>
@@ -425,6 +436,9 @@ onBeforeUnmount(() => {
           as="div"
           class-name="outcome-copy stitch-reveal"
           :animated="true"
+          :glow-color="homeGlowColor"
+          :glow-intensity="homeGlowIntensity"
+          :glow-radius="homeGlowRadius"
         >
           <p class="stitch-eyebrow">RESULTS</p>
           <h2>把零散时间，<br />还给真正的复习。</h2>
@@ -444,6 +458,9 @@ onBeforeUnmount(() => {
             as="article"
             :class-name="['outcome-card stitch-reveal', `stitch-delay-${index + 1}`]"
             :animated="true"
+            :glow-color="homeGlowColor"
+            :glow-intensity="homeGlowIntensity"
+            :glow-radius="homeGlowRadius"
           >
             <component :is="outcome.icon" :size="28" />
             <strong>{{ outcome.value }}</strong>

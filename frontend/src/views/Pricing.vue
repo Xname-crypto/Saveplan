@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { CheckCircle2, ChevronUp } from "lucide-vue-next"
 import AppFooter from "@/components/AppFooter.vue"
 import BorderGlow from "@/components/BorderGlow.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
 import TargetCursor from "@/components/TargetCursor.vue"
+import { useTheme } from "@/services/theme"
 
 const plans = [
   {
@@ -65,6 +66,8 @@ const faqs = [
 
 const selectedPlan = ref<string | null>(null)
 const openFaqIndex = ref<number | null>(null)
+const { theme } = useTheme()
+const isDayTheme = computed(() => theme.value === "day")
 
 function getPlanClasses(plan: (typeof plans)[number], index: number) {
   return [
@@ -78,10 +81,21 @@ function getPlanClasses(plan: (typeof plans)[number], index: number) {
 }
 
 function getFeaturedPlanProps(plan: (typeof plans)[number], index: number) {
+  const isSelected = selectedPlan.value === plan.name
+
   return {
     className: getPlanClasses(plan, index),
     animated: true,
-    backgroundColor: selectedPlan.value === plan.name ? "rgba(45, 42, 36, 0.9)" : "#111",
+    backgroundColor: isDayTheme.value
+      ? isSelected
+        ? "linear-gradient(145deg, rgba(238, 247, 246, 0.98), #ffffff)"
+        : "linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(247, 251, 250, 0.9))"
+      : isSelected
+        ? "rgba(45, 42, 36, 0.9)"
+        : "#111",
+    glowColor: isDayTheme.value ? "204 54 39" : "46 88 78",
+    glowIntensity: isDayTheme.value ? 1.08 : 1.75,
+    glowRadius: isDayTheme.value ? 44 : 58,
   }
 }
 

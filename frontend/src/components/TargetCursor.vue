@@ -590,4 +590,19 @@ watch(
   border-right: 0;
   transform: translate(-150%, 50%);
 }
+
+:global(html[data-theme="day"] .target-cursor) {
+  color: #1f2933;
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 0 6px rgba(52, 93, 117, 0.28));
+}
+
+:global(html[data-theme="day"] .target-cursor-dot) {
+  background: #345d75;
+  box-shadow: 0 0 0 5px rgba(52, 93, 117, 0.12);
+}
+
+:global(html[data-theme="day"] .target-cursor-corner) {
+  border-color: #345d75;
+}
 </style>
