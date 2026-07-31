@@ -38,7 +38,7 @@ const homeGlowColor = computed(() => (isDayTheme.value ? "204 54 39" : "46 88 78
 const homeGlowIntensity = computed(() => (isDayTheme.value ? 1.1 : 1.75))
 const homeGlowRadius = computed(() => (isDayTheme.value ? 42 : 58))
 const aboutRayColor = computed(() => (isDayTheme.value ? "#345d75" : "#d6c58d"))
-const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.82 : 0.95))
+const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.22 : 0.95))
 const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#090909"))
 
 const aboutText =
@@ -289,15 +289,15 @@ onBeforeUnmount(() => {
             class="home-about__rays"
             rays-origin="top-center"
             :rays-color="aboutRayColor"
-            :rays-speed="isDayTheme ? 1.08 : 0.62"
-            :light-spread="isDayTheme ? 0.68 : 0.78"
-            :ray-length="isDayTheme ? 1.68 : 1.45"
-            :fade-distance="isDayTheme ? 1.22 : 1.1"
-            :saturation="isDayTheme ? 1.08 : 0.86"
+            :rays-speed="isDayTheme ? 0.38 : 0.62"
+            :light-spread="isDayTheme ? 1.04 : 0.78"
+            :ray-length="isDayTheme ? 1.05 : 1.45"
+            :fade-distance="isDayTheme ? 0.84 : 1.1"
+            :saturation="isDayTheme ? 0.48 : 0.86"
             :follow-mouse="true"
-            :mouse-influence="isDayTheme ? 0.12 : 0.08"
-            :noise-amount="isDayTheme ? 0.14 : 0.18"
-            :distortion="isDayTheme ? 0.24 : 0.22"
+            :mouse-influence="isDayTheme ? 0.03 : 0.08"
+            :noise-amount="isDayTheme ? 0 : 0.18"
+            :distortion="isDayTheme ? 0.04 : 0.22"
             :style="{ opacity: aboutRayOpacity }"
             pulsating
           />
