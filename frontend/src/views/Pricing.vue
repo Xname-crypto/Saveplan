@@ -68,6 +68,12 @@ const selectedPlan = ref<string | null>(null)
 const openFaqIndex = ref<number | null>(null)
 const { theme } = useTheme()
 const isDayTheme = computed(() => theme.value === "day")
+const quoteImageSrc = computed(() =>
+  isDayTheme.value ? "/stitch/format-comparison.png" : "/stitch/asset-05.jpg",
+)
+const quoteImageAlt = computed(() =>
+  isDayTheme.value ? "结构化转换界面预览" : "午夜图书馆学习场景",
+)
 
 function getPlanClasses(plan: (typeof plans)[number], index: number) {
   return [
@@ -194,7 +200,7 @@ function toggleFaq(index: number) {
       </section>
 
       <section class="pricing-quote">
-        <img src="/stitch/asset-05.jpg" alt="午夜图书馆学习场景" loading="lazy" />
+        <img :src="quoteImageSrc" :alt="quoteImageAlt" loading="lazy" />
         <div />
         <p>“在最后的时限到来之前，为你的学术理想注入最后一束光。”</p>
       </section>
