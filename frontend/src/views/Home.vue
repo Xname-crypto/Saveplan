@@ -294,7 +294,55 @@ onBeforeUnmount(() => {
             <h1>在方寸之间，<br />让效率起航。</h1>
           </div>
           <aside>
-            <div class="hero-preview-card" aria-label="AI conversion preview">
+            <p>
+              我们相信，每个备考的人都值得更高效的学习方式。海量试卷和资料不该成为负担，而应该成为你前进的燃料。
+            </p>
+            <RouterLink class="hero-cta" to="/convert">
+              立即开始
+              <ArrowRight :size="20" />
+            </RouterLink>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <main ref="revealRoot">
+      <section id="about" class="home-about">
+        <div class="home-about__layout">
+          <div class="home-about__panel stitch-reveal">
+            <LightRays
+              class="home-about__rays"
+              rays-origin="top-center"
+              :rays-color="aboutRayColor"
+              :rays-speed="isDayTheme ? 0.38 : 0.62"
+              :light-spread="isDayTheme ? 1.04 : 0.78"
+              :ray-length="isDayTheme ? 1.05 : 1.45"
+              :fade-distance="isDayTheme ? 0.84 : 1.1"
+              :saturation="isDayTheme ? 0.48 : 0.86"
+              :follow-mouse="true"
+              :mouse-influence="isDayTheme ? 0.03 : 0.08"
+              :noise-amount="isDayTheme ? 0 : 0.18"
+              :distortion="isDayTheme ? 0.04 : 0.22"
+              :style="{ opacity: aboutRayOpacity }"
+              pulsating
+            />
+            <p class="stitch-eyebrow">ABOUT US</p>
+            <h2>从混乱到有序，<span>重塑你的学习边界。</span></h2>
+            <DecryptedText
+              :text="aboutText"
+              :speed="isDayTheme ? 16 : 28"
+              :sequential="true"
+              :use-original-chars-only="!isDayTheme"
+              characters="学习效率转换题库AI0123456789"
+              reveal-direction="start"
+              animate-on="view"
+              parent-class-name="home-about__copy"
+              encrypted-class-name="home-about__copy-char--encrypted"
+            />
+          </div>
+
+          <aside class="home-about__preview stitch-reveal stitch-delay-1">
+            <div class="hero-preview-card hero-preview-card--about" aria-label="AI conversion preview">
               <span class="hero-preview-card__icon" aria-hidden="true">
                 <FileText :size="34" />
                 <Sparkles :size="16" />
@@ -323,50 +371,7 @@ onBeforeUnmount(() => {
                 <ArrowRight :size="15" />
               </RouterLink>
             </div>
-            <p>
-              我们相信，每个备考的人都值得更高效的学习方式。海量试卷和资料不该成为负担，而应该成为你前进的燃料。
-            </p>
-            <RouterLink class="hero-cta" to="/convert">
-              立即开始
-              <ArrowRight :size="20" />
-            </RouterLink>
           </aside>
-        </div>
-      </div>
-    </section>
-
-    <main ref="revealRoot">
-      <section id="about" class="home-about">
-        <div class="home-about__panel stitch-reveal">
-          <LightRays
-            class="home-about__rays"
-            rays-origin="top-center"
-            :rays-color="aboutRayColor"
-            :rays-speed="isDayTheme ? 0.38 : 0.62"
-            :light-spread="isDayTheme ? 1.04 : 0.78"
-            :ray-length="isDayTheme ? 1.05 : 1.45"
-            :fade-distance="isDayTheme ? 0.84 : 1.1"
-            :saturation="isDayTheme ? 0.48 : 0.86"
-            :follow-mouse="true"
-            :mouse-influence="isDayTheme ? 0.03 : 0.08"
-            :noise-amount="isDayTheme ? 0 : 0.18"
-            :distortion="isDayTheme ? 0.04 : 0.22"
-            :style="{ opacity: aboutRayOpacity }"
-            pulsating
-          />
-          <p class="stitch-eyebrow">ABOUT US</p>
-          <h2>从混乱到有序，<span>重塑你的学习边界。</span></h2>
-          <DecryptedText
-            :text="aboutText"
-            :speed="isDayTheme ? 16 : 28"
-            :sequential="true"
-            :use-original-chars-only="!isDayTheme"
-            characters="学习效率转换题库AI0123456789"
-            reveal-direction="start"
-            animate-on="view"
-            parent-class-name="home-about__copy"
-            encrypted-class-name="home-about__copy-char--encrypted"
-          />
         </div>
       </section>
 

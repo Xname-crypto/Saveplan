@@ -1544,7 +1544,7 @@
   line-height: 1.08;
 }
 
-.home-hero__content aside .hero-preview-card p {
+.hero-preview-card p {
   max-width: none;
   margin: 0;
   color: rgba(241, 234, 213, 0.66);
@@ -1608,6 +1608,11 @@
 .hero-preview-card__action:hover {
   background: #ebe4cf;
   transform: translateY(-1px);
+}
+
+.hero-preview-card--about {
+  width: min(100%, 19.5rem);
+  margin-bottom: 0;
 }
 
 .primary-action {
@@ -1733,9 +1738,25 @@
 }
 
 .home-about {
-  width: min(100vw, 1072px);
+  width: min(calc(100vw - 2rem), 1420px);
   padding: 0 0 clamp(6rem, 9vw, 8.5rem);
   scroll-margin-top: 6rem;
+}
+
+.home-about__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1072px) minmax(17rem, 19.5rem);
+  align-items: start;
+  justify-content: center;
+  gap: clamp(1.25rem, 2.8vw, 2.3rem);
+}
+
+.home-about__preview {
+  position: sticky;
+  top: clamp(5.8rem, 8vh, 7rem);
+  z-index: 2;
+  align-self: start;
+  padding-top: clamp(2.2rem, 7vh, 4.25rem);
 }
 
 .home-about__panel {
@@ -5236,6 +5257,18 @@
 }
 
 @media (max-width: 1120px) {
+  .home-about {
+    width: min(100vw, 1072px);
+  }
+
+  .home-about__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-about__preview {
+    display: none;
+  }
+
   .auth-topbar {
     padding: 0 1.5rem;
   }
@@ -5962,7 +5995,7 @@ html[data-theme="day"] .hero-preview-card h2 {
   color: #1f2933;
 }
 
-html[data-theme="day"] .home-hero__content aside .hero-preview-card p {
+html[data-theme="day"] .hero-preview-card p {
   color: rgba(31, 41, 51, 0.66);
   text-shadow: none;
 }
