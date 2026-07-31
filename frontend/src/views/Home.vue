@@ -17,7 +17,6 @@ import BorderGlow from "@/components/BorderGlow.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
 import DecryptedText from "@/components/DecryptedText.vue"
 import InfiniteMovingCards from "@/components/InfiniteMovingCards.vue"
-import LineSidebar from "@/components/LineSidebar.vue"
 import LightRays from "@/components/LightRays.vue"
 import LogoLoop from "@/components/LogoLoop.vue"
 import TiltedCard from "@/components/TiltedCard.vue"
@@ -41,14 +40,6 @@ const homeGlowRadius = computed(() => (isDayTheme.value ? 42 : 58))
 const aboutRayColor = computed(() => (isDayTheme.value ? "#345d75" : "#d6c58d"))
 const aboutRayOpacity = computed(() => (isDayTheme.value ? 0.22 : 0.95))
 const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#090909"))
-const heroSidebarAccentColor = computed(() => (isDayTheme.value ? "#345d75" : "#d6c58d"))
-const heroSidebarTextColor = computed(() =>
-  isDayTheme.value ? "rgba(31, 41, 51, 0.64)" : "rgba(235, 228, 207, 0.58)",
-)
-const heroSidebarMarkerColor = computed(() =>
-  isDayTheme.value ? "rgba(52, 93, 117, 0.28)" : "rgba(235, 228, 207, 0.28)",
-)
-const heroSidebarItems = ["上传资料", "AI 拆题", "校对修正", "导出复习"]
 
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
@@ -272,21 +263,6 @@ onBeforeUnmount(() => {
           <source :src="heroVideoSrc" type="video/mp4" />
         </video>
         <div class="home-hero__shade" />
-        <LineSidebar
-          class-name="home-hero__line-sidebar"
-          :items="heroSidebarItems"
-          :accent-color="heroSidebarAccentColor"
-          :text-color="heroSidebarTextColor"
-          :marker-color="heroSidebarMarkerColor"
-          :default-active="1"
-          :proximity-radius="96"
-          :max-shift="22"
-          :marker-length="58"
-          :marker-gap="12"
-          :item-gap="18"
-          :font-size="0.76"
-          falloff="smooth"
-        />
 
         <div class="home-hero__content">
           <div>
