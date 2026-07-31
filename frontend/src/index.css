@@ -939,7 +939,7 @@
   z-index: 50;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  width: min(calc(100vw - 2.75rem), 1040px);
+  width: min(calc(100vw - 8rem), 1040px);
   min-height: 3.7rem;
   align-items: center;
   gap: 1.1rem;
@@ -1042,6 +1042,13 @@
   min-width: 8rem;
   justify-content: flex-end;
   justify-self: end;
+}
+
+.cinema-nav__theme-float {
+  position: fixed;
+  top: calc(1.15rem + (3.7rem - 2.5em) / 2);
+  right: 1rem;
+  z-index: 65;
 }
 
 .cinema-nav__login {
@@ -5014,6 +5021,11 @@
     width: min(calc(100vw - 1.5rem), 900px);
   }
 
+  .cinema-nav__theme-float {
+    top: 4.85rem;
+    right: 0.85rem;
+  }
+
   .cinema-nav__links {
     display: none;
   }
@@ -6007,14 +6019,12 @@ html[data-theme="day"] .auth-media-panel {
 
 html[data-theme="day"] .auth-layout-video,
 html[data-theme="day"] .auth-video-poster img {
-  filter: saturate(1.08) contrast(1.08) brightness(0.98);
+  filter: none;
 }
 
 html[data-theme="day"] .auth-media-shade {
-  display: block;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%),
-    linear-gradient(0deg, rgba(248, 250, 247, 0.42), rgba(248, 250, 247, 0.1) 50%, transparent);
+  display: none;
+  background: none;
 }
 
 html[data-theme="day"] .auth-media-copy strong {
