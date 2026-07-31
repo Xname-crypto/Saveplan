@@ -163,6 +163,12 @@ onBeforeUnmount(() => {
     </nav>
 
     <div class="cinema-nav__actions">
+      <ThemeSwitch
+        class="cinema-nav__theme-inline"
+        :checked="!isDayTheme"
+        :ariaLabel="themeToggleLabel"
+        @change="toggleTheme"
+      />
       <div v-if="currentUser" ref="userMenuRef" class="cinema-nav__user">
         <button
           class="cinema-nav__avatar"
@@ -203,11 +209,4 @@ onBeforeUnmount(() => {
       </button>
     </div>
   </header>
-
-  <ThemeSwitch
-    class="cinema-nav__theme-float"
-    :checked="!isDayTheme"
-    :ariaLabel="themeToggleLabel"
-    @change="toggleTheme"
-  />
 </template>
