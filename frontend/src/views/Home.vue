@@ -198,19 +198,23 @@ function updateScrollMotion() {
   const studioShift = Math.sin(progress * Math.PI) * 28
   const aboutSection = root.querySelector<HTMLElement>(".home-about")
   let aboutPreviewShift = 0
+  let isAboutPreviewVisible = false
 
   if (aboutSection) {
     const rect = aboutSection.getBoundingClientRect()
-    const start = window.innerHeight * 0.28
-    const range = Math.max(1, rect.height + window.innerHeight * 0.42)
-    const aboutProgress = Math.min(1, Math.max(0, (start - rect.top) / range))
-    aboutPreviewShift = aboutProgress * 148
+    const aboutTop = window.scrollY + rect.top
+    const revealAt = aboutTop - window.innerHeight * 0.24
+    const driftDistance = Math.max(0, window.scrollY - revealAt)
+
+    isAboutPreviewVisible = window.scrollY >= revealAt
+    aboutPreviewShift = Math.min(168, driftDistance * 0.08)
   }
 
   root.style.setProperty("--home-scroll-progress", progress.toFixed(4))
   root.style.setProperty("--home-hero-shift", `${heroShift.toFixed(2)}px`)
   root.style.setProperty("--home-studio-shift", `${studioShift.toFixed(2)}px`)
   root.style.setProperty("--home-about-preview-shift", `${aboutPreviewShift.toFixed(2)}px`)
+  root.classList.toggle("is-about-preview-visible", isAboutPreviewVisible)
 }
 
 function requestScrollMotion() {
