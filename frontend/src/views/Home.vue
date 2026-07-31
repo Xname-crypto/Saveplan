@@ -177,10 +177,21 @@ function updateScrollMotion() {
   const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll))
   const heroShift = Math.min(90, window.scrollY * 0.12)
   const studioShift = Math.sin(progress * Math.PI) * 28
+  const aboutSection = root.querySelector<HTMLElement>(".home-about")
+  let aboutPreviewShift = 0
+
+  if (aboutSection) {
+    const rect = aboutSection.getBoundingClientRect()
+    const start = window.innerHeight * 0.28
+    const range = Math.max(1, rect.height + window.innerHeight * 0.42)
+    const aboutProgress = Math.min(1, Math.max(0, (start - rect.top) / range))
+    aboutPreviewShift = aboutProgress * 148
+  }
 
   root.style.setProperty("--home-scroll-progress", progress.toFixed(4))
   root.style.setProperty("--home-hero-shift", `${heroShift.toFixed(2)}px`)
   root.style.setProperty("--home-studio-shift", `${studioShift.toFixed(2)}px`)
+  root.style.setProperty("--home-about-preview-shift", `${aboutPreviewShift.toFixed(2)}px`)
 }
 
 function requestScrollMotion() {
@@ -317,7 +328,7 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <aside class="home-about__preview stitch-reveal stitch-delay-1">
+          <aside class="home-about__preview">
             <div class="hero-preview-card hero-preview-card--about" aria-label="AI conversion preview">
               <span class="hero-preview-card__icon" aria-hidden="true">
                 <FileText :size="34" />
