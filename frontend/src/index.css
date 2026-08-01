@@ -4483,13 +4483,24 @@
 
 .pricing-card__badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 3;
+  display: inline-flex;
+  min-width: 3.5rem;
+  min-height: 1.7rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: 999px;
   background: #ebe4cf;
   color: #111;
-  padding: 0.35rem 0.8rem;
-  font-size: 0.72rem;
+  padding: 0 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .pricing-card > p {
@@ -6602,8 +6613,10 @@ html[data-theme="day"] .pricing-card.is-selected {
 }
 
 html[data-theme="day"] .pricing-card__badge {
+  border-color: rgba(255, 255, 255, 0.74);
   background: #1f2933;
   color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
 }
 
 html[data-theme="day"] .pricing-quote {
@@ -7158,7 +7171,9 @@ html[data-theme="day"] .history-filter__trigger:hover {
 }
 
 html[data-theme="day"] .pricing-card__badge {
-  box-shadow: 0 12px 28px rgba(31, 41, 51, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(31, 41, 51, 0.08),
+    0 12px 28px rgba(31, 41, 51, 0.18);
 }
 
 html[data-theme="day"] .profile-card::after {
