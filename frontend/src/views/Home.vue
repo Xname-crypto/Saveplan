@@ -45,8 +45,8 @@ const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
 
 const insideChipRows = [
-  ["PDF 试卷", "课堂截图", "手写公式", "Word 讲义", "OCR", "错题本", "PDF 试卷", "课堂截图"],
-  ["题干拆分", "答案解析", "知识点", "Markdown", "PDF 导出", "Anki 卡片", "题干拆分", "答案解析"],
+  ["PDF 试卷", "课堂截图", "手写公式", "Word 讲义", "OCR", "错题本", "PDF 试卷", "课堂截图", "手写公式", "Word 讲义"],
+  ["题干拆分", "答案解析", "知识点", "Markdown", "PDF 导出", "Anki 卡片", "题干拆分", "答案解析", "知识点", "Markdown"],
 ]
 
 const insideMetrics = [
@@ -332,16 +332,23 @@ onBeforeUnmount(() => {
             <p>上传资料、AI 拆题、导出复习，一屏看清完整学习流。</p>
           </div>
 
+          <div class="home-inside-marquee" aria-hidden="true">
+            <div
+              v-for="(row, rowIndex) in insideChipRows"
+              :key="`inside-chip-row-${rowIndex}`"
+              :class="['home-inside-chip-row', { 'home-inside-chip-row--reverse': rowIndex === 1 }]"
+            >
+              <span v-for="(chip, chipIndex) in row" :key="`${chip}-${chipIndex}`">{{ chip }}</span>
+            </div>
+          </div>
+
           <div class="home-inside__grid">
-            <article class="home-inside-card home-inside-card--wide home-inside-card--chips">
-              <div class="home-inside-card__visual home-inside-card__visual--chips" aria-hidden="true">
-                <div
-                  v-for="(row, rowIndex) in insideChipRows"
-                  :key="`inside-chip-row-${rowIndex}`"
-                  :class="['home-inside-chip-row', { 'home-inside-chip-row--reverse': rowIndex === 1 }]"
-                >
-                  <span v-for="(chip, chipIndex) in row" :key="`${chip}-${chipIndex}`">{{ chip }}</span>
-                </div>
+            <article class="home-inside-card home-inside-card--wide home-inside-card--upload">
+              <div class="home-inside-upload" aria-hidden="true">
+                <span><UploadCloud :size="18" /> PDF</span>
+                <span><FileText :size="18" /> DOCX</span>
+                <span><PenLine :size="18" /> IMG</span>
+                <strong>01</strong>
               </div>
               <h3>上传资料</h3>
               <p>拖入试卷、讲义、截图或 Word 文档，把混乱材料集中到一个转换工作台。</p>
