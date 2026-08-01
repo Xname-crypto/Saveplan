@@ -44,17 +44,6 @@ const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#09090
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
 
-const insideChipRows = [
-  ["PDF 试卷", "课堂截图", "手写公式", "Word 讲义", "OCR", "错题本", "PDF 试卷", "课堂截图", "手写公式", "Word 讲义"],
-  ["题干拆分", "答案解析", "知识点", "Markdown", "PDF 导出", "Anki 卡片", "题干拆分", "答案解析", "知识点", "Markdown"],
-]
-
-const insideMetrics = [
-  { value: "01", label: "上传资料" },
-  { value: "02", label: "AI 拆题" },
-  { value: "03", label: "导出复习" },
-]
-
 const features = [
   {
     title: "智能转换 (01)",
@@ -312,101 +301,6 @@ onBeforeUnmount(() => {
 
     <main ref="revealRoot">
       <section id="about" class="home-about">
-        <div class="home-inside stitch-reveal" aria-labelledby="home-inside-title">
-          <div class="home-inside__heading">
-            <div>
-              <span class="home-inside__eyebrow">WORKFLOW</span>
-              <h2 id="home-inside-title">
-                <DecryptedText
-                  text="三个步骤，重塑学习流。"
-                  :speed="18"
-                  :sequential="true"
-                  characters="上传资料AI拆题导出复习0123456789"
-                  reveal-direction="start"
-                  animate-on="view"
-                  parent-class-name="home-inside__title"
-                  encrypted-class-name="home-inside__title-char--encrypted"
-                />
-              </h2>
-            </div>
-            <p>上传资料、AI 拆题、导出复习，一屏看清完整学习流。</p>
-          </div>
-
-          <div class="home-inside-marquee" aria-hidden="true">
-            <div
-              v-for="(row, rowIndex) in insideChipRows"
-              :key="`inside-chip-row-${rowIndex}`"
-              :class="['home-inside-chip-row', { 'home-inside-chip-row--reverse': rowIndex === 1 }]"
-            >
-              <span v-for="(chip, chipIndex) in row" :key="`${chip}-${chipIndex}`">{{ chip }}</span>
-            </div>
-          </div>
-
-          <div class="home-inside__grid">
-            <article class="home-inside-card home-inside-card--wide home-inside-card--upload">
-              <div class="home-inside-upload" aria-hidden="true">
-                <span><UploadCloud :size="18" /> PDF</span>
-                <span><FileText :size="18" /> DOCX</span>
-                <span><PenLine :size="18" /> IMG</span>
-                <strong>01</strong>
-              </div>
-              <h3>上传资料</h3>
-              <p>拖入试卷、讲义、截图或 Word 文档，把混乱材料集中到一个转换工作台。</p>
-            </article>
-
-            <article class="home-inside-card home-inside-card--orbit">
-              <div class="home-inside-orbit" aria-hidden="true">
-                <span><UploadCloud :size="17" /></span>
-                <span><BrainCircuit :size="17" /></span>
-                <span><Layers3 :size="17" /></span>
-                <span><BookOpenCheck :size="17" /></span>
-                <strong><Sparkles :size="26" /></strong>
-              </div>
-              <h3>AI 拆题</h3>
-              <p>自动拆分题干、选项、答案和解析，并把复杂排版整理成可编辑结构。</p>
-            </article>
-
-            <article class="home-inside-card home-inside-card--stack">
-              <div class="home-inside-stack" aria-hidden="true">
-                <span><FileText :size="18" /> PDF</span>
-                <span><PenLine :size="18" /> Markdown</span>
-                <span><BookOpenCheck :size="18" /> Anki</span>
-              </div>
-              <h3>导出复习</h3>
-              <p>导出 Markdown、PDF 或记忆卡片格式，把时间还给真正的复习。</p>
-            </article>
-
-            <article class="home-inside-card home-inside-card--code">
-              <div class="home-inside-code" aria-hidden="true">
-                <span></span><span></span><span></span>
-                <pre>$ ai parse exam.pdf
-1 识别题干与选项
-2 对齐答案解析
-3 生成复习卡片</pre>
-              </div>
-              <h3>校对修正</h3>
-              <p>识别结果可以继续检查和修正，避免错题、漏题进入最终题库。</p>
-            </article>
-
-            <article class="home-inside-card home-inside-card--stats">
-              <div class="home-inside-stats" aria-hidden="true">
-                <strong>3.4x</strong>
-                <svg viewBox="0 0 220 84" role="img">
-                  <path d="M4 68 C 38 64, 56 54, 86 50 S 136 34, 166 27 S 199 17, 216 10" />
-                </svg>
-              </div>
-              <div class="home-inside-metrics" aria-hidden="true">
-                <span v-for="metric in insideMetrics" :key="metric.label">
-                  <b>{{ metric.value }}</b>
-                  {{ metric.label }}
-                </span>
-              </div>
-              <h3>学习闭环</h3>
-              <p>资料整理、结构化、导出复习连成一条线，减少重复整理成本。</p>
-            </article>
-          </div>
-        </div>
-
         <div class="home-about__layout">
           <div class="home-about__panel stitch-reveal">
             <LightRays
