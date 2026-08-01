@@ -40,7 +40,7 @@ const profileCredits = computed(() => {
 })
 const isDayTheme = computed(() => theme.value === "day")
 const brandColor = computed(() => (isDayTheme.value ? "#1f2937" : "#d4c7a8"))
-const brandShineColor = computed(() => (isDayTheme.value ? "#f8fafc" : "#ffffff"))
+const brandShineColor = computed(() => (isDayTheme.value ? "#c7983e" : "#f7fbff"))
 const brandShineSpeed = computed(() => (isDayTheme.value ? 1.85 : 1.25))
 const brandShineSpread = computed(() => (isDayTheme.value ? 100 : 82))
 const themeToggleLabel = computed(() => (isDayTheme.value ? "切换到夜晚版本" : "切换到白天版本"))
