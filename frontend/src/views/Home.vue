@@ -196,14 +196,16 @@ function updateScrollMotion() {
   const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll))
   const heroShift = Math.min(90, window.scrollY * 0.12)
   const studioShift = Math.sin(progress * Math.PI) * 28
-  const aboutSection = root.querySelector<HTMLElement>(".home-about")
+  const aboutPreviewAnchor =
+    root.querySelector<HTMLElement>(".home-about__layout") ||
+    root.querySelector<HTMLElement>(".home-about")
   let aboutPreviewShift = 0
   let isAboutPreviewVisible = false
 
-  if (aboutSection) {
-    const rect = aboutSection.getBoundingClientRect()
+  if (aboutPreviewAnchor) {
+    const rect = aboutPreviewAnchor.getBoundingClientRect()
     const aboutTop = window.scrollY + rect.top
-    const revealAt = aboutTop - window.innerHeight * 0.24
+    const revealAt = aboutTop - window.innerHeight * 0.58
     const driftDistance = Math.max(0, window.scrollY - revealAt)
 
     isAboutPreviewVisible = window.scrollY >= revealAt
