@@ -39,8 +39,10 @@ const profileCredits = computed(() => {
   return new Intl.NumberFormat("zh-CN").format(credits)
 })
 const isDayTheme = computed(() => theme.value === "day")
-const brandColor = computed(() => (isDayTheme.value ? "#1f2937" : "#958b72"))
-const brandShineColor = computed(() => (isDayTheme.value ? "#f8fafc" : "#fffdf4"))
+const brandColor = computed(() => (isDayTheme.value ? "#1f2937" : "#d4c7a8"))
+const brandShineColor = computed(() => (isDayTheme.value ? "#f8fafc" : "#ffffff"))
+const brandShineSpeed = computed(() => (isDayTheme.value ? 1.85 : 1.25))
+const brandShineSpread = computed(() => (isDayTheme.value ? 100 : 82))
 const themeToggleLabel = computed(() => (isDayTheme.value ? "切换到夜晚版本" : "切换到白天版本"))
 
 const updateCurrentUser = (user: AuthUser | null) => {
@@ -138,9 +140,9 @@ onBeforeUnmount(() => {
     <RouterLink class="cinema-nav__brand" to="/">
       <ShinyText
         text="Save Your Finals"
-        :speed="1.85"
+        :speed="brandShineSpeed"
         :delay="0.15"
-        :spread="100"
+        :spread="brandShineSpread"
         :color="brandColor"
         :shine-color="brandShineColor"
         direction="left"
