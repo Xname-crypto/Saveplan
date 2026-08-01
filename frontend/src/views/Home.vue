@@ -44,23 +44,15 @@ const logoLoopFadeColor = computed(() => (isDayTheme.value ? "#f8faf7" : "#09090
 const aboutText =
   "无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。无论是复杂排版、文字图片混合还是手写公式，我们都致力于为你带来前所未有的转换体验。上传你的文件，亲眼见证从混乱到有序的蜕变。"
 
-const insideChips = [
-  "PDF 试卷",
-  "课堂截图",
-  "手写公式",
-  "Word 讲义",
-  "OCR",
-  "错题本",
-  "Anki",
-  "Markdown",
-  "知识点",
-  "解析",
+const insideChipRows = [
+  ["PDF 试卷", "课堂截图", "手写公式", "Word 讲义", "OCR", "错题本", "PDF 试卷", "课堂截图"],
+  ["题干拆分", "答案解析", "知识点", "Markdown", "PDF 导出", "Anki 卡片", "题干拆分", "答案解析"],
 ]
 
 const insideMetrics = [
-  { value: "03", label: "导出格式" },
-  { value: "24h", label: "云端留存" },
-  { value: "AI", label: "自动拆题" },
+  { value: "01", label: "上传资料" },
+  { value: "02", label: "AI 拆题" },
+  { value: "03", label: "导出复习" },
 ]
 
 const features = [
@@ -322,17 +314,37 @@ onBeforeUnmount(() => {
       <section id="about" class="home-about">
         <div class="home-inside stitch-reveal" aria-labelledby="home-inside-title">
           <div class="home-inside__heading">
-            <h2 id="home-inside-title">What's inside</h2>
-            <p>从上传到复习，核心能力都在这里。</p>
+            <div>
+              <span class="home-inside__eyebrow">WORKFLOW</span>
+              <h2 id="home-inside-title">
+                <DecryptedText
+                  text="三个步骤，重塑学习流。"
+                  :speed="18"
+                  :sequential="true"
+                  characters="上传资料AI拆题导出复习0123456789"
+                  reveal-direction="start"
+                  animate-on="view"
+                  parent-class-name="home-inside__title"
+                  encrypted-class-name="home-inside__title-char--encrypted"
+                />
+              </h2>
+            </div>
+            <p>上传资料、AI 拆题、导出复习，一屏看清完整学习流。</p>
           </div>
 
           <div class="home-inside__grid">
             <article class="home-inside-card home-inside-card--wide home-inside-card--chips">
               <div class="home-inside-card__visual home-inside-card__visual--chips" aria-hidden="true">
-                <span v-for="chip in insideChips" :key="chip">{{ chip }}</span>
+                <div
+                  v-for="(row, rowIndex) in insideChipRows"
+                  :key="`inside-chip-row-${rowIndex}`"
+                  :class="['home-inside-chip-row', { 'home-inside-chip-row--reverse': rowIndex === 1 }]"
+                >
+                  <span v-for="(chip, chipIndex) in row" :key="`${chip}-${chipIndex}`">{{ chip }}</span>
+                </div>
               </div>
-              <h3>多格式资料入口</h3>
-              <p>试卷、截图、讲义和手写内容集中导入，自动进入同一套 AI 整理流程。</p>
+              <h3>上传资料</h3>
+              <p>拖入试卷、讲义、截图或 Word 文档，把混乱材料集中到一个转换工作台。</p>
             </article>
 
             <article class="home-inside-card home-inside-card--orbit">
@@ -343,8 +355,8 @@ onBeforeUnmount(() => {
                 <span><BookOpenCheck :size="17" /></span>
                 <strong><Sparkles :size="26" /></strong>
               </div>
-              <h3>流程清晰可控</h3>
-              <p>上传、识别、校对、导出分层处理，不用在一堆混乱资料里反复找答案。</p>
+              <h3>AI 拆题</h3>
+              <p>自动拆分题干、选项、答案和解析，并把复杂排版整理成可编辑结构。</p>
             </article>
 
             <article class="home-inside-card home-inside-card--stack">
@@ -353,8 +365,8 @@ onBeforeUnmount(() => {
                 <span><PenLine :size="18" /> Markdown</span>
                 <span><BookOpenCheck :size="18" /> Anki</span>
               </div>
-              <h3>复习格式就绪</h3>
-              <p>整理后的题目可以直接导出，适配刷题、背诵和二次编辑。</p>
+              <h3>导出复习</h3>
+              <p>导出 Markdown、PDF 或记忆卡片格式，把时间还给真正的复习。</p>
             </article>
 
             <article class="home-inside-card home-inside-card--code">
@@ -365,8 +377,8 @@ onBeforeUnmount(() => {
 2 对齐答案解析
 3 生成复习卡片</pre>
               </div>
-              <h3>AI 结构化拆题</h3>
-              <p>把题干、选项、答案、解析拆成清晰字段，减少后期手动校对量。</p>
+              <h3>校对修正</h3>
+              <p>识别结果可以继续检查和修正，避免错题、漏题进入最终题库。</p>
             </article>
 
             <article class="home-inside-card home-inside-card--stats">
@@ -382,8 +394,8 @@ onBeforeUnmount(() => {
                   {{ metric.label }}
                 </span>
               </div>
-              <h3>复习准备更快</h3>
-              <p>把整理资料的时间压缩下来，让用户更快进入真正的复习状态。</p>
+              <h3>学习闭环</h3>
+              <p>资料整理、结构化、导出复习连成一条线，减少重复整理成本。</p>
             </article>
           </div>
         </div>
