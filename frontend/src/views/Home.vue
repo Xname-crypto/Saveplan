@@ -180,6 +180,9 @@ function updateScrollMotion() {
   const aboutPreviewAnchor =
     root.querySelector<HTMLElement>(".home-about__layout") ||
     root.querySelector<HTMLElement>(".home-about")
+  const aboutPreview = root.querySelector<HTMLElement>(".home-about__preview")
+  const testimonials = root.querySelector<HTMLElement>(".home-testimonials")
+  const testimonialsMarquee = root.querySelector<HTMLElement>(".home-testimonials__marquee")
   let aboutPreviewShift = 0
   let isAboutPreviewVisible = false
 
@@ -191,6 +194,21 @@ function updateScrollMotion() {
 
     isAboutPreviewVisible = window.scrollY >= revealAt
     aboutPreviewShift = Math.min(168, driftDistance * 0.08)
+
+    if (aboutPreview && testimonials && testimonialsMarquee) {
+      const currentPreviewShift =
+        Number.parseFloat(root.style.getPropertyValue("--home-about-preview-shift")) || 0
+      const previewBaseTop = aboutPreview.getBoundingClientRect().top - currentPreviewShift
+      const testimonialsRect = testimonials.getBoundingClientRect()
+      const marqueeTop = testimonialsMarquee.getBoundingClientRect().top
+      const reviewAlignmentProgress = Math.min(
+        1,
+        Math.max(0, (window.innerHeight * 0.76 - testimonialsRect.top) / (window.innerHeight * 0.34)),
+      )
+      const reviewAlignedShift = Math.max(aboutPreviewShift, marqueeTop - previewBaseTop)
+
+      aboutPreviewShift += (reviewAlignedShift - aboutPreviewShift) * reviewAlignmentProgress
+    }
   }
 
   root.style.setProperty("--home-scroll-progress", progress.toFixed(4))
