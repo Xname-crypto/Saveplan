@@ -177,11 +177,11 @@ function updateScrollMotion() {
   const progress = Math.min(1, Math.max(0, window.scrollY / maxScroll))
   const heroShift = Math.min(90, window.scrollY * 0.12)
   const studioShift = Math.sin(progress * Math.PI) * 28
+  const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
   const aboutPreviewAnchor =
     root.querySelector<HTMLElement>(".home-about__layout") ||
     root.querySelector<HTMLElement>(".home-about")
   const aboutPreview = root.querySelector<HTMLElement>(".home-about__preview")
-  const testimonials = root.querySelector<HTMLElement>(".home-testimonials")
   const testimonialsMarquee = root.querySelector<HTMLElement>(".home-testimonials__marquee")
   let aboutPreviewShift = 0
   let isAboutPreviewVisible = false
@@ -189,25 +189,25 @@ function updateScrollMotion() {
   if (aboutPreviewAnchor) {
     const rect = aboutPreviewAnchor.getBoundingClientRect()
     const aboutTop = window.scrollY + rect.top
-    const revealAt = aboutTop - window.innerHeight * 0.58
-    const driftDistance = Math.max(0, window.scrollY - revealAt)
+    const revealAt = aboutTop - window.innerHeight * 0.56
 
     isAboutPreviewVisible = window.scrollY >= revealAt
-    aboutPreviewShift = Math.min(168, driftDistance * 0.08)
 
-    if (aboutPreview && testimonials && testimonialsMarquee) {
+    if (aboutPreview && testimonialsMarquee) {
       const currentPreviewShift =
         Number.parseFloat(root.style.getPropertyValue("--home-about-preview-shift")) || 0
       const previewBaseTop = aboutPreview.getBoundingClientRect().top - currentPreviewShift
-      const testimonialsRect = testimonials.getBoundingClientRect()
-      const marqueeTop = testimonialsMarquee.getBoundingClientRect().top
-      const reviewAlignmentProgress = Math.min(
-        1,
-        Math.max(0, (window.innerHeight * 0.76 - testimonialsRect.top) / (window.innerHeight * 0.34)),
-      )
-      const reviewAlignedShift = Math.max(aboutPreviewShift, marqueeTop - previewBaseTop)
+      const marqueeRect = testimonialsMarquee.getBoundingClientRect()
+      const marqueeTop = window.scrollY + marqueeRect.top
+      const previewHeight = aboutPreview.offsetHeight || aboutPreview.getBoundingClientRect().height
+      const bottomMarqueeTop = marqueeTop - maxScroll
+      const lowestViewportTop = Math.max(previewBaseTop, window.innerHeight - previewHeight - 24)
+      const targetViewportTop = Math.max(previewBaseTop, Math.min(bottomMarqueeTop, lowestViewportTop))
+      const finishAt = Math.max(revealAt + 1, maxScroll)
+      const travelProgress = clamp01((window.scrollY - revealAt) / (finishAt - revealAt))
+      const finalShift = Math.max(0, targetViewportTop - previewBaseTop)
 
-      aboutPreviewShift += (reviewAlignedShift - aboutPreviewShift) * reviewAlignmentProgress
+      aboutPreviewShift = finalShift * travelProgress
     }
   }
 
