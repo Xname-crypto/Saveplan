@@ -10,18 +10,43 @@ const emit = defineEmits<{
   change: []
 }>()
 
+const MAX_PULL_X = 24
+const MAX_PULL_Y = 56
+const CLICK_PULL_Y = 34
+const TOGGLE_PULL_Y = 22
+
 const isPulling = ref(false)
-const pullDistance = ref(0)
+const isReleasing = ref(false)
+const pullX = ref(0)
+const pullY = ref(0)
 
 let activePointerId: number | null = null
+let startX = 0
 let startY = 0
 let didDrag = false
 let suppressNextClick = false
 let releaseTimer: number | null = null
 
+const ropeExtra = computed(() => Math.hypot(pullX.value * 0.58, pullY.value))
+const ropeTilt = computed(() => {
+  if (pullY.value <= 0 && Math.abs(pullX.value) <= 0) return 0
+
+  return Math.max(-15, Math.min(15, pullX.value * 0.52))
+})
+
 const switchStyle = computed(() => ({
-  "--pull-distance": `${pullDistance.value}px`,
+  "--pull-x": `${pullX.value}px`,
+  "--pull-y": `${pullY.value}px`,
+  "--rope-extra": `${ropeExtra.value}px`,
+  "--rope-tilt": `${ropeTilt.value}deg`,
+  "--knot-rest-tilt": `${ropeTilt.value * 0.72 - 2}deg`,
+  "--knot-hover-tilt": `${ropeTilt.value * 0.72 + 2}deg`,
+  "--knot-pull-tilt": `${ropeTilt.value * 0.9 + 3}deg`,
 }))
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
 
 function clearReleaseTimer() {
   if (releaseTimer === null) return
@@ -32,9 +57,13 @@ function clearReleaseTimer() {
 
 function resetPull(delay = 120) {
   clearReleaseTimer()
+  isReleasing.value = true
+  pullX.value = 0
+  pullY.value = 0
+
   releaseTimer = window.setTimeout(() => {
     isPulling.value = false
-    pullDistance.value = 0
+    isReleasing.value = false
     releaseTimer = null
   }, delay)
 }
@@ -50,10 +79,13 @@ function handlePointerDown(event: PointerEvent) {
 
   clearReleaseTimer()
   activePointerId = event.pointerId
+  startX = event.clientX
   startY = event.clientY
   didDrag = false
   isPulling.value = true
-  pullDistance.value = 5
+  isReleasing.value = false
+  pullX.value = 0
+  pullY.value = 7
 
   window.addEventListener("pointermove", handlePointerMove)
   window.addEventListener("pointerup", handlePointerUp)
@@ -63,15 +95,17 @@ function handlePointerDown(event: PointerEvent) {
 function handlePointerMove(event: PointerEvent) {
   if (activePointerId !== event.pointerId) return
 
-  const nextDistance = Math.min(38, Math.max(0, event.clientY - startY))
-  didDrag = didDrag || nextDistance > 4
-  pullDistance.value = nextDistance
+  const nextX = clamp((event.clientX - startX) * 0.62, -MAX_PULL_X, MAX_PULL_X)
+  const nextY = clamp((event.clientY - startY) * 1.08, 0, MAX_PULL_Y)
+  didDrag = didDrag || nextY > 5 || Math.abs(nextX) > 6
+  pullX.value = nextX
+  pullY.value = nextY
 }
 
 function finishPointer(event: PointerEvent, shouldToggle: boolean) {
   if (activePointerId !== event.pointerId) return
 
-  const shouldEmit = shouldToggle && didDrag && pullDistance.value >= 17
+  const shouldEmit = shouldToggle && didDrag && pullY.value >= TOGGLE_PULL_Y
   activePointerId = null
   removePointerListeners()
 
@@ -99,9 +133,11 @@ function handleClick() {
 
   clearReleaseTimer()
   isPulling.value = true
-  pullDistance.value = 26
+  isReleasing.value = false
+  pullX.value = props.checked ? -7 : 7
+  pullY.value = CLICK_PULL_Y
   emit("change")
-  resetPull(190)
+  resetPull(360)
 }
 
 onBeforeUnmount(() => {
@@ -113,7 +149,7 @@ onBeforeUnmount(() => {
 <template>
   <button
     class="theme-pull-switch"
-    :class="{ 'is-night': props.checked, 'is-pulling': isPulling }"
+    :class="{ 'is-night': props.checked, 'is-pulling': isPulling, 'is-releasing': isReleasing }"
     type="button"
     :aria-label="ariaLabel"
     :aria-pressed="props.checked"
@@ -134,7 +170,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .theme-pull-switch {
-  --pull-distance: 0px;
+  --pull-x: 0px;
+  --pull-y: 0px;
+  --rope-extra: 0px;
+  --rope-tilt: 0deg;
+  --knot-rest-tilt: -2deg;
+  --knot-hover-tilt: 2deg;
+  --knot-pull-tilt: 3deg;
   --rope-main: #9f7240;
   --rope-light: #d0a66f;
   --rope-dark: #5f3e20;
@@ -191,12 +233,14 @@ onBeforeUnmount(() => {
   left: 50%;
   z-index: 1;
   width: 0.42rem;
-  height: calc(4.05rem + var(--pull-distance));
+  height: calc(4.75rem + var(--rope-extra));
   border-radius: 999px;
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(var(--rope-tilt));
   transform-origin: top center;
-  transition: height 260ms cubic-bezier(0.2, 0.9, 0.26, 1.18);
+  transition:
+    height 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
+    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
 }
 
 .theme-pull-switch__rope-core,
@@ -244,7 +288,7 @@ onBeforeUnmount(() => {
 
 .theme-pull-switch__knot {
   position: absolute;
-  top: calc(4.12rem + var(--pull-distance));
+  top: calc(4.82rem + var(--pull-y));
   left: 50%;
   z-index: 3;
   display: grid;
@@ -266,10 +310,10 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 236, 196, 0.24),
     inset 0 -0.14rem 0.2rem rgba(76, 45, 19, 0.38),
     0 0.65rem 1.15rem rgba(0, 0, 0, 0.28);
-  transform: translateX(-50%) rotate(-2deg);
+  transform: translateX(calc(-50% + var(--pull-x))) rotate(var(--knot-rest-tilt));
   transition:
-    top 260ms cubic-bezier(0.2, 0.9, 0.26, 1.18),
-    transform 220ms ease,
+    top 430ms cubic-bezier(0.16, 1.42, 0.28, 1),
+    transform 430ms cubic-bezier(0.16, 1.42, 0.28, 1),
     box-shadow 220ms ease;
 }
 
@@ -333,16 +377,29 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch:hover .theme-pull-switch__knot {
-  transform: translateX(-50%) translateY(0.08rem) rotate(2deg);
+  transform: translateX(calc(-50% + var(--pull-x))) translateY(0.08rem) rotate(var(--knot-hover-tilt));
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__rope {
-  transition-duration: 70ms;
+  transition-duration: 42ms;
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__knot {
-  transform: translateX(-50%) translateY(0.08rem) rotate(5deg) scale(0.98);
-  transition-duration: 70ms;
+  transform: translateX(calc(-50% + var(--pull-x))) translateY(0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
+  transition-duration: 42ms;
+}
+
+.theme-pull-switch.is-releasing .theme-pull-switch__rope {
+  transition:
+    height 560ms cubic-bezier(0.18, 1.55, 0.28, 1),
+    transform 620ms cubic-bezier(0.16, 1.58, 0.3, 1);
+}
+
+.theme-pull-switch.is-releasing .theme-pull-switch__knot {
+  transition:
+    top 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
+    transform 680ms cubic-bezier(0.14, 1.62, 0.32, 1),
+    box-shadow 220ms ease;
 }
 
 .theme-pull-switch.is-night {
