@@ -5,12 +5,14 @@ import {
   BookOpenCheck,
   BrainCircuit,
   CheckCircle2,
+  CircleEllipsis,
   FileText,
   Layers3,
   PenLine,
   Sparkles,
   TimerReset,
   UploadCloud,
+  X,
 } from "lucide-vue-next"
 import AppFooter from "@/components/AppFooter.vue"
 import BorderGlow from "@/components/BorderGlow.vue"
@@ -26,6 +28,7 @@ import { VIDEO_ASSETS } from "@/services/videoAssets"
 const videoReady = ref(false)
 const pageRoot = ref<HTMLElement | null>(null)
 const revealRoot = ref<HTMLElement | null>(null)
+const isAboutSurveyOpen = ref(true)
 const { theme } = useTheme()
 let revealObserver: IntersectionObserver | null = null
 let scrollFrame = 0
@@ -159,6 +162,15 @@ const logoLoopItems = [
   { label: "CLOUD SYNC", icon: UploadCloud },
 ]
 
+const sourceSurveyOptions = [
+  { label: "PDF 试卷", icon: FileText },
+  { label: "截图题目", icon: Sparkles },
+  { label: "手写公式", icon: PenLine },
+  { label: "Anki 卡片", icon: BookOpenCheck },
+  { label: "错题整理", icon: BrainCircuit },
+  { label: "其他资料", icon: CircleEllipsis },
+]
+
 function handleVideoReady() {
   videoReady.value = true
 }
@@ -193,7 +205,7 @@ function updateScrollMotion() {
     const revealAt = aboutTop - window.innerHeight * 0.56
     const isFooterVisible = footer ? footer.getBoundingClientRect().top < window.innerHeight - 12 : false
 
-    isAboutPreviewVisible = window.scrollY >= revealAt && !isFooterVisible
+    isAboutPreviewVisible = isAboutSurveyOpen.value && window.scrollY >= revealAt && !isFooterVisible
 
     if (aboutPreview && testimonialsMarquee) {
       const currentPreviewShift =
@@ -356,7 +368,42 @@ onBeforeUnmount(() => {
           </div>
 
           <aside class="home-about__preview">
-            <div class="hero-preview-card hero-preview-card--about" aria-label="AI conversion preview">
+            <div
+              v-if="isAboutSurveyOpen"
+              class="hero-preview-card hero-preview-card--about hero-preview-card--survey"
+              aria-label="Conversion source selector"
+            >
+              <button
+                class="hero-preview-card__close"
+                type="button"
+                aria-label="关闭资料类型选择卡片"
+                @click="isAboutSurveyOpen = false"
+              >
+                <X :size="18" />
+              </button>
+
+              <div class="hero-preview-card__body">
+                <span class="hero-preview-card__kicker">一个小问题</span>
+                <h2>你想先整理哪类资料？</h2>
+                <p>选择最接近的一类，直接进入对应的转换流程。</p>
+              </div>
+
+              <div class="hero-preview-card__options" aria-label="资料类型">
+                <RouterLink
+                  v-for="option in sourceSurveyOptions"
+                  :key="option.label"
+                  class="hero-preview-card__option"
+                  to="/convert"
+                >
+                  <span class="hero-preview-card__option-icon" aria-hidden="true">
+                    <component :is="option.icon" :size="17" />
+                  </span>
+                  <span>{{ option.label }}</span>
+                </RouterLink>
+              </div>
+            </div>
+
+            <div v-if="false" class="hero-preview-card hero-preview-card--about" aria-label="AI conversion preview">
               <span class="hero-preview-card__icon" aria-hidden="true">
                 <FileText :size="34" />
                 <Sparkles :size="16" />
