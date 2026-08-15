@@ -163,12 +163,13 @@ const logoLoopItems = [
 ]
 
 const sourceSurveyOptions = [
-  { label: "PDF 试卷", icon: FileText },
-  { label: "截图题目", icon: Sparkles },
-  { label: "手写公式", icon: PenLine },
-  { label: "Anki 卡片", icon: BookOpenCheck },
-  { label: "错题整理", icon: BrainCircuit },
-  { label: "其他资料", icon: CircleEllipsis },
+  { label: "哔哩哔哩", icon: Sparkles },
+  { label: "抖音", icon: TimerReset },
+  { label: "小红书", icon: BookOpenCheck },
+  { label: "X", icon: X },
+  { label: "GitHub", icon: BrainCircuit },
+  { label: "视频号", icon: FileText },
+  { label: "其他", icon: CircleEllipsis },
 ]
 
 function handleVideoReady() {
@@ -384,11 +385,11 @@ onBeforeUnmount(() => {
 
               <div class="hero-preview-card__body">
                 <span class="hero-preview-card__kicker">一个小问题</span>
-                <h2>你想先整理哪类资料？</h2>
-                <p>选择最接近的一类，直接进入对应的转换流程。</p>
+                <h2>你是在哪里了解到 Save Your Finals 的？</h2>
+                <p>选择最接近的渠道即可。</p>
               </div>
 
-              <div class="hero-preview-card__options" aria-label="资料类型">
+              <div class="hero-preview-card__options" aria-label="了解渠道">
                 <RouterLink
                   v-for="option in sourceSurveyOptions"
                   :key="option.label"
