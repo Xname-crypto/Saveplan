@@ -10,8 +10,8 @@ const emit = defineEmits<{
   change: []
 }>()
 
-const MAX_PULL_X = 118
-const MIN_PULL_Y = -82
+const MAX_PULL_X = 128
+const MIN_PULL_Y = -58
 const MAX_PULL_Y = 74
 const CLICK_PULL_Y = 34
 const TOGGLE_PULL_Y = 22
@@ -45,7 +45,7 @@ let velocityFoldX = 0
 let velocityFoldY = 0
 let releaseStartedAt = 0
 
-const ropeEndY = computed(() => clamp(ROPE_BASE_PX + pullY.value, 8, ROPE_BASE_PX + MAX_PULL_Y))
+const ropeEndY = computed(() => clamp(ROPE_BASE_PX + pullY.value, 32, ROPE_BASE_PX + MAX_PULL_Y))
 const ropeEndX = computed(() => ROPE_ANCHOR_X + pullX.value)
 const ropeVectorY = computed(() => Math.max(8, ropeEndY.value - ROPE_ANCHOR_Y))
 const ropeLength = computed(() => Math.hypot(pullX.value, ropeVectorY.value))
@@ -216,13 +216,13 @@ function handlePointerMove(event: PointerEvent) {
   const nextY = clamp((event.clientY - startY) * 1.08, MIN_PULL_Y, MAX_PULL_Y)
   velocityX = (nextX - pullX.value) * 0.45
   velocityY = (nextY - pullY.value) * 0.32
-  velocityFoldX = velocityX * -1.35
-  velocityFoldY = velocityY * -0.75
+  velocityFoldX = velocityX * -0.35
+  velocityFoldY = velocityY * -0.18
   didDrag = didDrag || nextY > 5 || Math.abs(nextX) > 6
   pullX.value = nextX
   pullY.value = nextY
-  foldX.value = clamp(-nextX * 0.16 + velocityFoldX, -30, 30)
-  foldY.value = clamp(-Math.abs(nextX) * 0.035 + velocityFoldY, -18, 18)
+  foldX.value = clamp(-nextX * 0.05 + velocityFoldX, -12, 12)
+  foldY.value = clamp(Math.abs(nextX) * 0.025 + velocityFoldY, -4, 14)
 }
 
 function finishPointer(event: PointerEvent, shouldToggle: boolean) {
@@ -435,6 +435,7 @@ onBeforeUnmount(() => {
   width: 1.44rem;
   height: 1.24rem;
   place-items: center;
+  pointer-events: auto;
   border: 1px solid rgba(105, 69, 34, 0.44);
   border-radius: 48% 52% 54% 46% / 46% 48% 52% 54%;
   background:
@@ -453,6 +454,12 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -0.16rem) rotate(var(--knot-rest-tilt));
   will-change: top, transform;
   transition: box-shadow 220ms ease;
+  cursor: grab;
+  touch-action: none;
+}
+
+.theme-pull-switch__knot:active {
+  cursor: grabbing;
 }
 
 .theme-pull-switch__knot::before,
