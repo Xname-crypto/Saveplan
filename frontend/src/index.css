@@ -6200,11 +6200,14 @@
   }
 
   .pricing-card__badge {
-    top: 0.42rem;
-    right: 0.42rem;
+    top: 0.36rem;
+    right: 0.36rem;
+    min-width: 2.25rem;
+    min-height: 1.18rem;
     border-radius: 999px;
-    padding: 0.18rem 0.42rem;
-    font-size: 0.54rem;
+    padding: 0 0.34rem;
+    font-size: 0.48rem;
+    letter-spacing: 0.04em;
   }
 
   .pricing-card > p {
@@ -6342,6 +6345,15 @@
     .pricing-card {
       min-height: 17.6rem;
       padding: 0.56rem;
+    }
+
+    .pricing-card__badge {
+      top: 0.3rem;
+      right: 0.3rem;
+      min-width: 1.95rem;
+      min-height: 1.02rem;
+      padding: 0 0.26rem;
+      font-size: 0.42rem;
     }
 
     .pricing-card h2 {
