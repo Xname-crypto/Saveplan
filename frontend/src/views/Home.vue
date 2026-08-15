@@ -314,6 +314,16 @@ onBeforeUnmount(() => {
           <source :src="heroVideoSrc" type="video/mp4" />
         </video>
         <div class="home-hero__shade" />
+        <div class="home-hero__video-text-mask" aria-hidden="true" />
+        <div class="home-hero__video-title" aria-hidden="true">
+          <span>STUDY SMARTER</span>
+          <span>ALWAYS</span>
+          <small>
+            Turn papers into question banks
+            <br />
+            Be ready in every final season.
+          </small>
+        </div>
 
         <div class="home-hero__content">
           <div>
