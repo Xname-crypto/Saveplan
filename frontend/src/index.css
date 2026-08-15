@@ -5514,7 +5514,7 @@
 
   .cinema-nav .cinema-nav__theme-inline.theme-pull-switch {
     top: calc(100% - 0.12rem);
-    right: 0.35rem;
+    right: 0.7rem;
   }
 
   .cinema-nav.is-mobile-open .cinema-nav__theme-inline.theme-pull-switch {
