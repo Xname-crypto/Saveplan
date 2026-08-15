@@ -14,9 +14,13 @@ const MAX_PULL_X = 24
 const MAX_PULL_Y = 56
 const CLICK_PULL_Y = 34
 const TOGGLE_PULL_Y = 22
+const ROPE_BASE_PX = 76
+const SPRING_STIFFNESS = 0.052
+const SPRING_DAMPING = 0.88
 
 const isPulling = ref(false)
 const isReleasing = ref(false)
+const isSwitching = ref(false)
 const pullX = ref(0)
 const pullY = ref(0)
 
@@ -26,12 +30,25 @@ let startY = 0
 let didDrag = false
 let suppressNextClick = false
 let releaseTimer: number | null = null
+let switchFlashTimer: number | null = null
+let animationFrameId: number | null = null
+let velocityX = 0
+let velocityY = 0
+let releaseStartedAt = 0
 
-const ropeExtra = computed(() => Math.hypot(pullX.value * 0.58, pullY.value))
+const ropeExtra = computed(() => {
+  const visualY = Math.max(0, pullY.value)
+
+  return Math.max(0, Math.hypot(pullX.value, ROPE_BASE_PX + visualY) - ROPE_BASE_PX)
+})
+
 const ropeTilt = computed(() => {
   if (pullY.value <= 0 && Math.abs(pullX.value) <= 0) return 0
 
-  return Math.max(-15, Math.min(15, pullX.value * 0.52))
+  const visualY = Math.max(0, pullY.value)
+  const angle = Math.atan2(-pullX.value, ROPE_BASE_PX + visualY) * (180 / Math.PI)
+
+  return clamp(angle, -18, 18)
 })
 
 const switchStyle = computed(() => ({
@@ -55,17 +72,75 @@ function clearReleaseTimer() {
   releaseTimer = null
 }
 
-function resetPull(delay = 120) {
+function clearSwitchFlashTimer() {
+  if (switchFlashTimer === null) return
+
+  window.clearTimeout(switchFlashTimer)
+  switchFlashTimer = null
+}
+
+function flashSwitch() {
+  clearSwitchFlashTimer()
+  isSwitching.value = true
+  switchFlashTimer = window.setTimeout(() => {
+    isSwitching.value = false
+    switchFlashTimer = null
+  }, 420)
+}
+
+function clearSwingAnimation() {
+  if (animationFrameId === null) return
+
+  window.cancelAnimationFrame(animationFrameId)
+  animationFrameId = null
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+function finishRelease() {
   clearReleaseTimer()
-  isReleasing.value = true
   pullX.value = 0
   pullY.value = 0
+  velocityX = 0
+  velocityY = 0
+  isPulling.value = false
+  isReleasing.value = false
+}
 
-  releaseTimer = window.setTimeout(() => {
-    isPulling.value = false
-    isReleasing.value = false
-    releaseTimer = null
-  }, delay)
+function startSwingRelease(strength = 1) {
+  clearReleaseTimer()
+  clearSwingAnimation()
+
+  if (prefersReducedMotion()) {
+    finishRelease()
+    return
+  }
+
+  isReleasing.value = true
+  releaseStartedAt = performance.now()
+  velocityX = clamp(velocityX * 0.35 - pullX.value * 0.32, -9, 9) * strength
+  velocityY = clamp(velocityY * 0.15 - pullY.value * 0.2, -10, 2) * strength
+
+  const step = () => {
+    const elapsed = performance.now() - releaseStartedAt
+
+    velocityX = (velocityX - pullX.value * SPRING_STIFFNESS) * SPRING_DAMPING
+    velocityY = (velocityY - pullY.value * SPRING_STIFFNESS) * SPRING_DAMPING
+    pullX.value = clamp(pullX.value + velocityX, -MAX_PULL_X, MAX_PULL_X)
+    pullY.value = clamp(pullY.value + velocityY, -7, MAX_PULL_Y)
+
+    if (elapsed > 560 && Math.abs(pullX.value) < 0.18 && Math.abs(pullY.value) < 0.18 && Math.abs(velocityX) < 0.14 && Math.abs(velocityY) < 0.14) {
+      animationFrameId = null
+      finishRelease()
+      return
+    }
+
+    animationFrameId = window.requestAnimationFrame(step)
+  }
+
+  animationFrameId = window.requestAnimationFrame(step)
 }
 
 function removePointerListeners() {
@@ -78,12 +153,15 @@ function handlePointerDown(event: PointerEvent) {
   if (event.pointerType === "mouse" && event.button !== 0) return
 
   clearReleaseTimer()
+  clearSwingAnimation()
   activePointerId = event.pointerId
   startX = event.clientX
   startY = event.clientY
   didDrag = false
   isPulling.value = true
   isReleasing.value = false
+  velocityX = 0
+  velocityY = 0
   pullX.value = 0
   pullY.value = 7
 
@@ -97,6 +175,8 @@ function handlePointerMove(event: PointerEvent) {
 
   const nextX = clamp((event.clientX - startX) * 0.62, -MAX_PULL_X, MAX_PULL_X)
   const nextY = clamp((event.clientY - startY) * 1.08, 0, MAX_PULL_Y)
+  velocityX = (nextX - pullX.value) * 0.45
+  velocityY = (nextY - pullY.value) * 0.32
   didDrag = didDrag || nextY > 5 || Math.abs(nextX) > 6
   pullX.value = nextX
   pullY.value = nextY
@@ -111,10 +191,11 @@ function finishPointer(event: PointerEvent, shouldToggle: boolean) {
 
   if (shouldEmit) {
     suppressNextClick = true
+    flashSwitch()
     emit("change")
   }
 
-  resetPull(shouldEmit ? 180 : 90)
+  startSwingRelease(shouldEmit ? 1.18 : 0.82)
 }
 
 function handlePointerUp(event: PointerEvent) {
@@ -132,16 +213,22 @@ function handleClick() {
   }
 
   clearReleaseTimer()
+  clearSwingAnimation()
   isPulling.value = true
   isReleasing.value = false
+  velocityX = props.checked ? -2.2 : 2.2
+  velocityY = 2.8
   pullX.value = props.checked ? -7 : 7
   pullY.value = CLICK_PULL_Y
+  flashSwitch()
   emit("change")
-  resetPull(360)
+  startSwingRelease(1)
 }
 
 onBeforeUnmount(() => {
   clearReleaseTimer()
+  clearSwitchFlashTimer()
+  clearSwingAnimation()
   removePointerListeners()
 })
 </script>
@@ -149,7 +236,7 @@ onBeforeUnmount(() => {
 <template>
   <button
     class="theme-pull-switch"
-    :class="{ 'is-night': props.checked, 'is-pulling': isPulling, 'is-releasing': isReleasing }"
+    :class="{ 'is-night': props.checked, 'is-pulling': isPulling, 'is-releasing': isReleasing, 'is-switching': isSwitching }"
     type="button"
     :aria-label="ariaLabel"
     :aria-pressed="props.checked"
@@ -179,6 +266,7 @@ onBeforeUnmount(() => {
   --knot-rest-tilt: -2deg;
   --knot-hover-tilt: 2deg;
   --knot-pull-tilt: 3deg;
+  --glyph-tilt: 0deg;
   --rope-main: #9f7240;
   --rope-light: #d0a66f;
   --rope-dark: #5f3e20;
@@ -238,6 +326,7 @@ onBeforeUnmount(() => {
   height: calc(5.95rem + var(--rope-extra));
   transform: translateX(-50%) rotate(var(--rope-tilt));
   transform-origin: top center;
+  will-change: height, transform;
   transition:
     height 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
     transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
@@ -254,6 +343,7 @@ onBeforeUnmount(() => {
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
   transform: translateX(-50%);
   transform-origin: top center;
+  will-change: height;
   transition: height 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
 }
 
@@ -325,6 +415,7 @@ onBeforeUnmount(() => {
     inset 0 -0.14rem 0.2rem rgba(76, 45, 19, 0.38),
     0 0.65rem 1.15rem rgba(0, 0, 0, 0.28);
   transform: translateX(-50%) rotate(var(--knot-rest-tilt));
+  will-change: top, transform;
   transition:
     top 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
     transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
@@ -395,33 +486,32 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__hanger {
-  transition-duration: 42ms;
+  transition-duration: 0ms;
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__rope {
-  transition-duration: 42ms;
+  transition-duration: 0ms;
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__knot {
   transform: translateX(-50%) translateY(0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
-  transition-duration: 42ms;
+  transition-duration: 0ms;
 }
 
 .theme-pull-switch.is-releasing .theme-pull-switch__hanger {
-  transition:
-    height 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
-    transform 620ms cubic-bezier(0.16, 1.58, 0.3, 1);
+  transition-duration: 0ms;
 }
 
 .theme-pull-switch.is-releasing .theme-pull-switch__rope {
-  transition: height 620ms cubic-bezier(0.16, 1.58, 0.3, 1);
+  transition-duration: 0ms;
 }
 
 .theme-pull-switch.is-releasing .theme-pull-switch__knot {
-  transition:
-    top 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
-    transform 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
-    box-shadow 220ms ease;
+  transition-duration: 0ms;
+}
+
+.theme-pull-switch.is-switching .theme-pull-switch__glyph {
+  animation: theme-pull-switch-flash 420ms ease-out;
 }
 
 .theme-pull-switch.is-night {
@@ -429,6 +519,7 @@ onBeforeUnmount(() => {
   --rope-light: #fbfaf3;
   --rope-dark: #8e8c84;
   --rope-shadow: rgba(248, 246, 230, 0.18);
+  --glyph-tilt: -16deg;
   color: #d6c58d;
 }
 
@@ -477,7 +568,7 @@ onBeforeUnmount(() => {
     inset -0.16rem 0 0 #8f8664,
     0 0 0 0.12rem rgba(214, 197, 141, 0.24),
     0 0 0.8rem rgba(214, 197, 141, 0.48);
-  transform: rotate(-16deg);
+  transform: rotate(var(--glyph-tilt));
 }
 
 .theme-pull-switch.is-night .theme-pull-switch__glyph::before {
@@ -515,6 +606,27 @@ html[data-theme="day"] .theme-pull-switch__knot {
   .theme-pull-switch *::before,
   .theme-pull-switch *::after {
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@keyframes theme-pull-switch-flash {
+  0% {
+    transform: rotate(var(--glyph-tilt)) scale(0.9);
+    box-shadow:
+      0 0 0 0.08rem rgba(255, 232, 154, 0.42),
+      0 0 0.4rem rgba(244, 200, 79, 0.4);
+  }
+
+  42% {
+    transform: rotate(var(--glyph-tilt)) scale(1.16);
+    box-shadow:
+      0 0 0 0.2rem rgba(255, 232, 154, 0.38),
+      0 0 1.25rem rgba(244, 200, 79, 0.72);
+  }
+
+  100% {
+    transform: rotate(var(--glyph-tilt)) scale(1);
   }
 }
 </style>
