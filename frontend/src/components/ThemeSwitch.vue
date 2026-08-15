@@ -10,19 +10,26 @@ const emit = defineEmits<{
   change: []
 }>()
 
-const MAX_PULL_X = 24
-const MAX_PULL_Y = 56
+const MAX_PULL_X = 118
+const MIN_PULL_Y = -82
+const MAX_PULL_Y = 74
 const CLICK_PULL_Y = 34
 const TOGGLE_PULL_Y = 22
-const ROPE_BASE_PX = 76
+const ROPE_BASE_PX = 86
+const ROPE_ANCHOR_X = 120
+const ROPE_ANCHOR_Y = 4
 const SPRING_STIFFNESS = 0.052
 const SPRING_DAMPING = 0.88
+const FOLD_STIFFNESS = 0.075
+const FOLD_DAMPING = 0.72
 
 const isPulling = ref(false)
 const isReleasing = ref(false)
 const isSwitching = ref(false)
 const pullX = ref(0)
 const pullY = ref(0)
+const foldX = ref(0)
+const foldY = ref(0)
 
 let activePointerId: number | null = null
 let startX = 0
@@ -34,31 +41,39 @@ let switchFlashTimer: number | null = null
 let animationFrameId: number | null = null
 let velocityX = 0
 let velocityY = 0
+let velocityFoldX = 0
+let velocityFoldY = 0
 let releaseStartedAt = 0
 
-const ropeExtra = computed(() => {
-  const visualY = Math.max(0, pullY.value)
+const ropeEndY = computed(() => clamp(ROPE_BASE_PX + pullY.value, 8, ROPE_BASE_PX + MAX_PULL_Y))
+const ropeEndX = computed(() => ROPE_ANCHOR_X + pullX.value)
+const ropeVectorY = computed(() => Math.max(8, ropeEndY.value - ROPE_ANCHOR_Y))
+const ropeLength = computed(() => Math.hypot(pullX.value, ropeVectorY.value))
 
-  return Math.max(0, Math.hypot(pullX.value, ROPE_BASE_PX + visualY) - ROPE_BASE_PX)
-})
+const ropeExtra = computed(() => Math.max(0, ropeLength.value - (ROPE_BASE_PX - ROPE_ANCHOR_Y)))
 
 const ropeTilt = computed(() => {
-  if (pullY.value <= 0 && Math.abs(pullX.value) <= 0) return 0
+  if (Math.abs(pullX.value) <= 0.1 && Math.abs(pullY.value) <= 0.1) return 0
 
-  const visualY = Math.max(0, pullY.value)
-  const angle = Math.atan2(-pullX.value, ROPE_BASE_PX + visualY) * (180 / Math.PI)
+  return Math.atan2(pullX.value, ropeVectorY.value) * (180 / Math.PI)
+})
 
-  return clamp(angle, -18, 18)
+const ropePath = computed(() => {
+  const controlX = ROPE_ANCHOR_X + pullX.value * 0.48 + foldX.value
+  const controlY = ROPE_ANCHOR_Y + ropeVectorY.value * 0.52 + foldY.value
+
+  return `M ${ROPE_ANCHOR_X} ${ROPE_ANCHOR_Y} Q ${controlX.toFixed(2)} ${controlY.toFixed(2)} ${ropeEndX.value.toFixed(2)} ${ropeEndY.value.toFixed(2)}`
 })
 
 const switchStyle = computed(() => ({
   "--pull-x": `${pullX.value}px`,
-  "--pull-y": `${pullY.value}px`,
+  "--rope-end-x": `${ropeEndX.value}px`,
+  "--rope-end-y": `${ropeEndY.value}px`,
   "--rope-extra": `${ropeExtra.value}px`,
   "--rope-tilt": `${ropeTilt.value}deg`,
-  "--knot-rest-tilt": `${ropeTilt.value * 0.72 - 2}deg`,
-  "--knot-hover-tilt": `${ropeTilt.value * 0.72 + 2}deg`,
-  "--knot-pull-tilt": `${ropeTilt.value * 0.9 + 3}deg`,
+  "--knot-rest-tilt": `${ropeTilt.value * 0.28 - 2}deg`,
+  "--knot-hover-tilt": `${ropeTilt.value * 0.28 + 2}deg`,
+  "--knot-pull-tilt": `${ropeTilt.value * 0.34 + 3}deg`,
 }))
 
 function clamp(value: number, min: number, max: number) {
@@ -103,8 +118,12 @@ function finishRelease() {
   clearReleaseTimer()
   pullX.value = 0
   pullY.value = 0
+  foldX.value = 0
+  foldY.value = 0
   velocityX = 0
   velocityY = 0
+  velocityFoldX = 0
+  velocityFoldY = 0
   isPulling.value = false
   isReleasing.value = false
 }
@@ -122,16 +141,32 @@ function startSwingRelease(strength = 1) {
   releaseStartedAt = performance.now()
   velocityX = clamp(velocityX * 0.35 - pullX.value * 0.32, -9, 9) * strength
   velocityY = clamp(velocityY * 0.15 - pullY.value * 0.2, -10, 2) * strength
+  velocityFoldX = clamp(-pullX.value * 0.42 + velocityX * 1.8, -30, 30) * strength
+  velocityFoldY = clamp(-Math.abs(pullX.value) * 0.12 - pullY.value * 0.16 + velocityY * 0.9, -22, 18) * strength
 
   const step = () => {
     const elapsed = performance.now() - releaseStartedAt
 
     velocityX = (velocityX - pullX.value * SPRING_STIFFNESS) * SPRING_DAMPING
     velocityY = (velocityY - pullY.value * SPRING_STIFFNESS) * SPRING_DAMPING
+    velocityFoldX = (velocityFoldX - foldX.value * FOLD_STIFFNESS - pullX.value * 0.018) * FOLD_DAMPING
+    velocityFoldY = (velocityFoldY - foldY.value * FOLD_STIFFNESS - pullY.value * 0.012) * FOLD_DAMPING
     pullX.value = clamp(pullX.value + velocityX, -MAX_PULL_X, MAX_PULL_X)
-    pullY.value = clamp(pullY.value + velocityY, -7, MAX_PULL_Y)
+    pullY.value = clamp(pullY.value + velocityY, MIN_PULL_Y, MAX_PULL_Y)
+    foldX.value = clamp(foldX.value + velocityFoldX, -44, 44)
+    foldY.value = clamp(foldY.value + velocityFoldY, -28, 28)
 
-    if (elapsed > 560 && Math.abs(pullX.value) < 0.18 && Math.abs(pullY.value) < 0.18 && Math.abs(velocityX) < 0.14 && Math.abs(velocityY) < 0.14) {
+    if (
+      elapsed > 720 &&
+      Math.abs(pullX.value) < 0.18 &&
+      Math.abs(pullY.value) < 0.18 &&
+      Math.abs(foldX.value) < 0.22 &&
+      Math.abs(foldY.value) < 0.22 &&
+      Math.abs(velocityX) < 0.14 &&
+      Math.abs(velocityY) < 0.14 &&
+      Math.abs(velocityFoldX) < 0.18 &&
+      Math.abs(velocityFoldY) < 0.18
+    ) {
       animationFrameId = null
       finishRelease()
       return
@@ -162,8 +197,12 @@ function handlePointerDown(event: PointerEvent) {
   isReleasing.value = false
   velocityX = 0
   velocityY = 0
+  velocityFoldX = 0
+  velocityFoldY = 0
   pullX.value = 0
   pullY.value = 7
+  foldX.value = 0
+  foldY.value = 0
 
   window.addEventListener("pointermove", handlePointerMove)
   window.addEventListener("pointerup", handlePointerUp)
@@ -174,12 +213,16 @@ function handlePointerMove(event: PointerEvent) {
   if (activePointerId !== event.pointerId) return
 
   const nextX = clamp((event.clientX - startX) * 0.62, -MAX_PULL_X, MAX_PULL_X)
-  const nextY = clamp((event.clientY - startY) * 1.08, 0, MAX_PULL_Y)
+  const nextY = clamp((event.clientY - startY) * 1.08, MIN_PULL_Y, MAX_PULL_Y)
   velocityX = (nextX - pullX.value) * 0.45
   velocityY = (nextY - pullY.value) * 0.32
+  velocityFoldX = velocityX * -1.35
+  velocityFoldY = velocityY * -0.75
   didDrag = didDrag || nextY > 5 || Math.abs(nextX) > 6
   pullX.value = nextX
   pullY.value = nextY
+  foldX.value = clamp(-nextX * 0.16 + velocityFoldX, -30, 30)
+  foldY.value = clamp(-Math.abs(nextX) * 0.035 + velocityFoldY, -18, 18)
 }
 
 function finishPointer(event: PointerEvent, shouldToggle: boolean) {
@@ -218,8 +261,12 @@ function handleClick() {
   isReleasing.value = false
   velocityX = props.checked ? -2.2 : 2.2
   velocityY = 2.8
+  velocityFoldX = props.checked ? 8 : -8
+  velocityFoldY = -6
   pullX.value = props.checked ? -7 : 7
   pullY.value = CLICK_PULL_Y
+  foldX.value = props.checked ? 12 : -12
+  foldY.value = -8
   flashSwitch()
   emit("change")
   startSwingRelease(1)
@@ -247,9 +294,12 @@ onBeforeUnmount(() => {
   >
     <span class="theme-pull-switch__ceiling" aria-hidden="true" />
     <span class="theme-pull-switch__hanger" aria-hidden="true">
-      <span class="theme-pull-switch__rope">
-        <span class="theme-pull-switch__rope-core" />
-      </span>
+      <svg class="theme-pull-switch__rope" viewBox="0 0 240 178" focusable="false">
+        <path class="theme-pull-switch__rope-shadow" :d="ropePath" pathLength="1" />
+        <path class="theme-pull-switch__rope-base" :d="ropePath" pathLength="1" />
+        <path class="theme-pull-switch__rope-fiber theme-pull-switch__rope-fiber--light" :d="ropePath" pathLength="1" />
+        <path class="theme-pull-switch__rope-fiber theme-pull-switch__rope-fiber--dark" :d="ropePath" pathLength="1" />
+      </svg>
       <span class="theme-pull-switch__knot">
         <span class="theme-pull-switch__glyph" />
       </span>
@@ -260,7 +310,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .theme-pull-switch {
   --pull-x: 0px;
-  --pull-y: 0px;
+  --rope-end-x: 120px;
+  --rope-end-y: 86px;
   --rope-extra: 0px;
   --rope-tilt: 0deg;
   --knot-rest-tilt: -2deg;
@@ -322,78 +373,63 @@ onBeforeUnmount(() => {
   top: 0.24rem;
   left: 50%;
   z-index: 1;
-  width: 2.4rem;
-  height: calc(5.95rem + var(--rope-extra));
-  transform: translateX(-50%) rotate(var(--rope-tilt));
-  transform-origin: top center;
-  will-change: height, transform;
-  transition:
-    height 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
-    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
+  width: 15rem;
+  height: 11.125rem;
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .theme-pull-switch__rope {
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;
   z-index: 1;
-  width: 0.42rem;
-  height: calc(4.75rem + var(--rope-extra));
-  border-radius: 999px;
+  width: 15rem;
+  height: 11.125rem;
+  overflow: visible;
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
-  transform: translateX(-50%);
-  transform-origin: top center;
-  will-change: height;
-  transition: height 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
 }
 
-.theme-pull-switch__rope-core,
-.theme-pull-switch__rope::before,
-.theme-pull-switch__rope::after {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
+.theme-pull-switch__rope path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.theme-pull-switch__rope-core {
-  background:
-    repeating-linear-gradient(
-      34deg,
-      var(--rope-dark) 0 0.08rem,
-      var(--rope-main) 0.08rem 0.18rem,
-      var(--rope-light) 0.18rem 0.24rem,
-      var(--rope-main) 0.24rem 0.34rem
-    );
-  box-shadow:
-    inset 0.08rem 0 0.09rem rgba(255, 246, 212, 0.22),
-    inset -0.08rem 0 0.12rem rgba(72, 45, 18, 0.36);
+.theme-pull-switch__rope-shadow {
+  stroke: rgba(34, 20, 8, 0.34);
+  stroke-width: 8.5;
+  transform: translate(0.65px, 1.15px);
 }
 
-.theme-pull-switch__rope::before,
-.theme-pull-switch__rope::after {
-  content: "";
-  opacity: 0.72;
-  mix-blend-mode: multiply;
+.theme-pull-switch__rope-base {
+  stroke: var(--rope-main);
+  stroke-width: 7.2;
 }
 
-.theme-pull-switch__rope::before {
-  background: repeating-linear-gradient(
-    -38deg,
-    transparent 0 0.11rem,
-    rgba(74, 48, 23, 0.42) 0.11rem 0.16rem,
-    transparent 0.16rem 0.28rem
-  );
+.theme-pull-switch__rope-fiber {
+  stroke-dasharray: 0.035 0.045;
+  stroke-width: 3;
+  opacity: 0.9;
 }
 
-.theme-pull-switch__rope::after {
-  inset: 0 0.08rem;
-  background: linear-gradient(90deg, rgba(255, 245, 205, 0.28), transparent 46%, rgba(44, 28, 12, 0.28));
+.theme-pull-switch__rope-fiber--light {
+  stroke: var(--rope-light);
+  stroke-dashoffset: 0.02;
+}
+
+.theme-pull-switch__rope-fiber--dark {
+  stroke: var(--rope-dark);
+  stroke-dashoffset: 0.06;
+  stroke-width: 2.2;
+  opacity: 0.64;
 }
 
 .theme-pull-switch__knot {
   position: absolute;
-  top: calc(4.62rem + var(--rope-extra));
-  left: 50%;
+  top: var(--rope-end-y);
+  left: var(--rope-end-x);
   z-index: 3;
   display: grid;
   width: 1.44rem;
@@ -414,12 +450,9 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 236, 196, 0.24),
     inset 0 -0.14rem 0.2rem rgba(76, 45, 19, 0.38),
     0 0.65rem 1.15rem rgba(0, 0, 0, 0.28);
-  transform: translateX(-50%) rotate(var(--knot-rest-tilt));
+  transform: translate(-50%, -0.16rem) rotate(var(--knot-rest-tilt));
   will-change: top, transform;
-  transition:
-    top 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
-    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
-    box-shadow 220ms ease;
+  transition: box-shadow 220ms ease;
 }
 
 .theme-pull-switch__knot::before,
@@ -482,27 +515,11 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch:hover .theme-pull-switch__knot {
-  transform: translateX(-50%) translateY(0.08rem) rotate(var(--knot-hover-tilt));
-}
-
-.theme-pull-switch.is-pulling .theme-pull-switch__hanger {
-  transition-duration: 0ms;
-}
-
-.theme-pull-switch.is-pulling .theme-pull-switch__rope {
-  transition-duration: 0ms;
+  transform: translate(-50%, -0.08rem) rotate(var(--knot-hover-tilt));
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__knot {
-  transform: translateX(-50%) translateY(0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
-  transition-duration: 0ms;
-}
-
-.theme-pull-switch.is-releasing .theme-pull-switch__hanger {
-  transition-duration: 0ms;
-}
-
-.theme-pull-switch.is-releasing .theme-pull-switch__rope {
+  transform: translate(-50%, -0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
   transition-duration: 0ms;
 }
 
