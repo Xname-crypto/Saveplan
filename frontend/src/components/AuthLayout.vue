@@ -111,7 +111,6 @@ watch(
         <i aria-hidden="true"></i>
         <small>题库导入助手</small>
       </div>
-      <button class="auth-help-button" type="button" title="帮助">?</button>
     </header>
 
     <div v-if="$slots.notice" class="pointer-events-none fixed inset-x-0 top-6 z-[9999] flex justify-center px-4">
