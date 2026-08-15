@@ -159,11 +159,13 @@ onBeforeUnmount(() => {
     @pointerdown="handlePointerDown"
   >
     <span class="theme-pull-switch__ceiling" aria-hidden="true" />
-    <span class="theme-pull-switch__rope" aria-hidden="true">
-      <span class="theme-pull-switch__rope-core" />
-    </span>
-    <span class="theme-pull-switch__knot" aria-hidden="true">
-      <span class="theme-pull-switch__glyph" />
+    <span class="theme-pull-switch__hanger" aria-hidden="true">
+      <span class="theme-pull-switch__rope">
+        <span class="theme-pull-switch__rope-core" />
+      </span>
+      <span class="theme-pull-switch__knot">
+        <span class="theme-pull-switch__glyph" />
+      </span>
     </span>
   </button>
 </template>
@@ -227,20 +229,32 @@ onBeforeUnmount(() => {
   transform: translateX(-50%);
 }
 
-.theme-pull-switch__rope {
+.theme-pull-switch__hanger {
   position: absolute;
   top: 0.24rem;
+  left: 50%;
+  z-index: 1;
+  width: 2.4rem;
+  height: calc(5.95rem + var(--rope-extra));
+  transform: translateX(-50%) rotate(var(--rope-tilt));
+  transform-origin: top center;
+  transition:
+    height 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
+    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
+}
+
+.theme-pull-switch__rope {
+  position: absolute;
+  top: 0;
   left: 50%;
   z-index: 1;
   width: 0.42rem;
   height: calc(4.75rem + var(--rope-extra));
   border-radius: 999px;
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
-  transform: translateX(-50%) rotate(var(--rope-tilt));
+  transform: translateX(-50%);
   transform-origin: top center;
-  transition:
-    height 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
-    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
+  transition: height 420ms cubic-bezier(0.18, 1.35, 0.28, 1);
 }
 
 .theme-pull-switch__rope-core,
@@ -288,7 +302,7 @@ onBeforeUnmount(() => {
 
 .theme-pull-switch__knot {
   position: absolute;
-  top: calc(4.82rem + var(--pull-y));
+  top: calc(4.62rem + var(--rope-extra));
   left: 50%;
   z-index: 3;
   display: grid;
@@ -310,10 +324,10 @@ onBeforeUnmount(() => {
     inset 0 1px 0 rgba(255, 236, 196, 0.24),
     inset 0 -0.14rem 0.2rem rgba(76, 45, 19, 0.38),
     0 0.65rem 1.15rem rgba(0, 0, 0, 0.28);
-  transform: translateX(calc(-50% + var(--pull-x))) rotate(var(--knot-rest-tilt));
+  transform: translateX(-50%) rotate(var(--knot-rest-tilt));
   transition:
-    top 430ms cubic-bezier(0.16, 1.42, 0.28, 1),
-    transform 430ms cubic-bezier(0.16, 1.42, 0.28, 1),
+    top 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
+    transform 420ms cubic-bezier(0.18, 1.35, 0.28, 1),
     box-shadow 220ms ease;
 }
 
@@ -377,7 +391,11 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch:hover .theme-pull-switch__knot {
-  transform: translateX(calc(-50% + var(--pull-x))) translateY(0.08rem) rotate(var(--knot-hover-tilt));
+  transform: translateX(-50%) translateY(0.08rem) rotate(var(--knot-hover-tilt));
+}
+
+.theme-pull-switch.is-pulling .theme-pull-switch__hanger {
+  transition-duration: 42ms;
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__rope {
@@ -385,20 +403,24 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch.is-pulling .theme-pull-switch__knot {
-  transform: translateX(calc(-50% + var(--pull-x))) translateY(0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
+  transform: translateX(-50%) translateY(0.08rem) rotate(var(--knot-pull-tilt)) scale(0.98);
   transition-duration: 42ms;
 }
 
-.theme-pull-switch.is-releasing .theme-pull-switch__rope {
+.theme-pull-switch.is-releasing .theme-pull-switch__hanger {
   transition:
-    height 560ms cubic-bezier(0.18, 1.55, 0.28, 1),
+    height 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
     transform 620ms cubic-bezier(0.16, 1.58, 0.3, 1);
+}
+
+.theme-pull-switch.is-releasing .theme-pull-switch__rope {
+  transition: height 620ms cubic-bezier(0.16, 1.58, 0.3, 1);
 }
 
 .theme-pull-switch.is-releasing .theme-pull-switch__knot {
   transition:
     top 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
-    transform 680ms cubic-bezier(0.14, 1.62, 0.32, 1),
+    transform 620ms cubic-bezier(0.16, 1.58, 0.3, 1),
     box-shadow 220ms ease;
 }
 
