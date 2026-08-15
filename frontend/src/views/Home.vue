@@ -203,7 +203,7 @@ function updateScrollMotion() {
   if (aboutPreviewAnchor) {
     const rect = aboutPreviewAnchor.getBoundingClientRect()
     const aboutTop = window.scrollY + rect.top
-    const revealAt = aboutTop - window.innerHeight * 0.56
+    const revealAt = aboutTop - window.innerHeight * 0.24
     const isFooterVisible = footer ? footer.getBoundingClientRect().top < window.innerHeight - 12 : false
 
     isAboutPreviewVisible = isAboutSurveyOpen.value && window.scrollY >= revealAt && !isFooterVisible

@@ -1928,9 +1928,9 @@
 .home-about__preview {
   position: fixed;
   top: clamp(8.4rem, 17vh, 10.4rem);
-  right: clamp(0.35rem, 1vw, 1rem);
+  right: clamp(0.1rem, 0.45vw, 0.55rem);
   z-index: 8;
-  width: clamp(22rem, 26vw, 25rem);
+  width: clamp(21rem, 24vw, 23.5rem);
   opacity: 0;
   pointer-events: none;
   transform: translate3d(0.8rem, calc(var(--home-about-preview-shift, 0px) + 0.6rem), 0) scale(0.985);
