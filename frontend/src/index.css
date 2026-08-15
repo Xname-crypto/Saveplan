@@ -1661,7 +1661,7 @@
 .hero-preview-card--survey {
   display: block;
   min-height: auto;
-  padding: 1.45rem 1.35rem 1.5rem;
+  padding: 1.45rem 1.45rem 1.5rem;
   overflow: hidden;
   border-color: rgba(235, 228, 207, 0.18);
   border-radius: 1.5rem;
@@ -1928,9 +1928,9 @@
 .home-about__preview {
   position: fixed;
   top: clamp(8.4rem, 17vh, 10.4rem);
-  right: clamp(0.1rem, 0.45vw, 0.55rem);
+  right: clamp(0.9rem, 1.4vw, 1.5rem);
   z-index: 8;
-  width: clamp(21rem, 24vw, 23.5rem);
+  width: clamp(20rem, 22vw, 22.25rem);
   opacity: 0;
   pointer-events: none;
   transform: translate3d(0.8rem, calc(var(--home-about-preview-shift, 0px) + 0.6rem), 0) scale(0.985);
