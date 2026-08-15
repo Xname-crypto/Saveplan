@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
   left: 50%;
   z-index: 1;
   width: 0.42rem;
-  height: calc(3.25rem + var(--pull-distance));
+  height: calc(4.05rem + var(--pull-distance));
   border-radius: 999px;
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
   transform: translateX(-50%);
@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
 
 .theme-pull-switch__knot {
   position: absolute;
-  top: calc(3.32rem + var(--pull-distance));
+  top: calc(4.12rem + var(--pull-distance));
   left: 50%;
   z-index: 3;
   display: grid;
@@ -346,14 +346,50 @@ onBeforeUnmount(() => {
 }
 
 .theme-pull-switch.is-night {
+  --rope-main: #d8d6cd;
+  --rope-light: #fbfaf3;
+  --rope-dark: #8e8c84;
+  --rope-shadow: rgba(248, 246, 230, 0.18);
   color: #d6c58d;
 }
 
 .theme-pull-switch.is-night .theme-pull-switch__ceiling {
-  border-color: rgba(214, 197, 141, 0.4);
+  border-color: rgba(238, 236, 222, 0.5);
   background:
-    linear-gradient(180deg, rgba(235, 228, 207, 0.18), rgba(52, 43, 28, 0.44)),
-    rgba(13, 13, 13, 0.84);
+    linear-gradient(180deg, rgba(255, 255, 248, 0.28), rgba(132, 130, 119, 0.34)),
+    rgba(24, 24, 22, 0.84);
+}
+
+.theme-pull-switch.is-night .theme-pull-switch__knot {
+  border-color: rgba(238, 236, 222, 0.42);
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 248, 0.38), transparent 34%),
+    repeating-linear-gradient(
+      28deg,
+      #8e8c84 0 0.11rem,
+      #d8d6cd 0.11rem 0.22rem,
+      #fbfaf3 0.22rem 0.3rem,
+      #aaa79d 0.3rem 0.42rem
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -0.14rem 0.2rem rgba(67, 66, 61, 0.3),
+    0 0.65rem 1.15rem rgba(0, 0, 0, 0.28),
+    0 0 0.65rem rgba(255, 252, 232, 0.16);
+}
+
+.theme-pull-switch.is-night .theme-pull-switch__knot::before {
+  background: rgba(84, 83, 78, 0.18);
+}
+
+.theme-pull-switch.is-night .theme-pull-switch__knot::after {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(142, 140, 132, 0.95) 0 0.06rem,
+      rgba(251, 250, 243, 0.95) 0.06rem 0.12rem,
+      rgba(170, 167, 157, 0.95) 0.12rem 0.18rem
+    );
 }
 
 .theme-pull-switch.is-night .theme-pull-switch__glyph {
