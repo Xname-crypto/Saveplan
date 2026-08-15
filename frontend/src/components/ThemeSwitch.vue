@@ -114,6 +114,10 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
 }
 
+function isRopeHeadTarget(target: EventTarget | null) {
+  return target instanceof Element && target.closest(".theme-pull-switch__knot") !== null
+}
+
 function finishRelease() {
   clearReleaseTimer()
   pullX.value = 0
@@ -186,6 +190,7 @@ function removePointerListeners() {
 
 function handlePointerDown(event: PointerEvent) {
   if (event.pointerType === "mouse" && event.button !== 0) return
+  if (!isRopeHeadTarget(event.target)) return
 
   clearReleaseTimer()
   clearSwingAnimation()
@@ -249,11 +254,13 @@ function handlePointerCancel(event: PointerEvent) {
   finishPointer(event, false)
 }
 
-function handleClick() {
+function handleClick(event: MouseEvent) {
   if (suppressNextClick) {
     suppressNextClick = false
     return
   }
+
+  if (event.detail > 0 && !isRopeHeadTarget(event.target)) return
 
   clearReleaseTimer()
   clearSwingAnimation()
