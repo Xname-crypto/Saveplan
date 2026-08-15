@@ -183,6 +183,7 @@ function updateScrollMotion() {
     root.querySelector<HTMLElement>(".home-about")
   const aboutPreview = root.querySelector<HTMLElement>(".home-about__preview")
   const testimonialsMarquee = root.querySelector<HTMLElement>(".home-testimonials__marquee")
+  const footer = root.querySelector<HTMLElement>(".stitch-footer")
   let aboutPreviewShift = 0
   let isAboutPreviewVisible = false
 
@@ -190,8 +191,9 @@ function updateScrollMotion() {
     const rect = aboutPreviewAnchor.getBoundingClientRect()
     const aboutTop = window.scrollY + rect.top
     const revealAt = aboutTop - window.innerHeight * 0.56
+    const isFooterVisible = footer ? footer.getBoundingClientRect().top < window.innerHeight - 12 : false
 
-    isAboutPreviewVisible = window.scrollY >= revealAt
+    isAboutPreviewVisible = window.scrollY >= revealAt && !isFooterVisible
 
     if (aboutPreview && testimonialsMarquee) {
       const currentPreviewShift =
@@ -200,10 +202,11 @@ function updateScrollMotion() {
       const marqueeRect = testimonialsMarquee.getBoundingClientRect()
       const marqueeTop = window.scrollY + marqueeRect.top
       const previewHeight = aboutPreview.offsetHeight || aboutPreview.getBoundingClientRect().height
-      const bottomMarqueeTop = marqueeTop - maxScroll
-      const lowestViewportTop = Math.max(previewBaseTop, window.innerHeight - previewHeight - 24)
-      const targetViewportTop = Math.max(previewBaseTop, Math.min(bottomMarqueeTop, lowestViewportTop))
-      const finishAt = Math.max(revealAt + 1, maxScroll)
+      const targetViewportTop = Math.max(
+        previewBaseTop,
+        Math.min(window.innerHeight * 0.58, window.innerHeight - previewHeight - 32),
+      )
+      const finishAt = Math.min(maxScroll, Math.max(revealAt + 1, marqueeTop - targetViewportTop))
       const travelProgress = clamp01((window.scrollY - revealAt) / (finishAt - revealAt))
       const finalShift = Math.max(0, targetViewportTop - previewBaseTop)
 
