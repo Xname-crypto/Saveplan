@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
-import { LogOut, Menu, UserRound } from "lucide-vue-next"
+import { BadgeDollarSign, FileText, Home, LogIn, LogOut, Menu, UserRound } from "lucide-vue-next"
 import ShinyText from "@/components/ShinyText.vue"
 import ThemeSwitch from "@/components/ThemeSwitch.vue"
 import { useRouter } from "@/router"
@@ -15,10 +15,10 @@ import {
 import { useTheme } from "@/services/theme"
 
 const links = [
-  { label: "首页", to: "/" },
-  { label: "转换", to: "/convert" },
-  { label: "价格", to: "/pricing" },
-  { label: "个人中心", to: "/profile" },
+  { label: "首页", to: "/", icon: Home, hint: "返回主视觉" },
+  { label: "转换", to: "/convert", icon: FileText, hint: "进入工作台" },
+  { label: "价格", to: "/pricing", icon: BadgeDollarSign, hint: "查看套餐" },
+  { label: "个人中心", to: "/profile", icon: UserRound, hint: "资料与记录" },
 ]
 
 const router = useRouter()
@@ -27,6 +27,8 @@ const currentUser = ref<AuthUser | null>(getStoredAuthUser())
 const avatarLoadFailed = ref(false)
 const isUserMenuOpen = ref(false)
 const userMenuRef = ref<HTMLElement | null>(null)
+const navRef = ref<HTMLElement | null>(null)
+const isMobileMenuOpen = ref(false)
 const isLoginPromptOpen = ref(false)
 
 const avatarSrc = computed(() => (avatarLoadFailed.value ? "" : getAuthAvatarSource(currentUser.value)))
@@ -72,38 +74,56 @@ const closeUserMenu = () => {
   isUserMenuOpen.value = false
 }
 
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
+  closeMobileMenu()
+}
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+  closeUserMenu()
 }
 
 const goToProfile = () => {
   closeUserMenu()
+  closeMobileMenu()
   void router.push("/profile")
 }
 
 const handleLogout = () => {
   closeUserMenu()
+  closeMobileMenu()
   authClient.logout()
   void router.push("/")
 }
 
 const handleDocumentClick = (event: MouseEvent) => {
-  if (!isUserMenuOpen.value) return
+  if (!isUserMenuOpen.value && !isMobileMenuOpen.value) return
 
   const target = event.target
   if (target instanceof Node && userMenuRef.value?.contains(target)) return
+  if (target instanceof Node && navRef.value?.contains(target)) return
 
   closeUserMenu()
+  closeMobileMenu()
 }
 
 const handleEscape = (event: KeyboardEvent) => {
   if (event.key === "Escape") {
     closeUserMenu()
+    closeMobileMenu()
   }
 }
 
 const handleNavLinkClick = (event: MouseEvent, link: (typeof links)[number]) => {
-  if (link.to !== "/profile" || currentUser.value) return
+  if (link.to !== "/profile" || currentUser.value) {
+    closeMobileMenu()
+    return
+  }
 
   event.preventDefault()
   event.stopPropagation()
@@ -112,6 +132,7 @@ const handleNavLinkClick = (event: MouseEvent, link: (typeof links)[number]) => 
   if (isLoginPromptOpen.value) return
 
   isLoginPromptOpen.value = true
+  closeMobileMenu()
   window.alert("请先登录后进入个人中心。")
   void router.push("/login?redirect=/profile")
   window.setTimeout(() => {
@@ -136,8 +157,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header class="cinema-nav">
-    <RouterLink class="cinema-nav__brand" to="/">
+  <header ref="navRef" :class="['cinema-nav', { 'is-mobile-open': isMobileMenuOpen }]">
+    <RouterLink class="cinema-nav__brand" to="/" @click="closeMobileMenu">
       <ShinyText
         text="Save Your Finals"
         :speed="brandShineSpeed"
@@ -206,9 +227,54 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <RouterLink v-else class="cinema-nav__login" to="/login">登录 / 注册</RouterLink>
-      <button class="cinema-nav__menu" type="button" aria-label="打开菜单">
+      <button
+        class="cinema-nav__menu"
+        type="button"
+        :aria-label="isMobileMenuOpen ? '关闭菜单' : '打开菜单'"
+        :aria-expanded="isMobileMenuOpen"
+        aria-controls="cinema-mobile-menu"
+        @click.stop="toggleMobileMenu"
+      >
         <Menu :size="20" />
       </button>
     </div>
+
+    <nav
+      v-if="isMobileMenuOpen"
+      id="cinema-mobile-menu"
+      class="cinema-nav__mobile"
+      aria-label="移动端导航"
+    >
+      <div class="cinema-nav__mobile-head">
+        <span>快速导航</span>
+        <small>{{ currentUser ? avatarLabel : "未登录" }}</small>
+      </div>
+      <RouterLink
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to"
+        @click="handleNavLinkClick($event, link)"
+      >
+        <component :is="link.icon" :size="18" />
+        <span>
+          <strong>{{ link.label }}</strong>
+          <small>{{ link.hint }}</small>
+        </span>
+      </RouterLink>
+      <RouterLink v-if="!currentUser" class="cinema-nav__mobile-login" to="/login" @click="closeMobileMenu">
+        <LogIn :size="18" />
+        <span>
+          <strong>登录 / 注册</strong>
+          <small>同步你的题库</small>
+        </span>
+      </RouterLink>
+      <button v-else type="button" class="cinema-nav__mobile-login" @click="handleLogout">
+        <LogOut :size="18" />
+        <span>
+          <strong>退出登录</strong>
+          <small>结束当前会话</small>
+        </span>
+      </button>
+    </nav>
   </header>
 </template>
