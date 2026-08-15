@@ -5911,22 +5911,20 @@
   }
 
   .home-process {
-    overflow: hidden;
+    overflow: visible;
   }
 
   .home-process__grid {
     display: grid;
-    grid-auto-columns: minmax(16.5rem, 78vw);
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    gap: 0.75rem;
-    margin-right: calc((100vw - 100%) * -0.5);
-    overflow-x: auto;
+    grid-auto-columns: unset;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    margin-right: 0;
+    overflow-x: visible;
     overflow-y: visible;
-    padding: 0.1rem 0.65rem 0.7rem 0;
-    scroll-padding-left: 0;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    padding: 0;
+    scroll-snap-type: none;
   }
 
   .home-process__grid::-webkit-scrollbar {
@@ -5934,42 +5932,50 @@
   }
 
   .home-process__grid > * {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+    min-width: 0;
   }
 
   .process-card {
     display: grid;
-    min-height: 13.75rem;
+    min-height: auto;
     grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto auto 1fr;
-    align-content: start;
-    gap: 0.75rem 1rem;
-    border-radius: 1.05rem;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.34rem 0.72rem;
+    padding: 0.86rem 0.95rem;
+    border-radius: 0.92rem;
   }
 
   .process-card svg {
-    grid-row: 1;
+    grid-row: 1 / span 2;
+    width: 1.35rem;
+    height: 1.35rem;
   }
 
   .process-card span {
+    grid-column: 2;
     justify-self: end;
     margin: 0;
-    font-size: 2.1rem;
+    align-self: start;
+    font-size: 1.34rem;
     line-height: 1;
   }
 
   .process-card h3 {
-    grid-column: 1 / -1;
+    grid-column: 2;
+    grid-row: 1;
+    padding-right: 2.25rem;
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 0.92rem;
+    line-height: 1.2;
   }
 
   .process-card p {
-    grid-column: 1 / -1;
+    grid-column: 2;
+    grid-row: 2;
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.72;
+    font-size: 0.74rem;
+    line-height: 1.48;
   }
 
   .home-section-heading {
@@ -6042,31 +6048,55 @@
 
   .outcome-copy,
   .outcome-card {
-    border-radius: 1.25rem;
+    border-radius: 1rem;
   }
 
   .outcome-copy {
-    padding: 1.6rem;
+    min-height: auto;
+    padding: 1.18rem;
   }
 
   .outcome-copy h2 {
-    max-width: 12.5ch;
-    font-size: clamp(1.82rem, 8.4vw, 2.42rem);
-    line-height: 1.12;
+    max-width: 11.5ch;
+    font-size: clamp(1.55rem, 7vw, 1.95rem);
+    line-height: 1.14;
+  }
+
+  .outcome-copy > p:last-of-type {
+    margin: 0.9rem 0 0.95rem;
+    font-size: 0.78rem;
+    line-height: 1.58;
   }
 
   .outcome-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
   }
 
   .outcome-card,
   .outcome-card:first-child {
-    min-height: 12rem;
+    min-height: 6.7rem;
     grid-row: auto;
+    gap: 0.32rem;
+    padding: 0.68rem 0.58rem;
   }
 
   .outcome-card strong {
-    font-size: clamp(3rem, 18vw, 5rem);
+    font-size: clamp(1.55rem, 8.8vw, 2.2rem);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+  }
+
+  .outcome-card span {
+    overflow-wrap: anywhere;
+    font-size: 0.52rem;
+    line-height: 1.24;
+    letter-spacing: 0.08em;
+  }
+
+  .outcome-card svg {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .converter-shell {
@@ -6331,11 +6361,41 @@
 
   @media (max-width: 430px) {
     .home-process__grid {
-      grid-auto-columns: minmax(15.25rem, 84vw);
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
     }
 
     .process-card {
-      min-height: 13.25rem;
+      min-height: auto;
+      padding: 0.78rem 0.82rem;
+    }
+
+    .process-card p {
+      font-size: 0.7rem;
+      line-height: 1.42;
+    }
+
+    .outcome-copy {
+      padding: 1rem;
+    }
+
+    .outcome-grid {
+      gap: 0.34rem;
+    }
+
+    .outcome-card,
+    .outcome-card:first-child {
+      min-height: 6.15rem;
+      padding: 0.56rem 0.42rem;
+    }
+
+    .outcome-card strong {
+      font-size: clamp(1.38rem, 8vw, 1.72rem);
+    }
+
+    .outcome-card span {
+      font-size: 0.46rem;
+      letter-spacing: 0.05em;
     }
 
     .pricing-grid {
