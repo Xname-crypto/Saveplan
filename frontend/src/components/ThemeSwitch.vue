@@ -63,7 +63,7 @@ function handlePointerDown(event: PointerEvent) {
 function handlePointerMove(event: PointerEvent) {
   if (activePointerId !== event.pointerId) return
 
-  const nextDistance = Math.min(26, Math.max(0, event.clientY - startY))
+  const nextDistance = Math.min(38, Math.max(0, event.clientY - startY))
   didDrag = didDrag || nextDistance > 4
   pullDistance.value = nextDistance
 }
@@ -71,7 +71,7 @@ function handlePointerMove(event: PointerEvent) {
 function finishPointer(event: PointerEvent, shouldToggle: boolean) {
   if (activePointerId !== event.pointerId) return
 
-  const shouldEmit = shouldToggle && didDrag && pullDistance.value >= 13
+  const shouldEmit = shouldToggle && didDrag && pullDistance.value >= 17
   activePointerId = null
   removePointerListeners()
 
@@ -99,7 +99,7 @@ function handleClick() {
 
   clearReleaseTimer()
   isPulling.value = true
-  pullDistance.value = 18
+  pullDistance.value = 26
   emit("change")
   resetPull(190)
 }
@@ -142,7 +142,7 @@ onBeforeUnmount(() => {
   position: relative;
   display: inline-flex;
   width: 2.75rem;
-  height: 3.35rem;
+  height: 5.2rem;
   flex: 0 0 auto;
   align-items: flex-start;
   justify-content: center;
@@ -152,7 +152,6 @@ onBeforeUnmount(() => {
   color: #e8c06d;
   cursor: pointer;
   touch-action: none;
-  transform: translateY(-0.08rem);
 }
 
 .theme-pull-switch *,
@@ -191,7 +190,7 @@ onBeforeUnmount(() => {
   left: 50%;
   z-index: 1;
   width: 0.42rem;
-  height: calc(2.1rem + var(--pull-distance));
+  height: calc(3.25rem + var(--pull-distance));
   border-radius: 999px;
   filter: drop-shadow(0 0.2rem 0.28rem var(--rope-shadow));
   transform: translateX(-50%);
@@ -244,7 +243,7 @@ onBeforeUnmount(() => {
 
 .theme-pull-switch__knot {
   position: absolute;
-  top: calc(2.18rem + var(--pull-distance));
+  top: calc(3.32rem + var(--pull-distance));
   left: 50%;
   z-index: 3;
   display: grid;
