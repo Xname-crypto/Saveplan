@@ -1075,20 +1075,18 @@
 }
 
 .cinema-nav__actions {
-  position: relative;
   display: flex;
-  align-self: stretch;
   align-items: center;
   gap: 0.7rem;
-  min-width: 10.75rem;
+  min-width: 8rem;
   justify-content: flex-end;
   justify-self: end;
 }
 
-.cinema-nav__theme-inline {
+.cinema-nav .cinema-nav__theme-inline.theme-pull-switch {
   position: absolute;
-  top: calc(100% - 0.16rem);
-  right: 6.05rem;
+  top: calc(100% - 0.18rem);
+  right: 2.65rem;
   z-index: 2;
   margin-right: 0;
 }
@@ -5502,12 +5500,12 @@
   }
 
   .cinema-nav__actions {
-    min-width: 3.4rem;
+    min-width: auto;
   }
 
-  .cinema-nav__theme-inline {
+  .cinema-nav .cinema-nav__theme-inline.theme-pull-switch {
     top: calc(100% - 0.12rem);
-    right: 2.2rem;
+    right: 0.35rem;
   }
 
   .home-hero__content,

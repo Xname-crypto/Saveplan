@@ -151,6 +151,7 @@ onBeforeUnmount(() => {
   background: transparent;
   color: #e8c06d;
   cursor: pointer;
+  overflow: visible;
   touch-action: none;
 }
 
