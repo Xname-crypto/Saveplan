@@ -68,6 +68,7 @@ function syncRoute() {
 async function loadRoute(path: string) {
   const loader = routeLoaders[path] ?? routeLoaders["/"]
   const module = await loader()
+  if (route.path !== path) return
   activeComponent.value = module.default
 }
 
@@ -105,6 +106,27 @@ function redirectToLogin(from = getCurrentFullPath()) {
   void loadRoute("/login")
 }
 
+async function navigate(to: string, mode: "push" | "replace") {
+  const target = normalizeTarget(to)
+  const targetPath = getTargetPath(target)
+  const from = route.fullPath || `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+  if (!canEnterRoute(targetPath)) {
+    redirectToLogin(target)
+    await Promise.resolve()
+    return
+  }
+
+  if (mode === "replace") {
+    window.history.replaceState({ from }, "", target)
+  } else {
+    window.history.pushState({ from }, "", target)
+  }
+
+  syncRoute()
+  await Promise.resolve()
+}
+
 export const router = {
   install(app: VueApp) {
     app.component("RouterView", RouterView)
@@ -115,19 +137,11 @@ export const router = {
   },
 
   async push(to: string) {
-    const target = normalizeTarget(to)
-    const targetPath = getTargetPath(target)
-    const from = route.fullPath || `${window.location.pathname}${window.location.search}${window.location.hash}`
+    await navigate(to, "push")
+  },
 
-    if (!canEnterRoute(targetPath)) {
-      redirectToLogin(target)
-      await Promise.resolve()
-      return
-    }
-
-    window.history.pushState({ from }, "", target)
-    syncRoute()
-    await Promise.resolve()
+  async replace(to: string) {
+    await navigate(to, "replace")
   },
 }
 

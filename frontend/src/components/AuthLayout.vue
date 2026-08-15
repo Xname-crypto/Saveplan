@@ -47,7 +47,7 @@ defineEmits<{
 }>();
 
 const closeAuth = () => {
-  void router.push('/');
+  void router.replace('/');
 };
 
 const resetVideoState = () => {
