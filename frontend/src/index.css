@@ -7262,6 +7262,37 @@ html[data-theme="day"] .auth-form-panel form .auth-button:hover {
   background: #345d75 !important;
 }
 
+@media (max-width: 760px) {
+  html[data-theme="day"] .auth-button,
+  html[data-theme="day"] .auth-form-panel form .auth-button {
+    border-color: rgba(31, 41, 51, 0.18) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      0 14px 30px rgba(31, 41, 51, 0.14),
+      0 0 0 1px rgba(31, 41, 51, 0.05) !important;
+  }
+
+  html[data-theme="day"] .auth-button > *,
+  html[data-theme="day"] .auth-form-panel form .auth-button > *,
+  html[data-theme="day"] .auth-button svg,
+  html[data-theme="day"] .auth-form-panel form .auth-button svg {
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    stroke: currentColor;
+  }
+
+  html[data-theme="day"] .auth-button:hover,
+  html[data-theme="day"] .auth-form-panel form .auth-button:hover {
+    border-color: rgba(52, 93, 117, 0.28) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+  }
+}
+
 html[data-theme="day"] .auth-alert {
   border-color: rgba(31, 41, 51, 0.12);
   background: rgba(255, 255, 255, 0.72);
