@@ -594,8 +594,19 @@ input::-ms-clear {
 }
 
 .avatar-picker__upload .auth-avatar-control {
-  width: 3.1rem;
-  height: 3.1rem;
+  width: 3.35rem;
+  height: 3.35rem;
+}
+
+.avatar-picker__upload .auth-avatar-upload {
+  right: -0.05rem;
+  bottom: -0.05rem;
+  padding: 0.25rem;
+}
+
+.avatar-picker__upload .auth-avatar-upload svg {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 
 .avatar-picker__upload p {
@@ -897,8 +908,8 @@ input::-ms-clear {
   }
 
   .avatar-picker__upload .auth-avatar-control {
-    width: 3rem;
-    height: 3rem;
+    width: 3.22rem;
+    height: 3.22rem;
   }
 
   .avatar-picker__upload p {
