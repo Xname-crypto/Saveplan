@@ -7224,8 +7224,7 @@ html[data-theme="day"] .auth-link:hover {
 
 html[data-theme="day"] .auth-title,
 html[data-theme="day"] .auth-register-title,
-html[data-theme="day"] .auth-brand span,
-html[data-theme="day"] .auth-media-copy strong {
+html[data-theme="day"] .auth-brand span {
   color: #1f2933;
 }
 
@@ -7234,9 +7233,7 @@ html[data-theme="day"] .auth-brand i {
 }
 
 html[data-theme="day"] .auth-brand small,
-html[data-theme="day"] .auth-media-copy span,
-html[data-theme="day"] .auth-register-subtitle,
-html[data-theme="day"] .auth-media-copy p {
+html[data-theme="day"] .auth-register-subtitle {
   color: rgba(31, 41, 51, 0.58);
 }
 
@@ -7337,7 +7334,21 @@ html[data-theme="day"] .auth-media-shade {
 }
 
 html[data-theme="day"] .auth-media-copy strong {
-  text-shadow: 0 12px 32px rgba(255, 255, 255, 0.72);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow: 0 12px 32px rgba(8, 18, 30, 0.7);
+}
+
+html[data-theme="day"] .auth-media-copy span {
+  color: rgba(255, 255, 255, 0.92);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 4px 16px rgba(8, 18, 30, 0.7);
+}
+
+html[data-theme="day"] .auth-media-copy p {
+  color: rgba(255, 255, 255, 0.88);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 4px 18px rgba(8, 18, 30, 0.64);
 }
 
 html[data-theme="day"] .auth-form-panel {
