@@ -307,7 +307,10 @@ watch(currentStep, async (step) => {
     @back="handleBack"
   >
     <template #title>
-      <div class="auth-register-head pr-12 md:pr-14">
+      <div
+        class="auth-register-head pr-12 md:pr-14"
+        :class="{ 'auth-register-head--profile': currentStep === 2 }"
+      >
         <h1 class="auth-register-title">
           <span v-if="currentStep === 1">创建账号</span>
           <span v-else-if="currentStep === 2">完善资料</span>
@@ -570,6 +573,10 @@ input::-ms-clear {
 .identity-choice-block {
   display: grid;
   gap: 0.72rem;
+}
+
+.auth-register-head--profile {
+  transform: translateY(-0.5rem);
 }
 
 .avatar-picker {
