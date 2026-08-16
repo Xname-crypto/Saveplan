@@ -132,7 +132,7 @@ const handleReset = async () => {
   font-weight: 800;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input) {
   border-bottom-color: rgba(104, 189, 240, 0.74) !important;
   color: #1f2933 !important;
   -webkit-text-fill-color: #1f2933 !important;
@@ -140,56 +140,56 @@ const handleReset = async () => {
   text-shadow: none !important;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control label {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control label) {
   color: rgba(52, 93, 117, 0.82) !important;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control label span {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control label span) {
   color: inherit;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__leading,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__trailing {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__leading),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__trailing) {
   color: rgba(52, 93, 117, 0.72) !important;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:focus,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:not(:placeholder-shown),
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:-webkit-autofill,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control.has-value input {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:focus),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:not(:placeholder-shown)),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:-webkit-autofill),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control.has-value input) {
   border-bottom-color: #345d75 !important;
   box-shadow:
     0 1px 0 rgba(52, 93, 117, 0.62),
     0 10px 22px rgba(52, 93, 117, 0.08) !important;
 }
 
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:focus + label span,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:not(:placeholder-shown) + label span,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control input:-webkit-autofill + label span,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control.has-value label span,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control:has(input:focus) .auth-wave-field__leading,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control:has(input:not(:placeholder-shown)) .auth-wave-field__leading,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control:has(input:-webkit-autofill) .auth-wave-field__leading,
-:global(html[data-theme="day"]) .forgot-form .auth-wave-field__control.has-value .auth-wave-field__leading {
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:focus + label span),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:not(:placeholder-shown) + label span),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control input:-webkit-autofill + label span),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control.has-value label span),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control:has(input:focus) .auth-wave-field__leading),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control:has(input:not(:placeholder-shown)) .auth-wave-field__leading),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control:has(input:-webkit-autofill) .auth-wave-field__leading),
+:global(html[data-theme="day"] .forgot-form .auth-wave-field__control.has-value .auth-wave-field__leading) {
   color: #345d75 !important;
   filter: drop-shadow(0 0 8px rgba(52, 93, 117, 0.18));
 }
 
-:global(html[data-theme="day"]) .forgot-submit-button {
+:global(html[data-theme="day"] .forgot-submit-button) {
   box-shadow:
     0 18px 36px rgba(31, 41, 51, 0.18),
     0 0 0 1px rgba(31, 41, 51, 0.04) !important;
 }
 
-:global(html[data-theme="day"]) .forgot-login-row {
+:global(html[data-theme="day"] .forgot-login-row) {
   color: rgba(31, 41, 51, 0.56) !important;
 }
 
-:global(html[data-theme="day"]) .forgot-login-row .auth-link {
+:global(html[data-theme="day"] .forgot-login-row .auth-link) {
   color: #345d75 !important;
 }
 
-:global(html[data-theme="day"]) .forgot-login-row .auth-link:hover {
+:global(html[data-theme="day"] .forgot-login-row .auth-link:hover) {
   color: #1f2933 !important;
 }
 </style>

@@ -299,48 +299,48 @@ const updateGeneratedCode = (code: string) => {
   font-weight: 900;
 }
 
-:global(html[data-theme="day"]) .remember-me-control {
+:global(html[data-theme="day"] .remember-me-control) {
   color: rgba(31, 41, 51, 0.68) !important;
 }
 
-:global(html[data-theme="day"]) .remember-me-control input {
+:global(html[data-theme="day"] .remember-me-control input) {
   border-color: rgba(52, 93, 117, 0.34);
   background: rgba(255, 255, 255, 0.8);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
 }
 
-:global(html[data-theme="day"]) .remember-me-control input:checked {
+:global(html[data-theme="day"] .remember-me-control input:checked) {
   border-color: #345d75;
   background:
     radial-gradient(circle, #345d75 0 42%, transparent 46%),
     #ffffff;
 }
 
-:global(html[data-theme="day"]) .forgot-password-link {
+:global(html[data-theme="day"] .forgot-password-link) {
   color: #345d75 !important;
   text-shadow: none;
 }
 
-:global(html[data-theme="day"]) .forgot-password-link:hover {
+:global(html[data-theme="day"] .forgot-password-link:hover) {
   color: #1f2933 !important;
   text-shadow: 0 0 14px rgba(52, 93, 117, 0.18);
 }
 
-:global(html[data-theme="day"]) .login-account-row {
+:global(html[data-theme="day"] .login-account-row) {
   color: rgba(31, 41, 51, 0.52) !important;
 }
 
-:global(html[data-theme="day"]) .login-account-row .auth-link {
+:global(html[data-theme="day"] .login-account-row .auth-link) {
   color: #345d75 !important;
 }
 
-:global(html[data-theme="day"]) .login-submit-button {
+:global(html[data-theme="day"] .login-submit-button) {
   box-shadow:
     0 18px 36px rgba(31, 41, 51, 0.18),
     0 0 0 1px rgba(31, 41, 51, 0.04) !important;
 }
 
-:global(html[data-theme="day"]) .auth-captcha-block {
+:global(html[data-theme="day"] .auth-captcha-block) {
   filter: drop-shadow(0 10px 22px rgba(52, 93, 117, 0.05));
 }
 
