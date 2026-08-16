@@ -791,6 +791,10 @@ input::-ms-clear {
   font-size: 0.82rem;
 }
 
+.identity-choice-block + .register-submit-button {
+  margin-top: 1.1rem !important;
+}
+
 .register-login-row {
   margin-top: 0.9rem !important;
   color: rgba(226, 218, 194, 0.38) !important;
