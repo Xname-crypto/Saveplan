@@ -7228,17 +7228,6 @@ html[data-theme="day"] .auth-brand span {
   color: #1f2933;
 }
 
-html[data-theme="day"] .auth-title,
-html[data-theme="day"] .auth-title > span,
-html[data-theme="day"] .auth-title h1 {
-  color: #17212b;
-  font-family: var(--font-body);
-  font-size: 2.02rem;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  line-height: 1.12;
-}
-
 html[data-theme="day"] .auth-brand i {
   background: rgba(31, 41, 51, 0.18);
 }
@@ -7652,23 +7641,9 @@ html[data-theme="day"] .outcome-card strong {
   color: #1f2933 !important;
 }
 
-html[data-theme="day"] .outcome-card strong {
-  color: #17212b !important;
-  font-family: var(--font-body);
-  font-weight: 600;
-  letter-spacing: -0.055em;
-  line-height: 0.92;
-  font-variant-numeric: tabular-nums;
-}
-
 html[data-theme="day"] .outcome-copy > p:last-of-type,
 html[data-theme="day"] .outcome-card span {
   color: rgba(31, 41, 51, 0.68) !important;
-}
-
-html[data-theme="day"] .outcome-card span {
-  color: #40515e !important;
-  letter-spacing: 0.08em;
 }
 
 html[data-theme="day"] .outcome-card svg {
