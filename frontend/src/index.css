@@ -1078,6 +1078,16 @@
   margin-right: 0;
 }
 
+@media (min-width: 1121px) {
+  .cinema-nav__user {
+    position: absolute;
+    top: 50%;
+    right: 2.85rem;
+    z-index: 3;
+    transform: translateY(-50%);
+  }
+}
+
 .cinema-nav__login {
   position: relative;
   z-index: 1;
