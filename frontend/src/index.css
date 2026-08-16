@@ -6568,8 +6568,14 @@ html[data-theme="day"] .auth-screen {
 }
 
 html[data-theme="day"] .stitch-noise {
-  opacity: 0.12;
-  mix-blend-mode: multiply;
+  opacity: 0.045;
+  mix-blend-mode: normal;
+}
+
+html[data-theme="day"] .stitch-atmosphere {
+  background-image: none;
+  filter: none;
+  opacity: 0;
 }
 
 html[data-theme="day"] .home-scroll-progress {
