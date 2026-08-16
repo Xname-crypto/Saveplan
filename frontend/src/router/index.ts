@@ -23,6 +23,7 @@ const routeLoaders: Record<string, RouteLoader> = {
   "/": () => import("@/views/Home.vue"),
   "/convert": () => import("@/views/Convert.vue"),
   "/pricing": () => import("@/views/Pricing.vue"),
+  "/checkout": () => import("@/views/Checkout.vue"),
   "/profile": () => import("@/views/Profile.vue"),
   "/login": () => import("@/views/Login.vue"),
   "/register": () => import("@/views/Register.vue"),
@@ -37,7 +38,7 @@ const route = reactive<RouteState>({
 })
 
 const activeComponent = shallowRef<Component | null>(null)
-const protectedRoutes = new Set(["/convert"])
+const protectedRoutes = new Set(["/convert", "/checkout"])
 
 function parseQuery(search: string) {
   const params = new URLSearchParams(search)
@@ -94,7 +95,7 @@ function canEnterRoute(path: string) {
 }
 
 function redirectToLogin(from = getCurrentFullPath()) {
-  window.alert("请先登录后再使用转换功能。")
+  window.alert("请先登录后再继续。")
   window.history.replaceState(
     { from },
     "",

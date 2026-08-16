@@ -4,6 +4,7 @@ from ..modules.auth.model import PasswordReset
 from ..modules.admin_auth.model import AdminUser
 from ..modules.audit_logs.model import AuditLog
 from ..modules.conversions.model import Conversion
+from ..modules.orders.model import Order
 from ..modules.points.model import PointTransaction
 from ..modules.rbac.model import Permission, Role, admin_user_roles, role_permissions
 from ..modules.users.model import User
@@ -12,6 +13,7 @@ __all__ = [
     "AdminUser",
     "AuditLog",
     "Conversion",
+    "Order",
     "PasswordReset",
     "Permission",
     "PointTransaction",

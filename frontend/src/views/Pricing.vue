@@ -5,37 +5,9 @@ import AppFooter from "@/components/AppFooter.vue"
 import BorderGlow from "@/components/BorderGlow.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
 import TargetCursor from "@/components/TargetCursor.vue"
+import { useRouter } from "@/router"
+import { plans, type PlanDefinition } from "@/services/planCatalog"
 import { useTheme } from "@/services/theme"
-
-const plans = [
-  {
-    name: "新手启航",
-    label: "Starter",
-    price: "¥0",
-    period: "/月",
-    cta: "开始免费使用",
-    featured: false,
-    features: ["每日 5 次转换", "基础校对", "导出 PDF"],
-  },
-  {
-    name: "高效拯救",
-    label: "Popular",
-    price: "¥29",
-    period: "/月",
-    cta: "立即升级",
-    featured: true,
-    features: ["无限次转换", "AI 智能纠错", "导出 Anki / Markdown", "云端自动同步"],
-  },
-  {
-    name: "学术精英",
-    label: "Exclusive",
-    price: "¥199",
-    period: "/年",
-    cta: "获取年度特惠",
-    featured: false,
-    features: ["包含 Pro 全部功能", "专属模板库", "优先 AI 解析通道", "1 对 1 技术支持"],
-  },
-]
 
 const faqs = [
   {
@@ -48,7 +20,7 @@ const faqs = [
   },
   {
     q: "我的试卷资料会不会泄露？",
-    a: "页面会保留资料管理入口，正式接入后端时会沿用项目数据库和存储权限控制。",
+    a: "正式接入支付和订单后，用户资料会继续沿用已有的数据库与存储权限控制。",
   },
   {
     q: "套餐可以随时升级或取消吗？",
@@ -60,10 +32,11 @@ const faqs = [
   },
   {
     q: "导出的内容可以继续编辑吗？",
-    a: "可以。导出的 Markdown、结构化 PDF 和 Anki 友好格式都保留清晰层级，方便你继续整理、标注和复习。",
+    a: "可以。导出的 Markdown、结构化 PDF 和 Anki 友好格式都保留清晰层级，方便继续整理、标注和复习。",
   },
 ]
 
+const router = useRouter()
 const selectedPlan = ref<string | null>(null)
 const openFaqIndex = ref<number | null>(null)
 const { theme } = useTheme()
@@ -75,19 +48,19 @@ const quoteImageAlt = computed(() =>
   isDayTheme.value ? "结构化转换界面预览" : "午夜图书馆学习场景",
 )
 
-function getPlanClasses(plan: (typeof plans)[number], index: number) {
+function getPlanClasses(plan: PlanDefinition, index: number) {
   return [
     "pricing-card",
     "stitch-reveal",
     "cursor-target",
     `stitch-delay-${index + 1}`,
     plan.featured ? "is-featured" : "",
-    selectedPlan.value === plan.name ? "is-selected" : "",
+    selectedPlan.value === plan.id ? "is-selected" : "",
   ].filter(Boolean)
 }
 
-function getFeaturedPlanProps(plan: (typeof plans)[number], index: number) {
-  const isSelected = selectedPlan.value === plan.name
+function getFeaturedPlanProps(plan: PlanDefinition, index: number) {
+  const isSelected = selectedPlan.value === plan.id
 
   return {
     className: getPlanClasses(plan, index),
@@ -105,12 +78,21 @@ function getFeaturedPlanProps(plan: (typeof plans)[number], index: number) {
   }
 }
 
-function selectPlan(planName: string) {
-  selectedPlan.value = planName
+function selectPlan(planId: string) {
+  selectedPlan.value = planId
 }
 
 function clearSelectedPlan() {
   selectedPlan.value = null
+}
+
+function continueWithPlan(plan: PlanDefinition) {
+  if (!plan.purchasable) {
+    void router.push("/convert")
+    return
+  }
+
+  void router.push(`/checkout?plan=${encodeURIComponent(plan.id)}`)
 }
 
 function toggleFaq(index: number) {
@@ -133,9 +115,9 @@ function toggleFaq(index: number) {
     <main class="pricing-shell">
       <section class="pricing-hero stitch-reveal">
         <p class="stitch-eyebrow">CINEMATIC PRICING</p>
-        <h1>选择你的拯救方案</h1>
+        <h1>选择你的抢救方案</h1>
         <p>
-          为不同阶段的备考者量身定制。从临时整理资料，到高频刷题复盘，让期末不再是一场混乱的追逐。
+          为不同阶段的备考者量身定制。从临时整理资料，到高频刷题复盘，让期末不再是一场混乱的追赶。
         </p>
       </section>
 
@@ -143,14 +125,14 @@ function toggleFaq(index: number) {
         <component
           :is="plan.featured ? BorderGlow : 'article'"
           v-for="(plan, index) in plans"
-          :key="plan.name"
+          :key="plan.id"
           as="article"
           v-bind="plan.featured
             ? getFeaturedPlanProps(plan, index)
             : {
                 class: getPlanClasses(plan, index),
               }"
-          @click.stop="selectPlan(plan.name)"
+          @click.stop="selectPlan(plan.id)"
         >
           <span v-if="plan.featured" class="pricing-card__badge">推荐</span>
           <p>{{ plan.label }}</p>
@@ -165,7 +147,9 @@ function toggleFaq(index: number) {
               {{ feature }}
             </li>
           </ul>
-          <button type="button" class="cursor-target">{{ plan.cta }}</button>
+          <button type="button" class="cursor-target" @click.stop="continueWithPlan(plan)">
+            {{ plan.cta }}
+          </button>
         </component>
       </section>
 
@@ -174,9 +158,9 @@ function toggleFaq(index: number) {
           <p class="stitch-eyebrow">CINEMATIC FAQ</p>
           <h2>常见问题解答</h2>
           <p>
-            我们随时准备解答您的任何问题。如果您找不到所需资料，请通过
+            我们随时准备解答你的任何问题。如果找不到所需资料，请通过
             <a href="mailto:support@example.com">support@example.com</a>
-            联系我们
+            联系我们。
           </p>
         </div>
         <div class="pricing-faq__list">

@@ -11,6 +11,7 @@ from .modules.admin_auth.controller import router as admin_auth_router
 from .modules.admin_auth.service import bootstrap_admin_security
 from .modules.audit_logs.controller import router as audit_logs_router
 from .modules.conversions.controller import router as admin_conversions_router
+from .modules.orders.controller import router as orders_router
 from .modules.rbac.controller import router as rbac_router
 from .modules.users.controller import router as admin_users_router
 
@@ -40,6 +41,7 @@ init_auth_db()
 init_conversion_db()
 app.include_router(auth_router)
 app.include_router(conversions_router)
+app.include_router(orders_router)
 app.include_router(admin_auth_router)
 app.include_router(rbac_router)
 app.include_router(admin_users_router)
