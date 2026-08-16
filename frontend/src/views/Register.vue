@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
 import AuthWaveInput from "@/components/AuthWaveInput.vue"
@@ -11,6 +11,8 @@ import {
   Camera,
   Check,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   Loader2,
@@ -36,13 +38,8 @@ const identityChoiceRef = ref<HTMLElement | null>(null)
 const presetAvatarRail = ref<HTMLElement | null>(null)
 const isUsernameTouched = ref(false)
 const isJobTouched = ref(false)
-const isPresetAvatarDragging = ref(false)
-
-let presetAvatarPointerId: number | null = null
-let presetAvatarStartX = 0
-let presetAvatarStartScrollLeft = 0
-let didDragPresetAvatars = false
-let suppressNextPresetAvatarClick = false
+const canScrollPresetAvatarsBackward = ref(false)
+const canScrollPresetAvatarsForward = ref(false)
 
 const presetAvatars = [
   { id: "lin", label: "Lin", src: "/stitch/avatar-lin.svg" },
@@ -160,65 +157,29 @@ const selectPresetAvatar = (src: string) => {
   }
 }
 
-const handlePresetAvatarClick = (src: string) => {
-  if (suppressNextPresetAvatarClick) {
-    suppressNextPresetAvatarClick = false
-    return
-  }
-
-  selectPresetAvatar(src)
-}
-
-const handlePresetAvatarPointerDown = (event: PointerEvent) => {
-  if (event.pointerType === "touch" || event.button !== 0) return
-
+const updatePresetAvatarScrollState = () => {
   const rail = presetAvatarRail.value
   if (!rail) return
 
-  presetAvatarPointerId = event.pointerId
-  presetAvatarStartX = event.clientX
-  presetAvatarStartScrollLeft = rail.scrollLeft
-  didDragPresetAvatars = false
+  const maxScrollLeft = Math.max(0, rail.scrollWidth - rail.clientWidth)
+  canScrollPresetAvatarsBackward.value = rail.scrollLeft > 1
+  canScrollPresetAvatarsForward.value = rail.scrollLeft < maxScrollLeft - 1
 }
 
-const handlePresetAvatarPointerMove = (event: PointerEvent) => {
-  if (presetAvatarPointerId !== event.pointerId) return
-
+const scrollPresetAvatars = (direction: -1 | 1) => {
   const rail = presetAvatarRail.value
   if (!rail) return
 
-  const distance = event.clientX - presetAvatarStartX
-  if (Math.abs(distance) <= 4) return
+  rail.scrollBy({
+    left: direction * Math.max(rail.clientWidth * 0.8, 88),
+    behavior: "smooth",
+  })
 
-  if (!didDragPresetAvatars) {
-    rail.setPointerCapture(event.pointerId)
-    isPresetAvatarDragging.value = true
-  }
-
-  didDragPresetAvatars = true
-  rail.scrollLeft = presetAvatarStartScrollLeft - distance
-  event.preventDefault()
+  window.setTimeout(updatePresetAvatarScrollState, 240)
 }
 
-const finishPresetAvatarDrag = (event: PointerEvent) => {
-  if (presetAvatarPointerId !== event.pointerId) return
-
-  const rail = presetAvatarRail.value
-  if (rail?.hasPointerCapture(event.pointerId)) {
-    rail.releasePointerCapture(event.pointerId)
-  }
-
-  presetAvatarPointerId = null
-  isPresetAvatarDragging.value = false
-
-  if (didDragPresetAvatars) {
-    suppressNextPresetAvatarClick = true
-    window.requestAnimationFrame(() => {
-      suppressNextPresetAvatarClick = false
-    })
-  }
-
-  didDragPresetAvatars = false
+const schedulePresetAvatarScrollStateUpdate = () => {
+  window.requestAnimationFrame(updatePresetAvatarScrollState)
 }
 
 const handleStep1 = () => {
@@ -316,11 +277,20 @@ const handleBack = () => {
 
 onMounted(() => {
   window.addEventListener("click", handleWindowClick)
+  window.addEventListener("resize", schedulePresetAvatarScrollStateUpdate)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener("click", handleWindowClick)
+  window.removeEventListener("resize", schedulePresetAvatarScrollStateUpdate)
   revokeUploadedAvatarPreview()
+})
+
+watch(currentStep, async (step) => {
+  if (step !== 2) return
+
+  await nextTick()
+  schedulePresetAvatarScrollStateUpdate()
 })
 </script>
 
@@ -456,35 +426,47 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="preset-avatar-block">
-          <div class="preset-avatar-title">
-            <span>选择已有头像</span>
-            <small>也可以继续使用上方上传。</small>
-          </div>
+          <button
+            type="button"
+            class="preset-avatar-nav"
+            aria-label="Previous avatar"
+            title="Previous avatar"
+            :disabled="!canScrollPresetAvatarsBackward"
+            @click="scrollPresetAvatars(-1)"
+          >
+            <ChevronLeft aria-hidden="true" />
+          </button>
           <div
             ref="presetAvatarRail"
             class="preset-avatar-rail"
-            :class="{ 'is-dragging': isPresetAvatarDragging }"
-            @pointerdown="handlePresetAvatarPointerDown"
-            @pointermove="handlePresetAvatarPointerMove"
-            @pointerup="finishPresetAvatarDrag"
-            @pointercancel="finishPresetAvatarDrag"
+            @scroll="updatePresetAvatarScrollState"
           >
-          <div class="preset-avatar-grid" role="radiogroup" aria-label="选择已有头像">
-            <button
-              v-for="avatar in presetAvatars"
-              :key="avatar.id"
-              type="button"
-              class="preset-avatar-option"
-              :class="{ 'is-selected': formData.avatarPreset === avatar.src }"
-              :aria-checked="formData.avatarPreset === avatar.src"
-              role="radio"
-              @click="handlePresetAvatarClick(avatar.src)"
-            >
-              <img :src="avatar.src" :alt="`${avatar.label} 头像`" />
-              <CheckCircle2 v-if="formData.avatarPreset === avatar.src" class="preset-avatar-check" />
-            </button>
+            <div class="preset-avatar-grid" role="radiogroup" aria-label="选择已有头像">
+              <button
+                v-for="avatar in presetAvatars"
+                :key="avatar.id"
+                type="button"
+                class="preset-avatar-option"
+                :class="{ 'is-selected': formData.avatarPreset === avatar.src }"
+                :aria-checked="formData.avatarPreset === avatar.src"
+                role="radio"
+                @click="selectPresetAvatar(avatar.src)"
+              >
+                <img :src="avatar.src" :alt="`${avatar.label} 头像`" />
+                <CheckCircle2 v-if="formData.avatarPreset === avatar.src" class="preset-avatar-check" />
+              </button>
+            </div>
           </div>
-          </div>
+          <button
+            type="button"
+            class="preset-avatar-nav"
+            aria-label="Next avatar"
+            title="Next avatar"
+            :disabled="!canScrollPresetAvatarsForward"
+            @click="scrollPresetAvatars(1)"
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
         </div>
         </section>
 
@@ -619,7 +601,10 @@ input::-ms-clear {
 }
 
 .preset-avatar-block {
-  display: block;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.34rem;
   min-width: 0;
 }
 
@@ -627,44 +612,60 @@ input::-ms-clear {
   min-width: 0;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  padding: 0.12rem 0.15rem 0.32rem;
+  padding: 0.16rem 0.08rem 0.3rem;
   scrollbar-width: none;
   scroll-behavior: smooth;
   scroll-snap-type: x proximity;
   touch-action: pan-x;
-  cursor: grab;
-  user-select: none;
 }
 
 .preset-avatar-rail::-webkit-scrollbar {
   display: none;
 }
 
-.preset-avatar-rail.is-dragging {
-  cursor: grabbing;
-  scroll-behavior: auto;
+.preset-avatar-nav {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(226, 218, 194, 0.24);
+  border-radius: 999px;
+  background: rgba(226, 218, 194, 0.055);
+  color: rgba(238, 230, 206, 0.88);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
 }
 
-.preset-avatar-title {
-  display: flex;
-  align-items: center;
-  color: rgba(238, 230, 206, 0.72);
+.preset-avatar-nav svg {
+  width: 1rem;
+  height: 1rem;
 }
 
-.preset-avatar-title span {
-  font-size: 0.74rem;
-  font-weight: 900;
+.preset-avatar-nav:hover:not(:disabled) {
+  border-color: rgba(155, 217, 255, 0.72);
+  background: rgba(155, 217, 255, 0.12);
+  color: #9bd9ff;
+  transform: translateY(-1px);
 }
 
-.preset-avatar-title small {
-  display: none;
+.preset-avatar-nav:focus-visible {
+  outline: 2px solid rgba(155, 217, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.preset-avatar-nav:disabled {
+  opacity: 0.32;
+  cursor: default;
 }
 
 .preset-avatar-grid {
   display: flex;
   width: max-content;
   gap: 0.48rem;
-  margin-top: 0.42rem;
 }
 
 .preset-avatar-option {
@@ -861,6 +862,19 @@ input::-ms-clear {
     0 0 0 1px rgba(31, 41, 51, 0.04) !important;
 }
 
+:global(html[data-theme="day"] .preset-avatar-nav) {
+  border-color: rgba(52, 93, 117, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  color: #345d75;
+  box-shadow: 0 6px 16px rgba(52, 93, 117, 0.08);
+}
+
+:global(html[data-theme="day"] .preset-avatar-nav:hover:not(:disabled)) {
+  border-color: rgba(52, 93, 117, 0.56);
+  background: #345d75;
+  color: #fff;
+}
+
 @media (max-width: 420px) {
   .avatar-picker {
     grid-template-columns: 6.1rem minmax(0, 1fr);
@@ -890,12 +904,18 @@ input::-ms-clear {
     flex-basis: 2.58rem;
   }
 
-  .identity-options {
-    grid-template-columns: 1fr;
+  .preset-avatar-block {
+    grid-template-columns: 1.82rem minmax(0, 1fr) 1.82rem;
+    gap: 0.22rem;
   }
 
-  .preset-avatar-title {
-    align-items: center;
+  .preset-avatar-nav {
+    width: 1.82rem;
+    height: 1.82rem;
+  }
+
+  .identity-options {
+    grid-template-columns: 1fr;
   }
 }
 </style>
