@@ -85,6 +85,7 @@ const showValidQuestions = ref(true)
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
 const showCopySuccessDialog = ref(false)
 const filePickState = ref<"idle" | "loading" | "success" | "error">("idle")
+const fileInputRef = ref<HTMLInputElement | null>(null)
 let filePickTimer: number | undefined
 let uploadStageTimer: number | undefined
 let copySuccessTimer: number | undefined
@@ -364,6 +365,26 @@ function handleFileChange(event: Event) {
         currentStep.value = 2
       }, 1100)
     }, 800)
+  }
+}
+
+function clearSelectedFile() {
+  if (isUploading.value) return
+
+  if (filePickTimer) {
+    window.clearTimeout(filePickTimer)
+    filePickTimer = undefined
+  }
+
+  selectedFile.value = null
+  errorMessage.value = ""
+  statusMessage.value = ""
+  uploadStage.value = ""
+  ocrProgressText.value = ""
+  filePickState.value = "idle"
+
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ""
   }
 }
 
@@ -1162,16 +1183,33 @@ onBeforeUnmount(() => {
         <div class="step-card__main">
           <label class="upload-panel upload-panel--step" aria-label="上传试卷或题库文档">
             <input
+              ref="fileInputRef"
               class="sr-only"
               type="file"
               accept=".pdf,.docx,.txt,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/msword"
               @change="handleFileChange"
             />
-            <div class="upload-panel__inner">
-              <UploadCloud :size="52" />
-              <h2>{{ uploadLabel }}</h2>
-              <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
-              <span>浏览文件</span>
+            <div class="upload-panel__dropzone">
+              <div class="upload-panel__inner">
+                <UploadCloud :size="52" />
+                <h2>{{ uploadLabel }}</h2>
+                <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
+                <span>浏览文件</span>
+              </div>
+            </div>
+            <div class="upload-panel__footer">
+              <FileText :size="18" aria-hidden="true" />
+              <p>{{ selectedFile?.name || "未选择文件" }}</p>
+              <button
+                v-if="selectedFile"
+                type="button"
+                aria-label="清空已选文件"
+                :disabled="isUploading"
+                @click.prevent.stop="clearSelectedFile"
+              >
+                <Trash2 :size="17" />
+              </button>
+              <UploadCloud v-else :size="18" aria-hidden="true" />
             </div>
             <div v-if="filePickState === 'loading' || filePickState === 'success'" class="upload-success">
               <div :class="['upload-success__mark', { 'is-loading': filePickState === 'loading' }]">

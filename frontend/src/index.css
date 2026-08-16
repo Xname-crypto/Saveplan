@@ -2953,10 +2953,13 @@
 
 .upload-panel {
   position: relative;
-  display: block;
-  min-height: 13.5rem;
+  display: flex;
+  min-height: 17.5rem;
+  flex-direction: column;
+  gap: 0.65rem;
   overflow: hidden;
   border-radius: 0.85rem;
+  padding: 0.7rem;
   cursor: pointer;
 }
 
@@ -2964,6 +2967,7 @@
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   background: linear-gradient(180deg, rgba(235, 228, 207, 0.06), transparent);
   opacity: 0;
   transition: opacity 300ms ease;
@@ -2973,9 +2977,21 @@
   opacity: 1;
 }
 
+.upload-panel__dropzone,
+.upload-panel__footer {
+  position: relative;
+  z-index: 1;
+}
+
+.upload-panel__dropzone {
+  position: relative;
+  min-height: 13.5rem;
+  flex: 1;
+}
+
 .upload-panel__inner {
   position: absolute;
-  inset: 1rem;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3029,6 +3045,63 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.upload-panel__footer {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.62rem;
+  border: 1px solid rgba(235, 228, 207, 0.15);
+  border-radius: 0.62rem;
+  background: rgba(235, 228, 207, 0.06);
+  padding: 0.38rem 0.5rem 0.38rem 0.72rem;
+  color: rgba(235, 228, 207, 0.72);
+}
+
+.upload-panel__footer > svg {
+  flex: 0 0 auto;
+  color: #d6c58d;
+}
+
+.upload-panel__footer p {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  margin: 0;
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-panel__footer button {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(235, 228, 207, 0.11);
+  color: #d6c58d;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.upload-panel__footer button:hover:not(:disabled) {
+  background: rgba(235, 228, 207, 0.2);
+  color: #fff4d5;
+  transform: scale(0.94);
+}
+
+.upload-panel__footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .upload-panel__progress {
@@ -8075,9 +8148,83 @@ html[data-theme="day"] .studio-board__rail span {
 }
 
 html[data-theme="day"] .upload-panel::before {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(112, 156, 177, 0.3), transparent 44%),
-    linear-gradient(135deg, rgba(52, 93, 117, 0.18), transparent 52%);
+  background: rgba(52, 93, 117, 0.055);
+}
+
+html[data-theme="day"] .upload-panel {
+  border-color: rgba(52, 93, 117, 0.18);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 18px 44px rgba(44, 64, 82, 0.1);
+}
+
+html[data-theme="day"] .upload-panel__inner {
+  border: 2px dashed rgba(52, 93, 117, 0.62);
+  background: rgba(52, 93, 117, 0.025);
+}
+
+html[data-theme="day"] .upload-panel:hover .upload-panel__inner {
+  border-color: #2f6c98;
+  background: rgba(52, 93, 117, 0.08);
+}
+
+html[data-theme="day"] .upload-panel__inner > svg {
+  color: #345d75;
+  filter: drop-shadow(0 0.35rem 0.55rem rgba(52, 93, 117, 0.16));
+}
+
+html[data-theme="day"] .upload-panel h2 {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .upload-panel p {
+  color: rgba(31, 41, 51, 0.68);
+}
+
+html[data-theme="day"] .upload-panel span {
+  border-color: rgba(52, 93, 117, 0.34);
+  background: rgba(255, 255, 255, 0.72);
+  color: #345d75;
+}
+
+html[data-theme="day"] .upload-panel:hover span {
+  border-color: #345d75;
+  background: #345d75;
+  color: #ffffff;
+}
+
+html[data-theme="day"] .upload-panel__footer {
+  border-color: rgba(52, 93, 117, 0.16);
+  background: rgba(52, 93, 117, 0.075);
+  color: #314b5d;
+}
+
+html[data-theme="day"] .upload-panel__footer > svg,
+html[data-theme="day"] .upload-panel__footer button {
+  color: #345d75;
+}
+
+html[data-theme="day"] .upload-panel__footer button {
+  background: rgba(52, 93, 117, 0.11);
+}
+
+html[data-theme="day"] .upload-panel__footer button:hover:not(:disabled) {
+  background: #345d75;
+  color: #ffffff;
+}
+
+html[data-theme="day"] .upload-success {
+  border: 1px solid rgba(52, 93, 117, 0.18);
+  background: rgba(248, 251, 250, 0.98);
+}
+
+html[data-theme="day"] .upload-success strong {
+  color: #1f2933;
+}
+
+html[data-theme="day"] .upload-success small {
+  color: rgba(31, 41, 51, 0.62);
 }
 
 html[data-theme="day"] .upload-panel:hover .upload-panel__inner,
