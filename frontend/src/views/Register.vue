@@ -33,8 +33,16 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const identityChoiceRef = ref<HTMLElement | null>(null)
+const presetAvatarRail = ref<HTMLElement | null>(null)
 const isUsernameTouched = ref(false)
 const isJobTouched = ref(false)
+const isPresetAvatarDragging = ref(false)
+
+let presetAvatarPointerId: number | null = null
+let presetAvatarStartX = 0
+let presetAvatarStartScrollLeft = 0
+let didDragPresetAvatars = false
+let suppressNextPresetAvatarClick = false
 
 const presetAvatars = [
   { id: "lin", label: "Lin", src: "/stitch/avatar-lin.svg" },
@@ -150,6 +158,67 @@ const selectPresetAvatar = (src: string) => {
   if (fileInput.value) {
     fileInput.value.value = ""
   }
+}
+
+const handlePresetAvatarClick = (src: string) => {
+  if (suppressNextPresetAvatarClick) {
+    suppressNextPresetAvatarClick = false
+    return
+  }
+
+  selectPresetAvatar(src)
+}
+
+const handlePresetAvatarPointerDown = (event: PointerEvent) => {
+  if (event.pointerType === "touch" || event.button !== 0) return
+
+  const rail = presetAvatarRail.value
+  if (!rail) return
+
+  presetAvatarPointerId = event.pointerId
+  presetAvatarStartX = event.clientX
+  presetAvatarStartScrollLeft = rail.scrollLeft
+  didDragPresetAvatars = false
+}
+
+const handlePresetAvatarPointerMove = (event: PointerEvent) => {
+  if (presetAvatarPointerId !== event.pointerId) return
+
+  const rail = presetAvatarRail.value
+  if (!rail) return
+
+  const distance = event.clientX - presetAvatarStartX
+  if (Math.abs(distance) <= 4) return
+
+  if (!didDragPresetAvatars) {
+    rail.setPointerCapture(event.pointerId)
+    isPresetAvatarDragging.value = true
+  }
+
+  didDragPresetAvatars = true
+  rail.scrollLeft = presetAvatarStartScrollLeft - distance
+  event.preventDefault()
+}
+
+const finishPresetAvatarDrag = (event: PointerEvent) => {
+  if (presetAvatarPointerId !== event.pointerId) return
+
+  const rail = presetAvatarRail.value
+  if (rail?.hasPointerCapture(event.pointerId)) {
+    rail.releasePointerCapture(event.pointerId)
+  }
+
+  presetAvatarPointerId = null
+  isPresetAvatarDragging.value = false
+
+  if (didDragPresetAvatars) {
+    suppressNextPresetAvatarClick = true
+    window.requestAnimationFrame(() => {
+      suppressNextPresetAvatarClick = false
+    })
+  }
+
+  didDragPresetAvatars = false
 }
 
 const handleStep1 = () => {
@@ -368,7 +437,8 @@ onBeforeUnmount(() => {
       </form>
 
       <div v-else-if="currentStep === 2" class="animate-in space-y-6 duration-300 fade-in slide-in-from-right-4">
-        <div class="auth-avatar-row">
+        <section class="avatar-picker">
+        <div class="auth-avatar-row avatar-picker__upload">
           <div class="group relative cursor-pointer" @click="triggerFileInputClick">
             <div class="auth-avatar-control">
               <img v-if="formData.avatarPreview" :src="formData.avatarPreview" class="h-full w-full object-cover" alt="" />
@@ -390,6 +460,15 @@ onBeforeUnmount(() => {
             <span>选择已有头像</span>
             <small>也可以继续使用上方上传。</small>
           </div>
+          <div
+            ref="presetAvatarRail"
+            class="preset-avatar-rail"
+            :class="{ 'is-dragging': isPresetAvatarDragging }"
+            @pointerdown="handlePresetAvatarPointerDown"
+            @pointermove="handlePresetAvatarPointerMove"
+            @pointerup="finishPresetAvatarDrag"
+            @pointercancel="finishPresetAvatarDrag"
+          >
           <div class="preset-avatar-grid" role="radiogroup" aria-label="选择已有头像">
             <button
               v-for="avatar in presetAvatars"
@@ -399,13 +478,15 @@ onBeforeUnmount(() => {
               :class="{ 'is-selected': formData.avatarPreset === avatar.src }"
               :aria-checked="formData.avatarPreset === avatar.src"
               role="radio"
-              @click="selectPresetAvatar(avatar.src)"
+              @click="handlePresetAvatarClick(avatar.src)"
             >
               <img :src="avatar.src" :alt="`${avatar.label} 头像`" />
               <CheckCircle2 v-if="formData.avatarPreset === avatar.src" class="preset-avatar-check" />
             </button>
           </div>
+          </div>
         </div>
+        </section>
 
         <div class="space-y-1">
           <AuthWaveInput
@@ -509,42 +590,89 @@ input::-ms-clear {
   gap: 0.72rem;
 }
 
-.preset-avatar-block {
+.avatar-picker {
   display: grid;
-  gap: 0.72rem;
-  margin-top: -0.8rem;
+  grid-template-columns: minmax(7.25rem, 0.9fr) minmax(0, 1.45fr);
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.avatar-picker__upload {
+  min-width: 0;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.avatar-picker__upload .auth-avatar-control {
+  width: 3.35rem;
+  height: 3.35rem;
+}
+
+.avatar-picker__upload p {
+  margin-bottom: 0.16rem;
+  letter-spacing: 0.1em;
+}
+
+.avatar-picker__upload > div:last-of-type span {
+  display: none;
+}
+
+.preset-avatar-block {
+  display: block;
+  min-width: 0;
+}
+
+.preset-avatar-rail {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 0.12rem 0.15rem 0.32rem;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  touch-action: pan-x;
+  cursor: grab;
+  user-select: none;
+}
+
+.preset-avatar-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.preset-avatar-rail.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
 }
 
 .preset-avatar-title {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
   color: rgba(238, 230, 206, 0.72);
 }
 
 .preset-avatar-title span {
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 900;
 }
 
 .preset-avatar-title small {
-  color: rgba(226, 218, 194, 0.36);
-  font-size: 0.68rem;
-  font-weight: 800;
+  display: none;
 }
 
 .preset-avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.62rem;
+  display: flex;
+  width: max-content;
+  gap: 0.48rem;
+  margin-top: 0.42rem;
 }
 
 .preset-avatar-option {
   position: relative;
   display: grid;
-  aspect-ratio: 1;
-  min-width: 0;
+  width: 2.72rem;
+  height: 2.72rem;
+  flex: 0 0 2.72rem;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(226, 218, 194, 0.18);
@@ -553,6 +681,7 @@ input::-ms-clear {
     radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.12), transparent 38%),
     rgba(226, 218, 194, 0.035);
   cursor: pointer;
+  scroll-snap-align: start;
   transition:
     border-color 180ms ease,
     box-shadow 180ms ease,
@@ -572,6 +701,7 @@ input::-ms-clear {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
 }
 
 .preset-avatar-check {
@@ -732,14 +862,40 @@ input::-ms-clear {
 }
 
 @media (max-width: 420px) {
+  .avatar-picker {
+    grid-template-columns: 6.1rem minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
+  .avatar-picker__upload {
+    gap: 0.42rem;
+  }
+
+  .avatar-picker__upload .auth-avatar-control {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .avatar-picker__upload > div:last-of-type span {
+    display: none;
+  }
+
+  .avatar-picker__upload p {
+    font-size: 0.58rem;
+  }
+
+  .preset-avatar-option {
+    width: 2.58rem;
+    height: 2.58rem;
+    flex-basis: 2.58rem;
+  }
+
   .identity-options {
     grid-template-columns: 1fr;
   }
 
   .preset-avatar-title {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
+    align-items: center;
   }
 }
 </style>
