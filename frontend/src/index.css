@@ -5583,7 +5583,7 @@
 
   .cinema-nav .cinema-nav__theme-inline.theme-pull-switch {
     top: calc(100% - 0.12rem);
-    right: 0.7rem;
+    right: 2.85rem;
   }
 
   .cinema-nav.is-mobile-open .cinema-nav__theme-inline.theme-pull-switch {
@@ -5893,6 +5893,10 @@
     width: 2.75rem;
     height: 2.75rem;
     flex-basis: 2.75rem;
+  }
+
+  .cinema-nav .cinema-nav__theme-inline.theme-pull-switch {
+    right: 3.45rem;
   }
 
   .cinema-nav__user-card {
