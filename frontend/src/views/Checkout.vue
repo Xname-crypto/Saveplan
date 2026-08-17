@@ -134,14 +134,6 @@ async function confirmOrder() {
             </div>
 
             <section class="checkout-form-section" aria-labelledby="contact-details">
-              <div class="checkout-section-heading">
-                <span>01</span>
-                <div>
-                  <h2 id="contact-details">联系信息</h2>
-                  <p>用于发送订单与支付状态提醒。</p>
-                </div>
-              </div>
-
               <label class="checkout-field">
                 <span>姓名</span>
                 <div :class="{ 'has-error': fieldErrors.contactName }">

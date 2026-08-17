@@ -8481,39 +8481,7 @@ html[data-theme="day"] .profile-avatar {
 .checkout-form-section {
   display: grid;
   gap: 1rem;
-}
-
-.checkout-section-heading {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  margin-bottom: 0.55rem;
-}
-
-.checkout-section-heading > span {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(235, 228, 207, 0.18);
-  border-radius: 50%;
-  color: rgba(235, 228, 207, 0.66);
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-}
-
-.checkout-section-heading h2 {
-  margin: 0;
-  color: #f1ead5;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.checkout-section-heading p {
-  margin: 0.18rem 0 0;
-  color: rgba(235, 228, 207, 0.48);
-  font-size: 0.78rem;
+  margin-top: 0.2rem;
 }
 
 .checkout-field {
