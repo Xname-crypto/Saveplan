@@ -8424,6 +8424,12 @@ html[data-theme="day"] .profile-avatar {
   min-width: 0;
 }
 
+@media (min-width: 901px) {
+  .checkout-form-column {
+    transform: translateY(-0.45rem);
+  }
+}
+
 .checkout-heading {
   max-width: 38rem;
 }
