@@ -80,6 +80,7 @@ const assetPreviewUrls = ref<Record<string, string>>({})
 const uploadStage = ref("")
 const ocrProgressText = ref("")
 const currentStep = ref(1)
+const mobileStepOnePanel = ref<"upload" | "paste" | "history">("upload")
 const showIssueQuestions = ref(true)
 const showValidQuestions = ref(true)
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
@@ -356,6 +357,7 @@ function handleFileChange(event: Event) {
     errorMessage.value = validationMessage
     filePickState.value = "error"
   } else if (selectedFile.value) {
+    mobileStepOnePanel.value = "upload"
     statusMessage.value = `正在读取 ${selectedFile.value.name}...`
     filePickState.value = "loading"
     filePickTimer = window.setTimeout(() => {
@@ -363,9 +365,16 @@ function handleFileChange(event: Event) {
       statusMessage.value = `已选择 ${selectedFile.value?.name}，下一步请选择转换配置。`
       filePickTimer = window.setTimeout(() => {
         currentStep.value = 2
+        mobileStepOnePanel.value = "upload"
       }, 1100)
     }, 800)
   }
+}
+
+function switchStepOnePanel(panel: "upload" | "paste" | "history") {
+  mobileStepOnePanel.value = panel
+  errorMessage.value = ""
+  statusMessage.value = ""
 }
 
 function clearSelectedFile() {
@@ -1180,53 +1189,100 @@ onBeforeUnmount(() => {
       </section>
 
       <section v-show="currentStep === 1" class="step-card step-card--upload stitch-reveal">
-        <div class="step-card__main">
-          <label class="upload-panel upload-panel--step" aria-label="上传试卷或题库文档">
-            <input
-              ref="fileInputRef"
-              class="sr-only"
-              type="file"
-              accept=".pdf,.docx,.txt,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/msword"
-              @change="handleFileChange"
-            />
-            <div class="upload-panel__dropzone">
-              <div class="upload-panel__inner">
-                <UploadCloud :size="52" />
-                <h2>{{ uploadLabel }}</h2>
-                <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
-                <span>浏览文件</span>
-              </div>
-            </div>
-            <div class="upload-panel__footer">
-              <FileText :size="18" aria-hidden="true" />
-              <p>{{ selectedFile?.name || "未选择文件" }}</p>
-              <button
-                v-if="selectedFile"
-                type="button"
-                aria-label="清空已选文件"
-                :disabled="isUploading"
-                @click.prevent.stop="clearSelectedFile"
-              >
-                <Trash2 :size="17" />
-              </button>
-              <UploadCloud v-else :size="18" aria-hidden="true" />
-            </div>
-            <div v-if="filePickState === 'loading' || filePickState === 'success'" class="upload-success">
-              <div :class="['upload-success__mark', { 'is-loading': filePickState === 'loading' }]">
-                <Loader2 v-if="filePickState === 'loading'" class="spin-icon" :size="54" />
-                <CheckCircle2 v-else :size="70" />
-              </div>
-              <strong>{{ filePickState === "loading" ? "正在读取文件" : "文件已选择" }}</strong>
-              <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "即将进入转换配置" }}</small>
-            </div>
-            <div v-if="isUploading" class="upload-panel__progress">
-              <i />
-              <strong>{{ uploadStage || "准备上传" }}</strong>
-              <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
-            </div>
-          </label>
+        <div class="source-workspace" :class="{ 'source-workspace--paste': mobileStepOnePanel === 'paste' }">
+          <aside class="mobile-convert-switcher" aria-label="转换输入方式">
+            <button
+              type="button"
+              :class="{ 'is-active': mobileStepOnePanel === 'upload' }"
+              @click="switchStepOnePanel('upload')"
+            >
+              <span class="source-tab__icon"><UploadCloud :size="17" /></span>
+              <span>
+                <strong>上传文件</strong>
+                <small>PDF / Word / TXT</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              :class="{ 'is-active': mobileStepOnePanel === 'paste' }"
+              @click="switchStepOnePanel('paste')"
+            >
+              <span class="source-tab__icon"><Clipboard :size="17" /></span>
+              <span>
+                <strong>粘贴试卷文本</strong>
+                <small>按示例整理导入</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              :class="{ 'is-active': mobileStepOnePanel === 'history' }"
+              @click="switchStepOnePanel('history')"
+            >
+              <span class="source-tab__icon"><History :size="17" /></span>
+              <span>
+                <strong>历史记录</strong>
+                <small>继续校对旧任务</small>
+              </span>
+            </button>
+          </aside>
 
-          <section class="paste-panel paste-panel--step" aria-label="粘贴试卷文本">
+          <div
+            v-show="mobileStepOnePanel === 'upload'"
+            class="step-card__main step-card__main--source"
+            :class="{ 'is-mobile-panel-hidden': mobileStepOnePanel !== 'upload' }"
+          >
+            <label class="upload-panel upload-panel--step" aria-label="上传试卷或题库文档">
+              <input
+                ref="fileInputRef"
+                class="sr-only"
+                type="file"
+                accept=".pdf,.docx,.txt,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/msword"
+                @change="handleFileChange"
+              />
+              <div class="upload-panel__dropzone">
+                <div class="upload-panel__inner">
+                  <UploadCloud :size="52" />
+                  <h2>{{ uploadLabel }}</h2>
+                  <p>推荐 DOCX、PDF、TXT；旧版 DOC 会尝试自动转换，失败时请另存为 DOCX。</p>
+                  <span>浏览文件</span>
+                </div>
+              </div>
+              <div class="upload-panel__footer">
+                <FileText :size="18" aria-hidden="true" />
+                <p>{{ selectedFile?.name || "未选择文件" }}</p>
+                <button
+                  v-if="selectedFile"
+                  type="button"
+                  aria-label="清空已选文件"
+                  :disabled="isUploading"
+                  @click.prevent.stop="clearSelectedFile"
+                >
+                  <Trash2 :size="17" />
+                </button>
+                <UploadCloud v-else :size="18" aria-hidden="true" />
+              </div>
+              <div v-if="filePickState === 'loading' || filePickState === 'success'" class="upload-success">
+                <div :class="['upload-success__mark', { 'is-loading': filePickState === 'loading' }]">
+                  <Loader2 v-if="filePickState === 'loading'" class="spin-icon" :size="54" />
+                  <CheckCircle2 v-else :size="70" />
+                </div>
+                <strong>{{ filePickState === "loading" ? "正在读取文件" : "文件已选择" }}</strong>
+                <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "即将进入转换配置" }}</small>
+              </div>
+              <div v-if="isUploading" class="upload-panel__progress">
+                <i />
+                <strong>{{ uploadStage || "准备上传" }}</strong>
+                <span v-if="ocrProgressText">{{ ocrProgressText }}</span>
+              </div>
+            </label>
+          </div>
+
+          <section
+            v-show="mobileStepOnePanel === 'paste'"
+            class="paste-panel paste-panel--step paste-panel--guided"
+            :class="{ 'is-mobile-panel-hidden': mobileStepOnePanel !== 'paste' }"
+            aria-label="粘贴试卷文本"
+          >
             <div>
               <p class="settings-panel__title">粘贴文本</p>
               <input v-model="pastedTitle" type="text" placeholder="任务名称，例如：政治专题一单选" />
@@ -1242,9 +1298,12 @@ onBeforeUnmount(() => {
               {{ isUploading ? "解析中" : "解析粘贴文本" }}
             </button>
           </section>
-        </div>
 
-        <aside class="conversion-history conversion-history--step">
+          <aside
+            v-show="mobileStepOnePanel === 'history'"
+            class="conversion-history conversion-history--step"
+            :class="{ 'is-mobile-panel-hidden': mobileStepOnePanel !== 'history' }"
+          >
           <header>
             <History :size="18" />
             <span>转换历史</span>
@@ -1278,7 +1337,8 @@ onBeforeUnmount(() => {
               <Trash2 v-else :size="15" />
             </button>
           </article>
-        </aside>
+          </aside>
+        </div>
       </section>
 
       <section v-show="currentStep === 2" class="step-card step-card--config stitch-reveal">
