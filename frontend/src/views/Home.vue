@@ -440,7 +440,7 @@ onBeforeUnmount(() => {
       <section class="home-process">
         <div class="home-section-heading stitch-reveal">
           <p class="stitch-eyebrow">WORKFLOW</p>
-          <h2>三个步骤，重塑学习流。</h2>
+          <h2>三个步骤，重塑学习流</h2>
         </div>
 
         <div class="home-process__grid">
@@ -550,7 +550,7 @@ onBeforeUnmount(() => {
       <section class="home-outcomes">
         <div class="home-section-heading home-outcomes__heading stitch-reveal">
           <p class="stitch-eyebrow">RESULTS</p>
-          <h2>看得见的整理效率。</h2>
+          <h2>看得见的整理效率</h2>
         </div>
 
         <BorderGlow
@@ -593,7 +593,7 @@ onBeforeUnmount(() => {
       <section class="home-testimonials">
         <div class="home-section-heading home-testimonials__heading stitch-reveal">
           <p class="stitch-eyebrow">USER REVIEWS</p>
-          <h2>使用后的真实反馈。</h2>
+          <h2>使用后的真实反馈</h2>
         </div>
 
         <div class="home-testimonials__marquee stitch-reveal stitch-delay-1">
