@@ -5537,6 +5537,25 @@ html:not([data-theme="day"]) .upload-step-nav__button:disabled .upload-step-nav_
   font-size: 0.82rem;
 }
 
+html:not([data-theme="day"]) .profile-card,
+html:not([data-theme="day"]) .history-panel {
+  border-color: rgba(214, 197, 141, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(214, 197, 141, 0.08),
+    0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+html:not([data-theme="day"]) .profile-card aside,
+html:not([data-theme="day"]) .history-tools label,
+html:not([data-theme="day"]) .history-filter__trigger,
+html:not([data-theme="day"]) .history-filter__menu,
+html:not([data-theme="day"]) .history-summary,
+html:not([data-theme="day"]) .material-row,
+html:not([data-theme="day"]) .material-row__icon,
+html:not([data-theme="day"]) .history-empty {
+  border-color: rgba(214, 197, 141, 0.34);
+}
+
 .profile-pagination {
   display: flex;
   justify-content: flex-end;
