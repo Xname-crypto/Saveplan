@@ -23,7 +23,11 @@ import {
   isAuthSessionInvalid,
   type AuthUser,
 } from "@/services/authClient"
-import { conversionClient, type ConversionSummary } from "@/services/conversionClient"
+import {
+  CONVERSION_HISTORY_CHANGE_EVENT,
+  conversionClient,
+  type ConversionSummary,
+} from "@/services/conversionClient"
 
 type MaterialStatus = "已完成" | "处理中"
 type StatusFilter = "all" | MaterialStatus
@@ -31,6 +35,7 @@ type StatusFilter = "all" | MaterialStatus
 interface MaterialItem {
   id: string
   name: string
+  createdAt: string
   date: string
   size: string
   status: MaterialStatus
@@ -103,6 +108,10 @@ const profileCredits = computed(() => {
 
   return new Intl.NumberFormat("zh-CN").format(credits)
 })
+const totalPointsCharged = computed(() => {
+  const total = materials.value.reduce((sum, item) => sum + (item.pointsCharged ?? 0), 0)
+  return new Intl.NumberFormat("zh-CN").format(total)
+})
 const avatarSrc = computed(() => (avatarLoadFailed.value ? "" : getAuthAvatarSource(currentUser.value)))
 const avatarInitial = computed(() => getAuthAvatarInitial(currentUser.value))
 
@@ -134,6 +143,10 @@ function handleAuthSessionChange(event: Event) {
   }
 }
 
+function handleConversionHistoryChange() {
+  void loadProfile()
+}
+
 function handleAvatarError() {
   avatarLoadFailed.value = true
 }
@@ -159,6 +172,7 @@ function conversionToMaterial(item: ConversionSummary): MaterialItem {
   return {
     id: item.id,
     name: item.filename,
+    createdAt: item.created_at,
     date: formatHistoryDate(item.created_at),
     size: `${item.question_count} 题 / ${item.issue_count} 个提示`,
     status: conversionStatusToMaterialStatus(item),
@@ -176,7 +190,9 @@ async function loadProfile() {
   try {
     const [user, conversions] = await Promise.all([authClient.me(), conversionClient.list()])
     updateCurrentUser(user)
-    materials.value = conversions.map(conversionToMaterial)
+    materials.value = conversions
+      .map(conversionToMaterial)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   } catch (error) {
     profileError.value = getAuthErrorMessage(error)
     if (isAuthSessionInvalid(error)) {
@@ -249,11 +265,13 @@ async function deleteMaterial(item: MaterialItem) {
 
 onMounted(() => {
   window.addEventListener(AUTH_SESSION_CHANGE_EVENT, handleAuthSessionChange)
+  window.addEventListener(CONVERSION_HISTORY_CHANGE_EVENT, handleConversionHistoryChange)
   void loadProfile()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, handleAuthSessionChange)
+  window.removeEventListener(CONVERSION_HISTORY_CHANGE_EVENT, handleConversionHistoryChange)
 })
 </script>
 
@@ -326,6 +344,11 @@ onBeforeUnmount(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="history-summary">
+          <strong>{{ filteredMaterials.length }} 条上传历史</strong>
+          <span>累计扣除 {{ totalPointsCharged }} 积分</span>
         </div>
 
         <div class="material-list">

@@ -5413,6 +5413,24 @@ html[data-theme="day"] .step-card--upload {
   gap: 0.68rem;
 }
 
+.history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin: 0.1rem 0 0.85rem;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid rgba(235, 228, 207, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(235, 228, 207, 0.72);
+  font-size: 0.76rem;
+}
+
+.history-summary strong {
+  color: #ebe4cf;
+  font-size: 0.82rem;
+}
+
 .material-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;

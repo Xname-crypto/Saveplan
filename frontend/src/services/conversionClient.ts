@@ -4,6 +4,7 @@ const API_BASE_URL =
     ? "http://127.0.0.1:8000/api"
     : "/api")
 const AUTH_TOKEN_KEY = "saveplan.auth.token"
+export const CONVERSION_HISTORY_CHANGE_EVENT = "saveplan:conversion-history-change"
 
 export interface ConversionQuestion {
   number: number

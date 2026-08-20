@@ -23,6 +23,7 @@ import { useRouter } from "@/router"
 import { authClient } from "@/services/authClient"
 import {
   conversionClient,
+  CONVERSION_HISTORY_CHANGE_EVENT,
   getConversionErrorMessage,
   isConversionAuthError,
   type CloudOcrStatus,
@@ -332,6 +333,7 @@ async function deleteHistoryItem(item: ConversionSummary) {
       currentStep.value = 1
     }
     statusMessage.value = "转换历史已删除。"
+    notifyConversionHistoryChanged()
   } catch (error) {
     setError(error)
   } finally {
@@ -355,11 +357,11 @@ function handleFileChange(event: Event) {
     errorMessage.value = validationMessage
     filePickState.value = "error"
   } else if (selectedFile.value) {
-    statusMessage.value = `正在读取 ${selectedFile.value.name}...`
+    statusMessage.value = ""
     filePickState.value = "loading"
     filePickTimer = window.setTimeout(() => {
       filePickState.value = "success"
-      statusMessage.value = `已选择 ${selectedFile.value?.name}，下一步请选择转换配置。`
+      statusMessage.value = ""
       filePickTimer = window.setTimeout(() => {
         currentStep.value = 2
       }, 1100)
@@ -397,6 +399,10 @@ function goToStep(step: number) {
   if (step === 3 && !activeConversion.value) return
 
   currentStep.value = step
+}
+
+function notifyConversionHistoryChanged() {
+  window.dispatchEvent(new CustomEvent(CONVERSION_HISTORY_CHANGE_EVENT))
 }
 
 async function uploadSelectedFile() {
@@ -442,6 +448,7 @@ async function uploadSelectedFile() {
     statusMessage.value = `解析完成：识别 ${activeConversion.value.question_count} 道题，${activeConversion.value.issue_count} 个提示。`
     currentStep.value = 3
     await loadHistory()
+    notifyConversionHistoryChanged()
   } catch (error) {
     setError(error)
   } finally {
@@ -477,6 +484,7 @@ async function createFromPastedText() {
     statusMessage.value = "粘贴文本已解析，请继续校对题目。"
     currentStep.value = 3
     await loadHistory()
+    notifyConversionHistoryChanged()
   } catch (error) {
     setError(error)
   } finally {
