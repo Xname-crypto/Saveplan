@@ -9564,7 +9564,7 @@ html[data-theme="day"] .checkout-empty button {
 
 /* Flow path: minimal breadcrumb-style process guide. */
 .convert-path {
-  --path-accent: #345d75;
+  --path-accent: #d8b46b;
   --path-muted: rgba(241, 234, 213, 0.7);
   --path-soft: rgba(241, 234, 213, 0.38);
   display: inline-flex;
