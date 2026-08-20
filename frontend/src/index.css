@@ -3232,6 +3232,12 @@ html[data-theme="day"] .step-card--upload {
   padding: 0;
 }
 
+.upload-step-nav--footer {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(235, 228, 207, 0.08);
+  padding-top: 1rem;
+}
+
 .upload-step-nav__button {
   --button_radius: 0.75em;
   --button_color: #ffffff;

@@ -1363,14 +1363,22 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <footer class="step-actions">
-          <button type="button" @click="currentStep = 1">返回上传</button>
-          <button class="primary-action" type="button" :disabled="isUploading || !selectedFile" @click="uploadSelectedFile">
-            <Loader2 v-if="isUploading" class="spin-icon" :size="18" />
-            <UploadCloud v-else :size="18" />
-            {{ isUploading ? "解析中" : selectedFile ? "上传并解析" : "请先选择文件" }}
+        <footer class="upload-step-nav upload-step-nav--footer" aria-label="步骤导航">
+          <button
+            type="button"
+            class="upload-step-nav__button upload-step-nav__button--prev"
+            @click="goToStep(1)"
+          >
+            <span class="upload-step-nav__button-top">上一步</span>
           </button>
-          <button type="button" :disabled="!activeConversion" @click="currentStep = 3">进入校对</button>
+          <button
+            type="button"
+            class="upload-step-nav__button upload-step-nav__button--next"
+            :disabled="isUploading || (!selectedFile && !activeConversion)"
+            @click="activeConversion ? goToStep(3) : uploadSelectedFile()"
+          >
+            <span class="upload-step-nav__button-top">{{ isUploading ? "解析中" : "下一步" }}</span>
+          </button>
         </footer>
       </section>
 
