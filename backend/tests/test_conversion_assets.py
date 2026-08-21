@@ -562,6 +562,42 @@ D. 选项丁
     assert "解析:人工校对后的解析" in export_text
 
 
+def test_conversion_api_upload_clamps_zero_question_number(tmp_path: Path):
+    client = TestClient(app)
+    token = register_and_login(client)
+    paper_path = tmp_path / "zero-number.txt"
+    paper_path.write_text(
+        "0. Zero numbered question ( )\nA. Alpha\nB. Beta\nC. Gamma\nD. Delta\nAnswer: B",
+        encoding="utf-8",
+    )
+
+    with paper_path.open("rb") as file:
+        created = client.post(
+            "/api/conversions",
+            headers={"Authorization": f"Bearer {token}"},
+            data={"subject": "politics"},
+            files={"file": ("zero-number.txt", file, "text/plain")},
+        )
+
+    assert created.status_code == 201
+    conversion = created.json()
+    assert conversion["questions"][0]["number"] == 1
+
+    detail = client.get(
+        f"/api/conversions/{conversion['id']}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert detail.status_code == 200
+    assert detail.json()["questions"][0]["number"] == 1
+
+    exported = client.post(
+        f"/api/conversions/{conversion['id']}/export/kshuati",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert exported.status_code == 200
+    assert exported.json()["question_count"] == 1
+
+
 def test_conversion_api_deletes_history_item(tmp_path: Path):
     client = TestClient(app)
     token = register_and_login(client)

@@ -244,7 +244,7 @@ def row_to_detail(row: Conversion) -> ConversionDetail:
         text_state=record_value(row, "text_state"),
         raw_text=record_value(row, "raw_text"),
         issues=issues,
-        questions=[ConversionQuestionPayload(**question) for question in questions],
+        questions=question_payloads_from_raw(questions),
         assets=[ConversionAssetPayload(**asset) for asset in assets],
         export_text=record_value(row, "export_text"),
     )
@@ -262,9 +262,30 @@ def read_json(value: str, fallback):
     return parsed if isinstance(parsed, type(fallback)) else fallback
 
 
-def question_to_payload(question: ParsedQuestion) -> dict[str, object]:
+def coerce_question_number(value: object, fallback_number: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return fallback_number
+    return number if number >= 1 else fallback_number
+
+
+def sanitize_question_payload(question: object, fallback_number: int) -> dict[str, object]:
+    payload = dict(question) if isinstance(question, dict) else {}
+    payload["number"] = coerce_question_number(payload.get("number"), fallback_number)
+    return payload
+
+
+def question_payloads_from_raw(questions: list[object]) -> list[ConversionQuestionPayload]:
+    return [
+        ConversionQuestionPayload(**sanitize_question_payload(question, index + 1))
+        for index, question in enumerate(questions)
+    ]
+
+
+def question_to_payload(question: ParsedQuestion, fallback_number: int) -> dict[str, object]:
     return {
-        "number": question.number,
+        "number": coerce_question_number(question.number, fallback_number),
         "stem": question.stem,
         "options": {key: question.options.get(key, "") for key in sorted_option_labels(question.options)},
         "answer": question.answer,
@@ -793,7 +814,10 @@ def create_conversion_record(
             asset_payloads.append(ocr_placeholder(source_type, "未提取到文本，建议进入 OCR 识别流程。"))
 
     parsed_questions = parse_single_choice_questions(raw_text, subject=subject)
-    question_payloads = [question_to_payload(question) for question in parsed_questions]
+    question_payloads = [
+        question_to_payload(question, index + 1)
+        for index, question in enumerate(parsed_questions)
+    ]
     asset_payloads = bind_assets_to_detected_markers(asset_payloads, parsed_questions)
     if not question_payloads:
         issues.append("未识别到单选题结构，请检查题号和选项格式。")
@@ -1060,7 +1084,10 @@ def finish_cloud_ocr_conversion(
         issues.append("PaddleOCR 未返回可用 Markdown 文本，已保留原始提取文本。")
 
     parsed_questions = parse_single_choice_questions(raw_text, subject=row.subject or "general")
-    question_payloads = [question_to_payload(question) for question in parsed_questions]
+    question_payloads = [
+        question_to_payload(question, index + 1)
+        for index, question in enumerate(parsed_questions)
+    ]
     if not question_payloads:
         issues.append("OCR 完成后仍未识别到单选题结构，请在人工校对页手动新增或粘贴文本。")
 
@@ -1425,7 +1452,7 @@ def export_conversion(
     db: Annotated[Session, Depends(get_db)],
 ) -> ConversionExportResponse:
     row = find_conversion(db, conversion_id, current_user.id)
-    question_payloads = [ConversionQuestionPayload(**item) for item in read_json(row.questions_json, [])]
+    question_payloads = question_payloads_from_raw(read_json(row.questions_json, []))
     asset_payloads = [ConversionAssetPayload(**item) for item in read_json(row.assets_json, [])]
     questions = [payload_to_question(payload) for payload in question_payloads]
     apply_asset_transcripts(questions, asset_payloads)
