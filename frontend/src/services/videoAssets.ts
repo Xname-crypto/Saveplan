@@ -9,6 +9,7 @@ export const VIDEO_ASSETS = {
   forgotPassword:
     "https://pub-4bd1febbb65843fbab89f795d612e480.r2.dev/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B9%A6%E6%9C%AC-%E4%B9%A6%E6%A1%8C-%E4%BA%8C%E6%AC%A1%E5%85%83.mp4",
   homeHeroPoster: "/video/home-hero-poster.jpg",
+  homeHeroDayPoster: "/video/day-hero-clouds-poster.png",
   loginPoster: "/video/login-poster.jpg",
   registerPoster: "/video/register-poster.jpg",
   forgotPasswordPoster: "/video/forgot-password-poster.jpg",
@@ -17,6 +18,7 @@ export const VIDEO_ASSETS = {
 
 const IMAGE_PRELOAD_ORDER = [
   VIDEO_ASSETS.homeHeroPoster,
+  VIDEO_ASSETS.homeHeroDayPoster,
   VIDEO_ASSETS.loginPoster,
   VIDEO_ASSETS.registerPoster,
   VIDEO_ASSETS.forgotPasswordPoster,

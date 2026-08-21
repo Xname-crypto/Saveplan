@@ -35,7 +35,9 @@ let scrollFrame = 0
 const heroVideoSrc = computed(() =>
   theme.value === "day" ? VIDEO_ASSETS.homeHeroDay : VIDEO_ASSETS.homeHero,
 )
-const heroPosterSrc = computed(() => VIDEO_ASSETS.homeHeroPoster)
+const heroPosterSrc = computed(() =>
+  theme.value === "day" ? VIDEO_ASSETS.homeHeroDayPoster : VIDEO_ASSETS.homeHeroPoster,
+)
 const isDayTheme = computed(() => theme.value === "day")
 const homeGlowColor = computed(() => (isDayTheme.value ? "204 54 39" : "46 88 78"))
 const homeGlowIntensity = computed(() => (isDayTheme.value ? 1.1 : 1.75))
