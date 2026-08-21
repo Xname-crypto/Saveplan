@@ -42,10 +42,10 @@ const openFaqIndex = ref<number | null>(null)
 const { theme } = useTheme()
 const isDayTheme = computed(() => theme.value === "day")
 const quoteImageSrc = computed(() =>
-  isDayTheme.value ? "/stitch/format-comparison.png" : "/stitch/asset-05.jpg",
+  isDayTheme.value ? "/stitch/pricing-quote-day.png" : "/stitch/pricing-quote-night.png",
 )
 const quoteImageAlt = computed(() =>
-  isDayTheme.value ? "结构化转换界面预览" : "午夜图书馆学习场景",
+  isDayTheme.value ? "白天图书馆学习场景" : "黑夜图书馆学习场景",
 )
 
 function getPlanClasses(plan: PlanDefinition, index: number) {

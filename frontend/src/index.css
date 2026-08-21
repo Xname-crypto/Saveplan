@@ -5104,12 +5104,15 @@ html:not([data-theme="day"]) .upload-step-nav__button:disabled .upload-step-nav_
 
 .pricing-quote img {
   object-fit: cover;
-  filter: grayscale(1);
-  opacity: 0.55;
+  object-position: center 48%;
+  filter: saturate(1.06) contrast(1.04) brightness(0.82);
+  opacity: 0.86;
 }
 
 .pricing-quote div {
-  background: rgba(0, 0, 0, 0.45);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.32) 50%, rgba(0, 0, 0, 0.68)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.58));
 }
 
 .pricing-quote p {
@@ -8168,15 +8171,15 @@ html[data-theme="day"] .pricing-quote {
 }
 
 html[data-theme="day"] .pricing-quote img {
-  opacity: 0.74;
-  filter: saturate(1.08) contrast(1.04) brightness(1.08);
+  opacity: 0.9;
+  filter: saturate(1.03) contrast(1.02) brightness(1.04);
   object-position: center 46%;
 }
 
 html[data-theme="day"] .pricing-quote div {
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 52%, rgba(238, 247, 246, 0.68)),
-    linear-gradient(180deg, rgba(248, 250, 247, 0.24), rgba(248, 250, 247, 0.58));
+    linear-gradient(90deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28) 52%, rgba(238, 247, 246, 0.5)),
+    linear-gradient(180deg, rgba(248, 250, 247, 0.08), rgba(248, 250, 247, 0.46));
 }
 
 html[data-theme="day"] .pricing-quote p {
