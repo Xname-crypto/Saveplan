@@ -16,6 +16,7 @@ import {
   Save,
   Trash2,
   UploadCloud,
+  X,
 } from "lucide-vue-next"
 import AppFooter from "@/components/AppFooter.vue"
 import CinematicNav from "@/components/CinematicNav.vue"
@@ -244,6 +245,10 @@ function setError(error: unknown) {
 
   errorMessage.value = getConversionErrorMessage(error)
   statusMessage.value = ""
+}
+
+function closeErrorDialog() {
+  errorMessage.value = ""
 }
 
 function waitForOcrPoll(ms: number) {
@@ -1223,10 +1228,9 @@ onBeforeUnmount(() => {
         </button>
       </nav>
 
-      <section v-if="errorMessage || statusMessage" class="conversion-alert stitch-reveal">
-        <AlertTriangle v-if="errorMessage" :size="18" />
-        <CheckCircle2 v-else :size="18" />
-        <span>{{ errorMessage || statusMessage }}</span>
+      <section v-if="statusMessage" class="conversion-alert stitch-reveal">
+        <CheckCircle2 :size="18" />
+        <span>{{ statusMessage }}</span>
       </section>
 
       <section v-show="currentStep === 1" class="step-card step-card--upload stitch-reveal">
@@ -1657,6 +1661,36 @@ onBeforeUnmount(() => {
           <strong>复制文本成功</strong>
           <button type="button" @click="closeCopySuccess">确定</button>
         </div>
+      </div>
+
+      <div
+        v-if="errorMessage"
+        class="conversion-error-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="conversion-error-title"
+        @click.self="closeErrorDialog"
+      >
+        <section class="conversion-error-modal__panel" role="alert">
+          <button
+            type="button"
+            class="conversion-error-modal__close"
+            aria-label="关闭错误提示"
+            @click="closeErrorDialog"
+          >
+            <X :size="18" />
+          </button>
+          <span class="conversion-error-modal__icon" aria-hidden="true">
+            <AlertTriangle :size="24" />
+          </span>
+          <div>
+            <h2 id="conversion-error-title">转换失败</h2>
+            <p>{{ errorMessage }}</p>
+          </div>
+          <button type="button" class="conversion-error-modal__confirm" @click="closeErrorDialog">
+            知道了
+          </button>
+        </section>
       </div>
 
       <div v-if="issueDialogQuestion" class="issue-modal" role="dialog" aria-modal="true">
