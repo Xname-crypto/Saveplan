@@ -367,9 +367,6 @@ function handleFileChange(event: Event) {
     filePickTimer = window.setTimeout(() => {
       filePickState.value = "success"
       statusMessage.value = ""
-      filePickTimer = window.setTimeout(() => {
-        currentStep.value = 2
-      }, 1100)
     }, 800)
   }
 }
@@ -450,8 +447,7 @@ async function uploadSelectedFile() {
       )
     }
     uploadStage.value = "解析完成"
-    statusMessage.value = `解析完成：识别 ${activeConversion.value.question_count} 道题，${activeConversion.value.issue_count} 个提示。`
-    currentStep.value = 3
+    statusMessage.value = `解析完成：识别 ${activeConversion.value.question_count} 道题，${activeConversion.value.issue_count} 个提示。请点击下一步进入人工校对。`
     await loadHistory()
     notifyConversionHistoryChanged()
   } catch (error) {
@@ -486,8 +482,7 @@ async function createFromPastedText() {
       selectedSubject.value,
     )
     uploadStage.value = "解析完成"
-    statusMessage.value = "粘贴文本已解析，请继续校对题目。"
-    currentStep.value = 3
+    statusMessage.value = "粘贴文本已解析，请点击下一步进入人工校对。"
     await loadHistory()
     notifyConversionHistoryChanged()
   } catch (error) {
@@ -1260,7 +1255,7 @@ onBeforeUnmount(() => {
                     <CheckCircle2 v-else :size="70" />
                   </div>
                   <strong>{{ filePickState === "loading" ? "正在读取文件" : "文件已选择" }}</strong>
-                  <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "即将进入转换配置" }}</small>
+                  <small>{{ filePickState === "loading" ? "正在确认文件类型与大小" : "请点击下一步进入转换配置" }}</small>
                 </div>
                 </div>
               </button>
