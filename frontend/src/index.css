@@ -8455,6 +8455,7 @@ html[data-theme="day"] .pricing-faq__question svg {
 
 html[data-theme="day"] .history-tools label,
 html[data-theme="day"] .history-filter__menu,
+html[data-theme="day"] .history-summary,
 html[data-theme="day"] .material-row,
 html[data-theme="day"] .history-empty {
   border-color: rgba(31, 41, 51, 0.12);
@@ -8501,6 +8502,7 @@ html[data-theme="day"] .material-row__icon {
 }
 
 html[data-theme="day"] .material-row h3,
+html[data-theme="day"] .history-summary strong,
 html[data-theme="day"] .history-empty strong {
   color: #1f2933;
 }
