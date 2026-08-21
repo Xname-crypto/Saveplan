@@ -36,7 +36,7 @@ const heroVideoSrc = computed(() =>
   theme.value === "day" ? VIDEO_ASSETS.homeHeroDay : VIDEO_ASSETS.homeHero,
 )
 const heroPosterSrc = computed(() =>
-  theme.value === "day" ? VIDEO_ASSETS.homeHeroDayPoster : VIDEO_ASSETS.homeHeroPoster,
+  theme.value === "day" ? VIDEO_ASSETS.homeHeroDayPosterWebp : VIDEO_ASSETS.homeHeroPosterWebp,
 )
 const isDayTheme = computed(() => theme.value === "day")
 const homeGlowColor = computed(() => (isDayTheme.value ? "204 54 39" : "46 88 78"))
