@@ -6197,6 +6197,11 @@ html:not([data-theme="day"]) .history-empty {
     border-radius: 1.25rem;
   }
 
+  .home-hero__poster,
+  .home-hero__video {
+    object-position: 68% center;
+  }
+
   .home-hero__content {
     inset: auto 1.25rem 1.55rem;
     gap: 0.95rem;
