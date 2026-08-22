@@ -8,11 +8,15 @@ from .config import CORS_ORIGINS
 from .conversions import init_conversion_db, router as conversions_router
 from .database.session import init_database
 from .modules.admin_auth.controller import router as admin_auth_router
+from .modules.admin_dashboard.controller import router as admin_dashboard_router
 from .modules.admin_auth.service import bootstrap_admin_security
+from .modules.broadcasts.controller import public_router as broadcasts_public_router
+from .modules.broadcasts.controller import router as admin_broadcasts_router
 from .modules.audit_logs.controller import router as audit_logs_router
 from .modules.conversions.controller import router as admin_conversions_router
 from .modules.orders.controller import router as orders_router
 from .modules.rbac.controller import router as rbac_router
+from .modules.redeem_codes.controller import router as redeem_codes_router
 from .modules.users.controller import router as admin_users_router
 
 
@@ -43,10 +47,14 @@ app.include_router(auth_router)
 app.include_router(conversions_router)
 app.include_router(orders_router)
 app.include_router(admin_auth_router)
+app.include_router(admin_dashboard_router)
 app.include_router(rbac_router)
 app.include_router(admin_users_router)
 app.include_router(admin_conversions_router)
 app.include_router(audit_logs_router)
+app.include_router(redeem_codes_router)
+app.include_router(admin_broadcasts_router)
+app.include_router(broadcasts_public_router)
 
 
 @app.get("/api/health")

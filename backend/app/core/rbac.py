@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from ..config import ADMIN_JWT_SECRET
+from ..config import ADMIN_JWT_SECRET, ADMIN_SESSION_COOKIE_NAME
 from ..database.session import get_db
 from ..modules.admin_auth.crud import AdminUserCrud
 from ..modules.admin_auth.model import AdminUser
@@ -16,15 +16,20 @@ from .security import verify_token
 
 def get_current_admin(
     db: Annotated[Session, Depends(get_db)],
+    request: Request,
     authorization: Annotated[str | None, Header()] = None,
 ) -> AdminUser:
-    if not authorization or not authorization.startswith("Bearer "):
+    token = (
+        authorization.removeprefix("Bearer ").strip()
+        if authorization and authorization.startswith("Bearer ")
+        else request.cookies.get(ADMIN_SESSION_COOKIE_NAME)
+    )
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="请先登录管理员后台。",
+            detail="Please sign in as an administrator.",
         )
 
-    token = authorization.removeprefix("Bearer ").strip()
     payload = verify_token(token, ADMIN_JWT_SECRET)
     admin_id = payload.get("sub")
     token_type = payload.get("type")
@@ -33,14 +38,14 @@ def get_current_admin(
     if token_type != "admin" or not isinstance(admin_id, str) or not isinstance(token_version, int):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="管理员登录状态无效。",
+            detail="Invalid admin login state.",
         )
 
     admin = AdminUserCrud(db).get_by_id(admin_id)
     if admin is None or not admin.is_active or admin.token_version != token_version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="管理员登录状态已失效。",
+            detail="Admin session expired. Please sign in again.",
         )
     return admin
 
@@ -71,7 +76,7 @@ def require_permission(permission_code: str) -> Callable[..., AdminUser]:
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="当前管理员没有该操作权限。",
+                detail="Current administrator does not have permission for this action.",
             )
         return admin
 

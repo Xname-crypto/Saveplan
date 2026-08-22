@@ -29,6 +29,8 @@ const routeLoaders: Record<string, RouteLoader> = {
   "/register": () => import("@/views/Register.vue"),
   "/forgot-password": () => import("@/views/ForgotPassword.vue"),
   "/reset-password": () => import("@/views/ResetPassword.vue"),
+  "/admin": () => import("@/views/AdminDashboard.vue"),
+  "/admin/login": () => import("@/views/AdminLogin.vue"),
 }
 
 const route = reactive<RouteState>({
