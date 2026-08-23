@@ -51,6 +51,14 @@ type ToastItem = {
   message: string
   tone: ToastTone
 }
+type OverviewActivityItem = {
+  id: string
+  kind: "broadcast" | "log"
+  title: string
+  meta: string
+  createdAt: string
+  status?: string
+}
 
 function normalizeTabKey(value: string | null): TabKey {
   switch (value) {
@@ -93,6 +101,9 @@ const redeemPage = ref(1)
 const redeemPageSize = 8
 const logPage = ref(1)
 const logPageSize = 10
+const overviewUserPage = ref(1)
+const overviewActivityPage = ref(1)
+const overviewPageSize = 5
 
 type BroadcastDraft = {
   channel: "announcement" | "popup"
@@ -495,9 +506,42 @@ const overviewStats = computed(() => [
 ])
 
 const selectedUserPreview = computed(() => selectedUser.value)
-const recentUsers = computed(() => summary.value?.recent_users ?? users.value.slice(0, 5))
-const recentBroadcasts = computed(() => summary.value?.recent_broadcasts ?? broadcasts.value.slice(0, 5))
-const recentLogs = computed(() => summary.value?.recent_logs ?? logs.value.slice(0, 5))
+const overviewUsers = computed(() => {
+  const source = users.value.length ? users.value : summary.value?.recent_users ?? []
+  return source.slice().sort((a, b) => b.created_at.localeCompare(a.created_at))
+})
+const paginatedOverviewUsers = computed(() =>
+  overviewUsers.value.slice((overviewUserPage.value - 1) * overviewPageSize, overviewUserPage.value * overviewPageSize),
+)
+const overviewUserPageCount = computed(() => Math.max(1, Math.ceil(overviewUsers.value.length / overviewPageSize)))
+const overviewActivities = computed<OverviewActivityItem[]>(() => {
+  const broadcastSource = broadcasts.value.length ? broadcasts.value : summary.value?.recent_broadcasts ?? []
+  const logSource = logs.value.length ? logs.value : summary.value?.recent_logs ?? []
+  return [
+    ...broadcastSource.map((message) => ({
+      id: `broadcast-${message.id}`,
+      kind: "broadcast" as const,
+      title: message.title,
+      meta: `${message.channel === "popup" ? "弹窗" : "公告"} · ${message.scope === "user" ? "单用户" : "全站"}`,
+      createdAt: message.created_at,
+      status: message.status,
+    })),
+    ...logSource.map((log) => ({
+      id: `log-${log.id}`,
+      kind: "log" as const,
+      title: log.action,
+      meta: log.resource,
+      createdAt: log.created_at,
+    })),
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+})
+const paginatedOverviewActivities = computed(() =>
+  overviewActivities.value.slice(
+    (overviewActivityPage.value - 1) * overviewPageSize,
+    overviewActivityPage.value * overviewPageSize,
+  ),
+)
+const overviewActivityPageCount = computed(() => Math.max(1, Math.ceil(overviewActivities.value.length / overviewPageSize)))
 const sortedRedeemCodes = computed(() =>
   redeemCodes.value.slice().sort((a, b) => b.created_at.localeCompare(a.created_at)),
 )
@@ -1093,6 +1137,20 @@ watch(
 )
 
 watch(
+  () => overviewUsers.value.length,
+  () => {
+    overviewUserPage.value = Math.min(overviewUserPage.value, overviewUserPageCount.value)
+  },
+)
+
+watch(
+  () => overviewActivities.value.length,
+  () => {
+    overviewActivityPage.value = Math.min(overviewActivityPage.value, overviewActivityPageCount.value)
+  },
+)
+
+watch(
   () => sortedRedeemCodes.value.length,
   () => {
     redeemPage.value = Math.min(redeemPage.value, redeemPageCount.value)
@@ -1316,7 +1374,7 @@ onBeforeUnmount(() => {
                 <UserPlus class="h-5 w-5 text-slate-400" />
               </div>
               <div class="mt-4 grid gap-3">
-                <div v-for="user in recentUsers" :key="user.id" class="rounded-lg border border-slate-200 px-4 py-3">
+                <div v-for="user in paginatedOverviewUsers" :key="user.id" class="rounded-lg border border-slate-200 px-4 py-3">
                   <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                       <p class="truncate text-sm font-medium text-slate-900">{{ user.username }}</p>
@@ -1325,7 +1383,19 @@ onBeforeUnmount(() => {
                     <span class="text-xs text-slate-400">{{ formatDate(user.created_at) }}</span>
                   </div>
                 </div>
-                <p v-if="!recentUsers.length" class="py-8 text-center text-sm text-slate-400">暂无用户。</p>
+                <p v-if="!overviewUsers.length" class="py-8 text-center text-sm text-slate-400">暂无用户。</p>
+              </div>
+              <div v-if="overviewUsers.length" class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
+                <span>共 {{ overviewUsers.length }} 条</span>
+                <div class="flex items-center gap-2">
+                  <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40" :disabled="overviewUserPage === 1" @click="overviewUserPage -= 1">
+                    <ChevronLeft class="h-4 w-4" />
+                  </button>
+                  <span>第 {{ overviewUserPage }} / {{ overviewUserPageCount }} 页</span>
+                  <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40" :disabled="overviewUserPage === overviewUserPageCount" @click="overviewUserPage += 1">
+                    <ChevronRight class="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </article>
 
@@ -1338,25 +1408,29 @@ onBeforeUnmount(() => {
                 <FileClock class="h-5 w-5 text-slate-400" />
               </div>
               <div class="mt-4 grid gap-3">
-                <div v-for="message in recentBroadcasts" :key="message.id" class="rounded-lg border border-slate-200 px-4 py-3">
+                <div v-for="item in paginatedOverviewActivities" :key="item.id" class="rounded-lg border border-slate-200 px-4 py-3">
                   <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                      <p class="truncate text-sm font-medium text-slate-900">{{ message.title }}</p>
-                      <p class="mt-1 text-xs text-slate-500">{{ message.channel === 'popup' ? '弹窗' : '公告' }} · {{ message.scope === 'user' ? '单用户' : '全站' }}</p>
+                      <p class="truncate text-sm font-medium text-slate-900">{{ item.title }}</p>
+                      <p class="mt-1 text-xs text-slate-500">{{ item.meta }}</p>
+                      <p class="mt-1 text-xs text-slate-400">{{ formatDate(item.createdAt) }}</p>
                     </div>
-                    <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ formatStatus(message.status) }}</span>
+                    <span v-if="item.status" class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(item.status)">{{ formatStatus(item.status) }}</span>
                   </div>
                 </div>
-                <p v-if="!recentBroadcasts.length" class="py-4 text-center text-sm text-slate-400">暂无发布记录。</p>
+                <p v-if="!overviewActivities.length" class="py-8 text-center text-sm text-slate-400">暂无动态记录。</p>
               </div>
-
-              <div class="mt-6 grid gap-3">
-                <div v-for="log in recentLogs" :key="log.id" class="rounded-lg border border-slate-200 px-4 py-3">
-                  <p class="text-sm font-medium">{{ log.action }}</p>
-                  <p class="mt-1 text-xs text-slate-500">{{ log.resource }}</p>
-                  <p class="mt-1 text-xs text-slate-400">{{ formatDate(log.created_at) }}</p>
+              <div v-if="overviewActivities.length" class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
+                <span>共 {{ overviewActivities.length }} 条</span>
+                <div class="flex items-center gap-2">
+                  <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40" :disabled="overviewActivityPage === 1" @click="overviewActivityPage -= 1">
+                    <ChevronLeft class="h-4 w-4" />
+                  </button>
+                  <span>第 {{ overviewActivityPage }} / {{ overviewActivityPageCount }} 页</span>
+                  <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40" :disabled="overviewActivityPage === overviewActivityPageCount" @click="overviewActivityPage += 1">
+                    <ChevronRight class="h-4 w-4" />
+                  </button>
                 </div>
-                <p v-if="!recentLogs.length" class="py-8 text-center text-sm text-slate-400">暂无审计记录。</p>
               </div>
             </article>
           </section>
