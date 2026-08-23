@@ -254,6 +254,22 @@ function toIso(value: string, fallbackTime = "23:59:59") {
   return parsed.toISOString()
 }
 
+function toDateOnly(value: string) {
+  const raw = value.trim()
+  if (!raw) return ""
+  const normalized = raw.replace(/\s+/g, "T")
+  const directDate = normalized.match(/^\d{4}-\d{2}-\d{2}/)?.[0]
+  if (directDate) return directDate
+
+  const parsed = new Date(normalized)
+  if (Number.isNaN(parsed.getTime())) return ""
+
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, "0")
+  const day = String(parsed.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 function formatDraftDateTime(value: string, fallbackTime: string) {
   const raw = value.trim()
   if (!raw) return "未设置"
@@ -424,6 +440,8 @@ function restoreBroadcastDraft(channel: "announcement" | "popup") {
   const draft = loadDraft<BroadcastDraft>(getBroadcastDraftKey(channel))
   if (draft) {
     Object.assign(broadcastForm, draft)
+    broadcastForm.starts_at = toDateOnly(broadcastForm.starts_at)
+    broadcastForm.ends_at = toDateOnly(broadcastForm.ends_at)
     return
   }
 
@@ -441,6 +459,7 @@ function restoreRedeemDraft() {
   const draft = loadDraft<RedeemDraft>(REDEEM_DRAFT_KEY)
   if (draft) {
     Object.assign(codeForm, draft)
+    codeForm.expires_date = toDateOnly(codeForm.expires_date)
   }
 }
 
@@ -1284,16 +1303,12 @@ onBeforeUnmount(() => {
                     <span class="mb-1 block text-sm text-slate-500">过期日期</span>
                     <input
                       v-model="codeForm.expires_date"
-                      type="text"
-                      inputmode="numeric"
-                      spellcheck="false"
-                      autocomplete="off"
-                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm outline-none transition focus:border-slate-400 focus:bg-white"
-                      placeholder="2026-08-22"
+                      type="date"
+                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 focus:bg-white"
                     />
                   </label>
                 </div>
-                <p class="text-xs text-slate-400">格式：YYYY-MM-DD，未填则不设置过期时间。</p>
+                <p class="text-xs text-slate-400">选择日期即可，未填则不设置过期时间。</p>
                 <label class="block">
                   <span class="mb-1 block text-sm text-slate-500">备注</span>
                   <textarea v-model="codeForm.note" rows="4" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 focus:bg-white" placeholder="发放场景、活动说明、回收时间等"></textarea>
@@ -1418,12 +1433,12 @@ onBeforeUnmount(() => {
                 </label>
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
-                    <span class="mb-1 block text-sm text-slate-500">开始时间</span>
-                    <input v-model="broadcastForm.starts_at" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm outline-none focus:border-slate-400 focus:bg-white" placeholder="2026-08-22 09:00" />
+                    <span class="mb-1 block text-sm text-slate-500">开始日期</span>
+                    <input v-model="broadcastForm.starts_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
                   </label>
                   <label class="block">
-                    <span class="mb-1 block text-sm text-slate-500">结束时间</span>
-                    <input v-model="broadcastForm.ends_at" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm outline-none focus:border-slate-400 focus:bg-white" placeholder="2026-08-25 23:59" />
+                    <span class="mb-1 block text-sm text-slate-500">结束日期</span>
+                    <input v-model="broadcastForm.ends_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
                   </label>
                 </div>
               </div>
@@ -1541,12 +1556,12 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
-                    <span class="mb-1 block text-sm text-slate-500">开始时间</span>
-                    <input v-model="broadcastForm.starts_at" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm outline-none focus:border-slate-400 focus:bg-white" placeholder="2026-08-22 09:00" />
+                    <span class="mb-1 block text-sm text-slate-500">开始日期</span>
+                    <input v-model="broadcastForm.starts_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
                   </label>
                   <label class="block">
-                    <span class="mb-1 block text-sm text-slate-500">结束时间</span>
-                    <input v-model="broadcastForm.ends_at" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm outline-none focus:border-slate-400 focus:bg-white" placeholder="2026-08-25 23:59" />
+                    <span class="mb-1 block text-sm text-slate-500">结束日期</span>
+                    <input v-model="broadcastForm.ends_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
                   </label>
                 </div>
               </div>
