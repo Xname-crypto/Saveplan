@@ -6199,7 +6199,7 @@ html:not([data-theme="day"]) .history-empty {
 
   .home-hero__poster,
   .home-hero__video {
-    object-position: 68% center;
+    object-position: 62% center;
   }
 
   .home-hero__content {
@@ -9868,5 +9868,12 @@ html[data-theme="day"] .convert-path__arrow {
 @keyframes checkout-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 520px) {
+  .home-hero__poster,
+  .home-hero__video {
+    object-position: 58% center;
   }
 }
