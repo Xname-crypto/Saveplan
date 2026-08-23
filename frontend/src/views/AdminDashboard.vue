@@ -415,6 +415,23 @@ function statusBadge(status: string) {
   }
 }
 
+function formatStatus(status: string) {
+  switch (status) {
+    case "active":
+      return "生效中"
+    case "scheduled":
+      return "待生效"
+    case "expired":
+      return "已过期"
+    case "used":
+      return "已使用"
+    case "inactive":
+      return "已停用"
+    default:
+      return status || "未知"
+  }
+}
+
 const filteredUsers = computed(() => {
   const query = userQuery.value.trim().toLowerCase()
   if (!query) return users.value
@@ -484,7 +501,7 @@ const redeemExportRows = computed(() =>
     item.code,
     item.batch_name,
     item.points,
-    item.status,
+    formatStatus(item.status),
     formatDate(item.expires_at),
     formatDate(item.created_at),
   ]),
@@ -1283,7 +1300,7 @@ onBeforeUnmount(() => {
                       <p class="truncate text-sm font-medium text-slate-900">{{ message.title }}</p>
                       <p class="mt-1 text-xs text-slate-500">{{ message.channel === 'popup' ? '弹窗' : '公告' }} · {{ message.scope === 'user' ? '单用户' : '全站' }}</p>
                     </div>
-                    <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ message.status }}</span>
+                    <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ formatStatus(message.status) }}</span>
                   </div>
                 </div>
                 <p v-if="!recentBroadcasts.length" class="py-4 text-center text-sm text-slate-400">暂无发布记录。</p>
@@ -1508,7 +1525,7 @@ onBeforeUnmount(() => {
                       <th class="border-b border-slate-200 py-3 font-medium">兑换码</th>
                       <th class="border-b border-slate-200 py-3 font-medium">批次</th>
                       <th class="border-b border-slate-200 py-3 font-medium">积分</th>
-                      <th class="border-b border-slate-200 py-3 font-medium">状态</th>
+                      <th class="border-b border-slate-200 py-3 text-center font-medium">状态</th>
                       <th class="border-b border-slate-200 py-3 font-medium">过期</th>
                       <th class="border-b border-slate-200 py-3 text-right font-medium">操作</th>
                     </tr>
@@ -1521,8 +1538,8 @@ onBeforeUnmount(() => {
                       </td>
                       <td class="py-4 pr-4 text-sm text-slate-700">{{ code.batch_name }}</td>
                       <td class="py-4 pr-4 text-sm font-medium">{{ code.points }}</td>
-                      <td class="py-4 pr-4">
-                        <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(code.status)">{{ code.status }}</span>
+                      <td class="py-4 pr-4 text-center">
+                        <span class="inline-flex min-w-14 justify-center rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(code.status)">{{ formatStatus(code.status) }}</span>
                       </td>
                       <td class="py-4 pr-4 text-sm text-slate-600">{{ formatDate(code.expires_at) }}</td>
                       <td class="py-4 pr-4 text-right">
@@ -1674,7 +1691,7 @@ onBeforeUnmount(() => {
                       <p class="text-base font-medium">{{ message.title }}</p>
                       <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-500">{{ message.content }}</p>
                     </div>
-                    <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ message.status }}</span>
+                    <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ formatStatus(message.status) }}</span>
                   </div>
                   <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                     <span>优先级：{{ message.priority }}</span>
@@ -1863,7 +1880,7 @@ onBeforeUnmount(() => {
                           <p class="text-base font-medium">{{ message.title }}</p>
                           <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-500">{{ message.content }}</p>
                         </div>
-                        <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ message.status }}</span>
+                        <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ formatStatus(message.status) }}</span>
                       </div>
                       <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                         <span>优先级：{{ message.priority }}</span>
@@ -1897,7 +1914,7 @@ onBeforeUnmount(() => {
                           <p class="mt-1 text-xs text-slate-500">{{ broadcastTargetLabel(message.target_user_id) }}</p>
                           <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-500">{{ message.content }}</p>
                         </div>
-                        <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ message.status }}</span>
+                        <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(message.status)">{{ formatStatus(message.status) }}</span>
                       </div>
                       <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                         <span>优先级：{{ message.priority }}</span>
