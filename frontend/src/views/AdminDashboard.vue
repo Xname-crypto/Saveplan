@@ -1217,7 +1217,7 @@ onBeforeUnmount(() => {
                       <th class="border-b border-slate-200 py-3 font-medium">身份</th>
                       <th class="border-b border-slate-200 py-3 font-medium">积分</th>
                       <th class="border-b border-slate-200 py-3 font-medium">注册时间</th>
-                      <th class="border-b border-slate-200 py-3 font-medium">操作</th>
+                      <th class="border-b border-slate-200 py-3 text-right font-medium">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1230,8 +1230,8 @@ onBeforeUnmount(() => {
                       <td class="py-4 pr-4 text-sm text-slate-600">{{ user.job || "未填写" }}</td>
                       <td class="py-4 pr-4 text-sm font-medium">{{ user.point_balance }}</td>
                       <td class="py-4 pr-4 text-sm text-slate-600">{{ formatDate(user.created_at) }}</td>
-                      <td class="py-4 pr-4">
-                        <div class="flex flex-wrap items-center gap-2">
+                      <td class="py-4 pr-4 text-right">
+                        <div class="flex flex-wrap items-center justify-end gap-2">
                           <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="openUserDetail(user)">
                             <Eye class="h-3.5 w-3.5" />
                             详情
@@ -1358,7 +1358,7 @@ onBeforeUnmount(() => {
                       <th class="border-b border-slate-200 py-3 font-medium">积分</th>
                       <th class="border-b border-slate-200 py-3 font-medium">状态</th>
                       <th class="border-b border-slate-200 py-3 font-medium">过期</th>
-                      <th class="border-b border-slate-200 py-3 font-medium">操作</th>
+                      <th class="border-b border-slate-200 py-3 text-right font-medium">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1373,8 +1373,8 @@ onBeforeUnmount(() => {
                         <span class="rounded-full border px-2.5 py-1 text-[11px] font-medium" :class="statusBadge(code.status)">{{ code.status }}</span>
                       </td>
                       <td class="py-4 pr-4 text-sm text-slate-600">{{ formatDate(code.expires_at) }}</td>
-                      <td class="py-4 pr-4">
-                        <div class="flex flex-wrap items-center gap-2">
+                      <td class="py-4 pr-4 text-right">
+                        <div class="flex flex-wrap items-center justify-end gap-2">
                           <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" @click="copyCode(code.code)">
                             <Copy class="h-3.5 w-3.5" />
                             复制
