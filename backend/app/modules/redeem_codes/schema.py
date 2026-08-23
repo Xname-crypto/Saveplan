@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field
+
+from ..auth.schema import AuthUser
 
 
 class RedeemCodeCreateRequest(BaseModel):
@@ -35,3 +38,15 @@ class RedeemCodeRead(BaseModel):
 class RedeemCodeBatchResponse(BaseModel):
     batch_name: str
     codes: list[RedeemCodeRead]
+
+
+class RedeemCodeClaimRequest(BaseModel):
+    code: str = Field(min_length=3, max_length=48)
+
+
+class RedeemCodeClaimResponse(BaseModel):
+    message: str
+    code: str
+    points_earned: int
+    balance_after: int
+    user: AuthUser

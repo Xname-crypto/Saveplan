@@ -20,4 +20,5 @@ class PointTransaction(Base):
     source: Mapped[str] = mapped_column(String(80), index=True)
     admin_id: Mapped[str | None] = mapped_column(String(36), default=None, index=True)
     conversion_id: Mapped[str | None] = mapped_column(String(36), default=None, index=True)
+    redeem_code_id: Mapped[str | None] = mapped_column(String(36), default=None, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)

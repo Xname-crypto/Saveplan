@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..config import AUTO_CREATE_TABLES, DATABASE_URL
@@ -37,6 +37,19 @@ SessionLocal = sessionmaker(
 _tables_initialized = False
 
 
+def _ensure_point_transaction_redeem_code_column() -> None:
+    inspector = inspect(engine)
+    if "point_transactions" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("point_transactions")}
+    if "redeem_code_id" in columns:
+        return
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("ALTER TABLE point_transactions ADD COLUMN redeem_code_id VARCHAR(36)")
+
+
 def get_db() -> Generator[Session, None, None]:
     ensure_database_initialized()
     db = SessionLocal()
@@ -53,6 +66,7 @@ def init_database() -> None:
     from . import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+    _ensure_point_transaction_redeem_code_column()
     _tables_initialized = True
 
 

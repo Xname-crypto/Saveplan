@@ -54,3 +54,24 @@ class PointService:
                 conversion_id=conversion_id,
             )
         )
+
+    def record_redeem_code(
+        self,
+        *,
+        user_id: str,
+        amount: int,
+        balance_after: int,
+        reason: str,
+        redeem_code_id: str,
+    ) -> PointTransaction:
+        return self.crud.create(
+            PointTransaction(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                amount=amount,
+                balance_after=balance_after,
+                reason=reason,
+                source="redeem_code",
+                redeem_code_id=redeem_code_id,
+            )
+        )

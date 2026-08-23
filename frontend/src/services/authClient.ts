@@ -39,6 +39,14 @@ interface ForgotPasswordResponse {
   reset_url?: string
 }
 
+interface RedeemCodeClaimResponse {
+  message: string
+  code: string
+  points_earned: number
+  balance_after: number
+  user: AuthUser
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -84,13 +92,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return payload as T
 }
 
+function persistAuthUser(user: AuthUser) {
+  const avatarUrl = getStoredAvatarSource(user)
+  const storedUser = avatarUrl ? { ...user, avatar_url: avatarUrl } : user
+
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(storedUser))
+  emitAuthSessionChange(storedUser)
+}
+
 function persistSession(response: AuthResponse) {
   const avatarUrl = getStoredAvatarSource(response.user)
   const user = avatarUrl ? { ...response.user, avatar_url: avatarUrl } : response.user
 
   localStorage.setItem(AUTH_TOKEN_KEY, response.token)
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
-  emitAuthSessionChange(user)
+  persistAuthUser(user)
 }
 
 function emitAuthSessionChange(user: AuthUser | null) {
@@ -245,7 +260,18 @@ export const authClient = {
   },
 
   async me() {
-    return request<AuthUser>("/auth/me")
+    const user = await request<AuthUser>("/auth/me")
+    persistAuthUser(user)
+    return user
+  },
+
+  async claimRedeemCode(code: string) {
+    const response = await request<RedeemCodeClaimResponse>("/redeem-codes/claim", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    })
+    persistAuthUser(response.user)
+    return response
   },
 
   logout() {
@@ -276,4 +302,14 @@ export function isAuthSessionInvalid(error: unknown) {
 
 export function getAuthErrorStatus(error: unknown) {
   return error instanceof ApiError ? error.status : null
+}
+
+export function updateStoredAuthUser(user: AuthUser | null) {
+  if (!user) {
+    localStorage.removeItem(AUTH_USER_KEY)
+    emitAuthSessionChange(null)
+    return
+  }
+
+  persistAuthUser(user)
 }

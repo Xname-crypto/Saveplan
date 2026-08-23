@@ -10,6 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..audit_logs.service import AuditLogService
+from ..points.model import PointTransaction
+from ..points.service import PointService
+from ..users.model import User
 from .model import RedeemCode
 from .schema import RedeemCodeCreateRequest
 
@@ -37,6 +40,10 @@ def _code_status(code: RedeemCode) -> str:
     if code.redeemed_count >= code.max_redemptions:
         return "used"
     return "active"
+
+
+def _normalize_code(value: str) -> str:
+    return "".join(ch for ch in value.strip().upper() if ch.isalnum() or ch == "-")
 
 
 class RedeemCodeService:
@@ -117,6 +124,50 @@ class RedeemCodeService:
         self.db.commit()
         self.db.refresh(code)
         return code
+
+    def claim(self, *, user_id: str, code_value: str) -> tuple[RedeemCode, User]:
+        normalized_code = _normalize_code(code_value)
+        if not normalized_code:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="请输入兑换码。")
+
+        code = self.db.scalar(select(RedeemCode).where(RedeemCode.code == normalized_code))
+        if code is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="兑换码不存在。")
+
+        status_value = _code_status(code)
+        if status_value == "inactive":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="兑换码已停用。")
+        if status_value == "expired":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="兑换码已过期。")
+        if status_value == "used":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="兑换码已被领取完。")
+
+        user = self.db.get(User, user_id)
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在。")
+
+        already_claimed = self.db.scalar(
+            select(PointTransaction.id).where(
+                PointTransaction.user_id == user_id,
+                PointTransaction.redeem_code_id == code.id,
+            )
+        )
+        if already_claimed is not None:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="你已经领取过这个兑换码了。")
+
+        user.point_balance = (user.point_balance or 0) + code.points
+        code.redeemed_count += 1
+        PointService(self.db).record_redeem_code(
+            user_id=user.id,
+            amount=code.points,
+            balance_after=user.point_balance,
+            reason=f"兑换码 {code.code} 领取积分",
+            redeem_code_id=code.id,
+        )
+        self.db.commit()
+        self.db.refresh(code)
+        self.db.refresh(user)
+        return code, user
 
     @staticmethod
     def status_of(code: RedeemCode) -> str:

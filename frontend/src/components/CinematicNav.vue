@@ -9,6 +9,7 @@ import {
   authClient,
   getAuthAvatarInitial,
   getAuthAvatarSource,
+  getAuthErrorMessage,
   getStoredAuthUser,
   type AuthUser,
 } from "@/services/authClient"
@@ -30,6 +31,12 @@ const userMenuRef = ref<HTMLElement | null>(null)
 const navRef = ref<HTMLElement | null>(null)
 const isMobileMenuOpen = ref(false)
 const isLoginPromptOpen = ref(false)
+const redeemCode = ref("")
+const redeemStatus = ref<{
+  kind: "success" | "error"
+  message: string
+} | null>(null)
+const redeemLoading = ref(false)
 
 const avatarSrc = computed(() => (avatarLoadFailed.value ? "" : getAuthAvatarSource(currentUser.value)))
 const avatarInitial = computed(() => getAuthAvatarInitial(currentUser.value))
@@ -99,6 +106,40 @@ const handleLogout = () => {
   closeMobileMenu()
   authClient.logout()
   void router.push("/")
+}
+
+const handleRedeemCode = async () => {
+  const normalizedCode = redeemCode.value.trim()
+  if (!normalizedCode) {
+    redeemStatus.value = {
+      kind: "error",
+      message: "请输入兑换码。",
+    }
+    return
+  }
+
+  try {
+    redeemLoading.value = true
+    redeemStatus.value = null
+    const response = await authClient.claimRedeemCode(normalizedCode)
+    redeemStatus.value = {
+      kind: "success",
+      message: response.message,
+    }
+    redeemCode.value = ""
+    window.setTimeout(() => {
+      if (redeemStatus.value?.kind === "success") {
+        redeemStatus.value = null
+      }
+    }, 2400)
+  } catch (error) {
+    redeemStatus.value = {
+      kind: "error",
+      message: getAuthErrorMessage(error),
+    }
+  } finally {
+    redeemLoading.value = false
+  }
 }
 
 const handleDocumentClick = (event: MouseEvent) => {
@@ -210,6 +251,24 @@ onBeforeUnmount(() => {
             <span>剩余积分</span>
             <strong>{{ profileCredits }}</strong>
           </div>
+          <form class="cinema-nav__redeem" @submit.prevent="handleRedeemCode">
+            <label class="sr-only" for="nav-redeem-code">兑换码</label>
+            <input
+              id="nav-redeem-code"
+              v-model="redeemCode"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              maxlength="48"
+              :disabled="redeemLoading"
+              placeholder="输入兑换码回车"
+            />
+            <p v-if="redeemStatus" :class="['cinema-nav__redeem-status', `is-${redeemStatus.kind}`]">
+              {{ redeemStatus.message }}
+            </p>
+          </form>
           <button type="button" role="menuitem" @click="goToProfile">
             <UserRound :size="16" />
             个人中心

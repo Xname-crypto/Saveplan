@@ -285,7 +285,7 @@ onBeforeUnmount(() => {
         <div>
           <p class="stitch-eyebrow">PRISMA SPACE</p>
           <h1>个人中心</h1>
-          <p v-if="currentUser">欢迎回来，{{ profileName }}。这里展示你的真实账户资料和转换记录。</p>
+          <p v-if="currentUser">欢迎回来，{{ profileName }}。这里展示账户资料和转换记录。</p>
           <p v-else-if="isLoadingProfile">正在读取账户信息...</p>
           <p v-else>{{ profileError || "请先登录后查看个人中心。" }}</p>
         </div>
@@ -373,8 +373,8 @@ onBeforeUnmount(() => {
             </div>
           </article>
           <div v-if="paginatedMaterials.length === 0" class="history-empty">
-            <strong>暂无真实历史记录</strong>
-            <span>接入真实转换记录接口后，这里会显示当前账户的资料。</span>
+            <strong>暂无转换记录</strong>
+            <span>完成一次转换后，这里会显示当前账户的资料。</span>
           </div>
         </div>
 

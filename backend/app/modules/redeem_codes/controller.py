@@ -8,7 +8,15 @@ from sqlalchemy.orm import Session
 from ...core.rbac import require_permission
 from ...database.session import get_db
 from ..admin_auth.model import AdminUser
-from .schema import RedeemCodeBatchResponse, RedeemCodeCreateRequest, RedeemCodeRead
+from ..auth.schema import AuthUser
+from ..auth.service import get_current_user, user_to_schema
+from .schema import (
+    RedeemCodeBatchResponse,
+    RedeemCodeClaimRequest,
+    RedeemCodeClaimResponse,
+    RedeemCodeCreateRequest,
+    RedeemCodeRead,
+)
 from .service import RedeemCodeService
 
 router = APIRouter(prefix="/api/admin/redeem-codes", tags=["admin-redeem-codes"])
@@ -50,3 +58,19 @@ def deactivate_redeem_code(
 ) -> RedeemCodeRead:
     code = RedeemCodeService(db).deactivate(admin_id=admin.id, code_id=code_id)
     return _to_read_model(RedeemCodeService(db), code)
+
+
+@router.post("/claim", response_model=RedeemCodeClaimResponse)
+def claim_redeem_code(
+    payload: RedeemCodeClaimRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[AuthUser, Depends(get_current_user)],
+) -> RedeemCodeClaimResponse:
+    code, user = RedeemCodeService(db).claim(user_id=current_user.id, code_value=payload.code)
+    return RedeemCodeClaimResponse(
+        message=f"兑换成功，已到账 {code.points} 积分。",
+        code=code.code,
+        points_earned=code.points,
+        balance_after=user.point_balance or 0,
+        user=user_to_schema(user),
+    )

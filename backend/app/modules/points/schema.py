@@ -14,6 +14,7 @@ class PointTransactionRead(BaseModel):
     source: str
     admin_id: str | None = None
     conversion_id: str | None = None
+    redeem_code_id: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
