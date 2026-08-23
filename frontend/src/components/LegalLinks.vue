@@ -294,6 +294,27 @@ onBeforeUnmount(() => {
 }
 
 .legal-modal {
+  --legal-overlay: rgba(0, 0, 0, 0.72);
+  --legal-panel-border: rgba(235, 228, 207, 0.18);
+  --legal-panel-bg:
+    linear-gradient(180deg, rgba(235, 228, 207, 0.08), transparent 38%),
+    #11100e;
+  --legal-panel-text: rgba(235, 228, 207, 0.78);
+  --legal-heading: #f1ead5;
+  --legal-accent: rgba(214, 197, 141, 0.82);
+  --legal-muted: rgba(235, 228, 207, 0.72);
+  --legal-divider: rgba(235, 228, 207, 0.1);
+  --legal-close-bg: rgba(255, 255, 255, 0.035);
+  --legal-close-border: rgba(235, 228, 207, 0.14);
+  --legal-close-color: #ebe4cf;
+  --legal-cta-bg: #ebe4cf;
+  --legal-cta-border: rgba(235, 228, 207, 0.78);
+  --legal-cta-color: #111;
+  --legal-shadow:
+    0 36px 120px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --legal-scroll-track: rgba(255, 255, 255, 0.04);
+  --legal-scroll-thumb: rgba(235, 228, 207, 0.42);
   position: fixed;
   inset: 0;
   z-index: 10000;
@@ -306,7 +327,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--legal-overlay);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -318,15 +339,11 @@ onBeforeUnmount(() => {
   width: min(48rem, calc(100vw - 2rem));
   max-height: min(82vh, 46rem);
   overflow: hidden;
-  border: 1px solid rgba(235, 228, 207, 0.18);
+  border: 1px solid var(--legal-panel-border);
   border-radius: 1.15rem;
-  background:
-    linear-gradient(180deg, rgba(235, 228, 207, 0.08), transparent 38%),
-    #11100e;
-  color: rgba(235, 228, 207, 0.78);
-  box-shadow:
-    0 36px 120px rgba(0, 0, 0, 0.58),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: var(--legal-panel-bg);
+  color: var(--legal-panel-text);
+  box-shadow: var(--legal-shadow);
 }
 
 .legal-modal__header {
@@ -336,12 +353,12 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 1rem;
   padding: clamp(1.25rem, 3vw, 1.8rem);
-  border-bottom: 1px solid rgba(235, 228, 207, 0.1);
+  border-bottom: 1px solid var(--legal-divider);
 }
 
 .legal-modal__header h2 {
   margin: 0.35rem 0 0;
-  color: #f1ead5;
+  color: var(--legal-heading);
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 4vw, 2.7rem);
   font-weight: 500;
@@ -350,7 +367,7 @@ onBeforeUnmount(() => {
 }
 
 .legal-modal__eyebrow {
-  color: rgba(214, 197, 141, 0.82);
+  color: var(--legal-accent);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.2em;
@@ -361,16 +378,33 @@ onBeforeUnmount(() => {
   width: 2.45rem;
   height: 2.45rem;
   place-items: center;
-  border: 1px solid rgba(235, 228, 207, 0.14);
+  border: 1px solid var(--legal-close-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.035);
-  color: #ebe4cf;
+  background: var(--legal-close-bg);
+  color: var(--legal-close-color);
   cursor: pointer;
 }
 
 .legal-modal__body {
   overflow: auto;
   padding: clamp(1.15rem, 3vw, 1.8rem);
+  scrollbar-color: var(--legal-scroll-thumb) var(--legal-scroll-track);
+  scrollbar-width: thin;
+}
+
+.legal-modal__body::-webkit-scrollbar {
+  width: 0.65rem;
+}
+
+.legal-modal__body::-webkit-scrollbar-track {
+  background: var(--legal-scroll-track);
+}
+
+.legal-modal__body::-webkit-scrollbar-thumb {
+  border: 0.18rem solid transparent;
+  border-radius: 999px;
+  background: var(--legal-scroll-thumb);
+  background-clip: padding-box;
 }
 
 .legal-modal__section + .legal-modal__section {
@@ -379,7 +413,7 @@ onBeforeUnmount(() => {
 
 .legal-modal__section h3 {
   margin: 0 0 0.65rem;
-  color: #f1ead5;
+  color: var(--legal-heading);
   font-size: 1rem;
   font-weight: 900;
   line-height: 1.4;
@@ -387,7 +421,7 @@ onBeforeUnmount(() => {
 
 .legal-modal__section p,
 .legal-modal__section li {
-  color: rgba(235, 228, 207, 0.72);
+  color: var(--legal-muted);
   font-size: 0.92rem;
   line-height: 1.85;
 }
@@ -409,14 +443,14 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem clamp(1.25rem, 3vw, 1.8rem);
-  border-top: 1px solid rgba(235, 228, 207, 0.1);
+  border-top: 1px solid var(--legal-divider);
 }
 
 .legal-modal__footer a {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgba(235, 228, 207, 0.72);
+  color: var(--legal-muted);
   font-size: 0.82rem;
   font-weight: 800;
   text-decoration: none;
@@ -424,13 +458,66 @@ onBeforeUnmount(() => {
 
 .legal-modal__footer button {
   min-height: 2.5rem;
-  border: 1px solid rgba(235, 228, 207, 0.78);
+  border: 1px solid var(--legal-cta-border);
   border-radius: 999px;
   padding: 0 1.35rem;
-  background: #ebe4cf;
-  color: #111;
+  background: var(--legal-cta-bg);
+  color: var(--legal-cta-color);
   cursor: pointer;
   font-weight: 900;
+}
+
+:global(html[data-theme="day"] .legal-link) {
+  color: rgba(31, 41, 51, 0.62);
+}
+
+:global(html[data-theme="day"] .legal-link:hover),
+:global(html[data-theme="day"] .legal-link:focus-visible) {
+  color: #1f2933;
+  text-shadow: none;
+}
+
+:global(html[data-theme="day"] .legal-modal) {
+  --legal-overlay: rgba(31, 41, 51, 0.2);
+  --legal-panel-border: rgba(31, 41, 51, 0.12);
+  --legal-panel-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 249, 0.96)),
+    #ffffff;
+  --legal-panel-text: #1f2933;
+  --legal-heading: #111827;
+  --legal-accent: #345d75;
+  --legal-muted: rgba(31, 41, 51, 0.68);
+  --legal-divider: rgba(31, 41, 51, 0.1);
+  --legal-close-bg: rgba(248, 250, 247, 0.86);
+  --legal-close-border: rgba(31, 41, 51, 0.12);
+  --legal-close-color: #1f2933;
+  --legal-cta-bg: #1f2933;
+  --legal-cta-border: #1f2933;
+  --legal-cta-color: #ffffff;
+  --legal-shadow:
+    0 28px 90px rgba(44, 64, 82, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --legal-scroll-track: rgba(31, 41, 51, 0.06);
+  --legal-scroll-thumb: rgba(52, 93, 117, 0.42);
+}
+
+:global(html[data-theme="day"] .legal-modal__backdrop) {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+:global(html[data-theme="day"] .legal-modal__close:hover),
+:global(html[data-theme="day"] .legal-modal__close:focus-visible) {
+  border-color: rgba(52, 93, 117, 0.28);
+  background: #eef7f6;
+  outline: none;
+}
+
+:global(html[data-theme="day"] .legal-modal__footer button:hover),
+:global(html[data-theme="day"] .legal-modal__footer button:focus-visible) {
+  background: #345d75;
+  border-color: #345d75;
+  outline: none;
 }
 
 @media (max-width: 640px) {
