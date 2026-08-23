@@ -144,6 +144,7 @@ export interface RedeemCodeCreatePayload {
   count: number
   points: number
   prefix?: string | null
+  custom_code?: string | null
   expires_at?: string | null
   note?: string | null
   max_redemptions?: number

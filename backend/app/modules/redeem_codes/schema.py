@@ -12,6 +12,7 @@ class RedeemCodeCreateRequest(BaseModel):
     count: int = Field(ge=1, le=500)
     points: int = Field(ge=1, le=100000)
     prefix: str | None = Field(default=None, max_length=24)
+    custom_code: str | None = Field(default=None, min_length=3, max_length=48)
     expires_at: datetime | None = None
     note: str | None = Field(default=None, max_length=300)
     max_redemptions: int = Field(default=1, ge=1, le=1000)

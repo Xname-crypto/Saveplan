@@ -57,13 +57,31 @@ class RedeemCodeService:
     def create_batch(self, *, admin_id: str, payload: RedeemCodeCreateRequest) -> list[RedeemCode]:
         batch_name = payload.batch_name.strip()
         prefix = _normalize_prefix(payload.prefix, batch_name)
+        custom_code = _normalize_code(payload.custom_code) if payload.custom_code else None
         expires_at = _as_utc(payload.expires_at)
         created: list[RedeemCode] = []
         reserved_codes: set[str] = set()
+        if custom_code:
+            if payload.count != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="指定兑换码时数量只能为 1。",
+                )
+            if len(custom_code) < 3:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="兑换码至少需要 3 个字符。",
+                )
+            exists = self.db.scalar(select(RedeemCode.id).where(RedeemCode.code == custom_code))
+            if exists is not None:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="兑换码已存在，请重新生成。")
+            generated_values = [custom_code]
+        else:
+            generated_values = []
 
         for _index in range(payload.count):
             for _attempt in range(20):
-                generated = f"{prefix}-{secrets.token_hex(3).upper()}"
+                generated = generated_values[_index] if custom_code else f"{prefix}-{secrets.token_hex(3).upper()}"
                 if generated in reserved_codes:
                     continue
                 exists = self.db.scalar(select(RedeemCode.id).where(RedeemCode.code == generated))

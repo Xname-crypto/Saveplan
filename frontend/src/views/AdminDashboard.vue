@@ -109,7 +109,7 @@ type RedeemDraft = {
   batch_name: string
   count: number
   points: number
-  prefix: string
+  custom_code: string
   expires_date: string
   note: string
   max_redemptions: number
@@ -176,7 +176,7 @@ const codeForm = reactive({
   batch_name: "",
   count: 10,
   points: 20,
-  prefix: "SAVEPLAN",
+  custom_code: "",
   expires_date: "",
   note: "",
   max_redemptions: 1,
@@ -391,6 +391,43 @@ function clearDate(key: DatePickerKey) {
   activeDatePicker.value = null
 }
 
+function normalizeRedeemCodeInput(value: string) {
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "")
+    .replace(/-{2,}/g, "-")
+    .slice(0, 48)
+}
+
+function generateRandomCodeSegment(length: number) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  const bytes = new Uint8Array(length)
+  window.crypto.getRandomValues(bytes)
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")
+}
+
+function generateRedeemCodeValue() {
+  return `SP-${generateRandomCodeSegment(4)}-${generateRandomCodeSegment(4)}`
+}
+
+function generateCustomRedeemCode() {
+  codeForm.custom_code = generateRedeemCodeValue()
+  codeForm.count = 1
+  if (!codeForm.batch_name.trim()) {
+    codeForm.batch_name = "手动兑换码"
+  }
+}
+
+function handleCustomRedeemCodeInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  const normalized = normalizeRedeemCodeInput(input.value)
+  codeForm.custom_code = normalized
+  input.value = normalized
+  if (normalized) {
+    codeForm.count = 1
+  }
+}
+
 function formatDraftDateTime(value: string, fallbackTime: string) {
   const raw = value.trim()
   if (!raw) return "未设置"
@@ -596,8 +633,13 @@ function restoreBroadcastDraft(channel: "announcement" | "popup") {
 function restoreRedeemDraft() {
   const draft = loadDraft<RedeemDraft>(REDEEM_DRAFT_KEY)
   if (draft) {
-    Object.assign(codeForm, draft)
+    const legacyDraft = draft as RedeemDraft & { prefix?: string }
+    const nextDraft = { ...legacyDraft }
+    delete nextDraft.prefix
+    Object.assign(codeForm, nextDraft)
+    codeForm.custom_code = normalizeRedeemCodeInput(codeForm.custom_code || "")
     codeForm.expires_date = toDateOnly(codeForm.expires_date)
+    if (codeForm.custom_code) codeForm.count = 1
   }
 }
 
@@ -833,11 +875,12 @@ async function createRedeemCodeBatch() {
 
   codeSaving.value = true
   try {
+    const customCode = normalizeRedeemCodeInput(codeForm.custom_code)
     const response = await adminClient.createRedeemCodes({
       batch_name: codeForm.batch_name.trim(),
-      count: codeForm.count,
+      count: customCode ? 1 : codeForm.count,
       points: codeForm.points,
-      prefix: codeForm.prefix.trim() || null,
+      custom_code: customCode || null,
       expires_at: toIso(codeForm.expires_date),
       note: codeForm.note.trim() || null,
       max_redemptions: codeForm.max_redemptions,
@@ -846,6 +889,7 @@ async function createRedeemCodeBatch() {
     setNotice(`已生成 ${response.codes.length} 个兑换码。`, "success")
     clearDraft(REDEEM_DRAFT_KEY)
     codeForm.batch_name = ""
+    codeForm.custom_code = ""
     codeForm.expires_date = ""
     codeForm.note = ""
     const latestLogs = await adminClient.listAuditLogs(100)
@@ -1428,7 +1472,14 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">数量</span>
-                    <input v-model.number="codeForm.count" type="number" min="1" max="500" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 focus:bg-white" />
+                    <input
+                      v-model.number="codeForm.count"
+                      type="number"
+                      min="1"
+                      max="500"
+                      :disabled="Boolean(codeForm.custom_code.trim())"
+                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 focus:bg-white disabled:cursor-not-allowed disabled:text-slate-400"
+                    />
                   </label>
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">积分</span>
@@ -1436,8 +1487,24 @@ onBeforeUnmount(() => {
                   </label>
                 </div>
                 <label class="block">
-                  <span class="mb-1 block text-sm text-slate-500">前缀</span>
-                  <input v-model="codeForm.prefix" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm uppercase outline-none transition focus:border-slate-400 focus:bg-white" placeholder="SAVEPLAN" />
+                  <span class="mb-1 block text-sm text-slate-500">兑换码</span>
+                  <div class="flex gap-2">
+                    <input
+                      v-model="codeForm.custom_code"
+                      class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm uppercase tracking-[0.08em] outline-none transition placeholder:font-sans placeholder:normal-case placeholder:tracking-normal focus:border-slate-400 focus:bg-white"
+                      placeholder="点击随机生成"
+                      @input="handleCustomRedeemCodeInput"
+                    />
+                    <button
+                      type="button"
+                      class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      @click="generateCustomRedeemCode"
+                    >
+                      <RefreshCcw class="h-4 w-4" />
+                      随机生成
+                    </button>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-400">填入或随机生成完整兑换码；使用指定兑换码时数量自动为 1。</p>
                 </label>
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
