@@ -88,7 +88,7 @@ onMounted(() => {
 <template>
   <div
     v-if="!route.path.startsWith('/admin') && (banners.length || globalPopups.length || directPopups.length)"
-    class="pointer-events-none fixed inset-x-0 top-4 z-50 px-4"
+    class="pointer-events-none fixed inset-x-0 top-[4.75rem] z-40 px-4 lg:top-[5.35rem]"
   >
     <div class="mx-auto flex w-full max-w-5xl flex-col gap-3">
       <section
@@ -120,7 +120,7 @@ onMounted(() => {
   <transition name="fade">
     <div
       v-if="globalPopups.length || directPopups.length"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6 backdrop-blur-sm"
+      class="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-slate-950/40 px-4 py-6 pt-[5.75rem] backdrop-blur-sm sm:items-center sm:pt-6"
     >
       <div class="grid w-full max-w-5xl gap-4 lg:grid-cols-2">
         <section
