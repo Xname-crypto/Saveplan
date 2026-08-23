@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch, type Compon
 import {
   Ban,
   BellRing,
+  CalendarDays,
   Check,
   Clock3,
   Download,
@@ -44,6 +45,7 @@ import {
 type TabKey = "overview" | "users" | "redeem-codes" | "announcements" | "popups" | "logs"
 type UserFormMode = "create" | "edit"
 type ToastTone = "success" | "error" | "neutral"
+type DatePickerKey = "redeem-expires" | "broadcast-start" | "broadcast-end"
 type ToastItem = {
   id: number
   message: string
@@ -165,6 +167,7 @@ const userForm = reactive({
 const targetUserPickerRef = ref<HTMLElement | null>(null)
 const targetUserPickerOpen = ref(false)
 const targetUserSearch = ref("")
+const activeDatePicker = ref<DatePickerKey | null>(null)
 const pointAmount = ref(0)
 const pointReason = ref("后台人工调整")
 const codeSaving = ref(false)
@@ -193,6 +196,12 @@ const logQuery = ref("")
 const BROADCAST_ANNOUNCEMENT_DRAFT_KEY = "saveplan.admin.broadcast-draft.announcement"
 const BROADCAST_POPUP_DRAFT_KEY = "saveplan.admin.broadcast-draft.popup"
 const REDEEM_DRAFT_KEY = "saveplan.admin.redeem-draft"
+const weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"]
+const calendarMonths = reactive<Record<DatePickerKey, string>>({
+  "redeem-expires": "",
+  "broadcast-start": "",
+  "broadcast-end": "",
+})
 
 const tabs: Array<{ key: TabKey; label: string; icon: Component }> = [
   { key: "overview", label: "概览", icon: LayoutGrid },
@@ -268,6 +277,118 @@ function toDateOnly(value: string) {
   const month = String(parsed.getMonth() + 1).padStart(2, "0")
   const day = String(parsed.getDate()).padStart(2, "0")
   return `${year}-${month}-${day}`
+}
+
+function getLocalDateParts(date: Date) {
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+  }
+}
+
+function toDateKey(date: Date) {
+  const { year, month, day } = getLocalDateParts(date)
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+}
+
+function getMonthKey(date: Date) {
+  const { year, month } = getLocalDateParts(date)
+  return `${year}-${String(month).padStart(2, "0")}`
+}
+
+function parseDateOnly(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const parsed = new Date(year, month - 1, day)
+  if (parsed.getFullYear() !== year || parsed.getMonth() !== month - 1 || parsed.getDate() !== day) return null
+  return parsed
+}
+
+function displayDateOnly(value: string) {
+  return value ? value.replace(/-/g, "/") : "选择日期"
+}
+
+function datePickerValue(key: DatePickerKey) {
+  if (key === "redeem-expires") return codeForm.expires_date
+  if (key === "broadcast-start") return broadcastForm.starts_at
+  return broadcastForm.ends_at
+}
+
+function setDatePickerValue(key: DatePickerKey, value: string) {
+  if (key === "redeem-expires") {
+    codeForm.expires_date = value
+    return
+  }
+  if (key === "broadcast-start") {
+    broadcastForm.starts_at = value
+    return
+  }
+  broadcastForm.ends_at = value
+}
+
+function ensureCalendarMonth(key: DatePickerKey) {
+  if (calendarMonths[key]) return
+  const selectedDate = parseDateOnly(datePickerValue(key))
+  calendarMonths[key] = getMonthKey(selectedDate ?? new Date())
+}
+
+function toggleDatePicker(key: DatePickerKey) {
+  if (activeDatePicker.value === key) {
+    activeDatePicker.value = null
+    return
+  }
+  const selectedDate = parseDateOnly(datePickerValue(key))
+  calendarMonths[key] = getMonthKey(selectedDate ?? new Date())
+  activeDatePicker.value = key
+}
+
+function shiftCalendarMonth(key: DatePickerKey, offset: number) {
+  ensureCalendarMonth(key)
+  const [year, month] = calendarMonths[key].split("-").map(Number)
+  calendarMonths[key] = getMonthKey(new Date(year, month - 1 + offset, 1))
+}
+
+function calendarMonthLabel(key: DatePickerKey) {
+  ensureCalendarMonth(key)
+  const [year, month] = calendarMonths[key].split("-")
+  return `${year}年${month}月`
+}
+
+function calendarCells(key: DatePickerKey) {
+  ensureCalendarMonth(key)
+  const [year, month] = calendarMonths[key].split("-").map(Number)
+  const firstDay = new Date(year, month - 1, 1)
+  const mondayOffset = (firstDay.getDay() + 6) % 7
+  const startDate = new Date(year, month - 1, 1 - mondayOffset)
+  const selectedValue = datePickerValue(key)
+  const todayValue = toDateKey(new Date())
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(startDate)
+    date.setDate(startDate.getDate() + index)
+    const value = toDateKey(date)
+    return {
+      value,
+      label: String(date.getDate()),
+      inMonth: date.getMonth() === month - 1,
+      selected: value === selectedValue,
+      today: value === todayValue,
+    }
+  })
+}
+
+function selectDate(key: DatePickerKey, value: string) {
+  setDatePickerValue(key, value)
+  activeDatePicker.value = null
+}
+
+function clearDate(key: DatePickerKey) {
+  setDatePickerValue(key, "")
+  activeDatePicker.value = null
 }
 
 function formatDraftDateTime(value: string, fallbackTime: string) {
@@ -802,8 +923,12 @@ async function copyCode(code: string) {
 }
 
 function handleDocumentPointerDown(event: MouseEvent) {
-  if (!targetUserPickerRef.value) return
-  if (!targetUserPickerRef.value.contains(event.target as Node)) {
+  const target = event.target as Node
+  const targetElement = target instanceof Element ? target : target.parentNode instanceof Element ? target.parentNode : null
+  if (!targetElement?.closest("[data-admin-date-picker]")) {
+    activeDatePicker.value = null
+  }
+  if (targetUserPickerRef.value && !targetUserPickerRef.value.contains(target)) {
     closeTargetUserPicker()
   }
 }
@@ -928,12 +1053,15 @@ watch(
     if (tab === "announcements") {
       restoreBroadcastDraft("announcement")
       closeTargetUserPicker()
+      activeDatePicker.value = null
     }
     if (tab === "popups") {
       restoreBroadcastDraft("popup")
+      activeDatePicker.value = null
     }
     if (tab === "redeem-codes") {
       restoreRedeemDraft()
+      activeDatePicker.value = null
     }
   },
   { immediate: true },
@@ -1301,11 +1429,35 @@ onBeforeUnmount(() => {
                   </label>
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">过期日期</span>
-                    <input
-                      v-model="codeForm.expires_date"
-                      type="date"
-                      class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-slate-400 focus:bg-white"
-                    />
+                    <div class="relative" data-admin-date-picker>
+                      <button type="button" class="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition hover:border-slate-300 hover:bg-white focus:border-slate-400 focus:bg-white" @click="toggleDatePicker('redeem-expires')">
+                        <span :class="datePickerValue('redeem-expires') ? 'text-slate-900' : 'text-slate-400'">{{ displayDateOnly(datePickerValue('redeem-expires')) }}</span>
+                        <CalendarDays class="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
+                      <div v-if="activeDatePicker === 'redeem-expires'" class="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                        <div class="flex items-center justify-between">
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('redeem-expires', -1)">
+                            <ChevronLeft class="h-4 w-4" />
+                          </button>
+                          <p class="text-sm font-semibold">{{ calendarMonthLabel('redeem-expires') }}</p>
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('redeem-expires', 1)">
+                            <ChevronRight class="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium text-slate-400">
+                          <span v-for="day in weekdayLabels" :key="day" class="py-1">{{ day }}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-0.5">
+                          <button v-for="day in calendarCells('redeem-expires')" :key="day.value" type="button" class="inline-flex h-7 items-center justify-center rounded-md text-xs font-medium transition" :class="day.selected ? 'bg-slate-900 text-white' : day.today ? 'border border-slate-300 text-slate-900' : day.inMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-50'" @click="selectDate('redeem-expires', day.value)">
+                            {{ day.label }}
+                          </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                          <button type="button" class="font-medium text-slate-500 hover:text-slate-900" @click="clearDate('redeem-expires')">清空</button>
+                          <button type="button" class="font-medium text-slate-900 hover:text-slate-600" @click="selectDate('redeem-expires', toDateKey(new Date()))">今天</button>
+                        </div>
+                      </div>
+                    </div>
                   </label>
                 </div>
                 <p class="text-xs text-slate-400">选择日期即可，未填则不设置过期时间。</p>
@@ -1434,11 +1586,67 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">开始日期</span>
-                    <input v-model="broadcastForm.starts_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
+                    <div class="relative" data-admin-date-picker>
+                      <button type="button" class="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition hover:border-slate-300 hover:bg-white focus:border-slate-400 focus:bg-white" @click="toggleDatePicker('broadcast-start')">
+                        <span :class="datePickerValue('broadcast-start') ? 'text-slate-900' : 'text-slate-400'">{{ displayDateOnly(datePickerValue('broadcast-start')) }}</span>
+                        <CalendarDays class="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
+                      <div v-if="activeDatePicker === 'broadcast-start'" class="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                        <div class="flex items-center justify-between">
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-start', -1)">
+                            <ChevronLeft class="h-4 w-4" />
+                          </button>
+                          <p class="text-sm font-semibold">{{ calendarMonthLabel('broadcast-start') }}</p>
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-start', 1)">
+                            <ChevronRight class="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium text-slate-400">
+                          <span v-for="day in weekdayLabels" :key="day" class="py-1">{{ day }}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-0.5">
+                          <button v-for="day in calendarCells('broadcast-start')" :key="day.value" type="button" class="inline-flex h-7 items-center justify-center rounded-md text-xs font-medium transition" :class="day.selected ? 'bg-slate-900 text-white' : day.today ? 'border border-slate-300 text-slate-900' : day.inMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-50'" @click="selectDate('broadcast-start', day.value)">
+                            {{ day.label }}
+                          </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                          <button type="button" class="font-medium text-slate-500 hover:text-slate-900" @click="clearDate('broadcast-start')">清空</button>
+                          <button type="button" class="font-medium text-slate-900 hover:text-slate-600" @click="selectDate('broadcast-start', toDateKey(new Date()))">今天</button>
+                        </div>
+                      </div>
+                    </div>
                   </label>
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">结束日期</span>
-                    <input v-model="broadcastForm.ends_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
+                    <div class="relative" data-admin-date-picker>
+                      <button type="button" class="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition hover:border-slate-300 hover:bg-white focus:border-slate-400 focus:bg-white" @click="toggleDatePicker('broadcast-end')">
+                        <span :class="datePickerValue('broadcast-end') ? 'text-slate-900' : 'text-slate-400'">{{ displayDateOnly(datePickerValue('broadcast-end')) }}</span>
+                        <CalendarDays class="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
+                      <div v-if="activeDatePicker === 'broadcast-end'" class="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                        <div class="flex items-center justify-between">
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-end', -1)">
+                            <ChevronLeft class="h-4 w-4" />
+                          </button>
+                          <p class="text-sm font-semibold">{{ calendarMonthLabel('broadcast-end') }}</p>
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-end', 1)">
+                            <ChevronRight class="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium text-slate-400">
+                          <span v-for="day in weekdayLabels" :key="day" class="py-1">{{ day }}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-0.5">
+                          <button v-for="day in calendarCells('broadcast-end')" :key="day.value" type="button" class="inline-flex h-7 items-center justify-center rounded-md text-xs font-medium transition" :class="day.selected ? 'bg-slate-900 text-white' : day.today ? 'border border-slate-300 text-slate-900' : day.inMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-50'" @click="selectDate('broadcast-end', day.value)">
+                            {{ day.label }}
+                          </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                          <button type="button" class="font-medium text-slate-500 hover:text-slate-900" @click="clearDate('broadcast-end')">清空</button>
+                          <button type="button" class="font-medium text-slate-900 hover:text-slate-600" @click="selectDate('broadcast-end', toDateKey(new Date()))">今天</button>
+                        </div>
+                      </div>
+                    </div>
                   </label>
                 </div>
               </div>
@@ -1557,11 +1765,67 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-2 gap-3">
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">开始日期</span>
-                    <input v-model="broadcastForm.starts_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
+                    <div class="relative" data-admin-date-picker>
+                      <button type="button" class="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition hover:border-slate-300 hover:bg-white focus:border-slate-400 focus:bg-white" @click="toggleDatePicker('broadcast-start')">
+                        <span :class="datePickerValue('broadcast-start') ? 'text-slate-900' : 'text-slate-400'">{{ displayDateOnly(datePickerValue('broadcast-start')) }}</span>
+                        <CalendarDays class="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
+                      <div v-if="activeDatePicker === 'broadcast-start'" class="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                        <div class="flex items-center justify-between">
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-start', -1)">
+                            <ChevronLeft class="h-4 w-4" />
+                          </button>
+                          <p class="text-sm font-semibold">{{ calendarMonthLabel('broadcast-start') }}</p>
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-start', 1)">
+                            <ChevronRight class="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium text-slate-400">
+                          <span v-for="day in weekdayLabels" :key="day" class="py-1">{{ day }}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-0.5">
+                          <button v-for="day in calendarCells('broadcast-start')" :key="day.value" type="button" class="inline-flex h-7 items-center justify-center rounded-md text-xs font-medium transition" :class="day.selected ? 'bg-slate-900 text-white' : day.today ? 'border border-slate-300 text-slate-900' : day.inMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-50'" @click="selectDate('broadcast-start', day.value)">
+                            {{ day.label }}
+                          </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                          <button type="button" class="font-medium text-slate-500 hover:text-slate-900" @click="clearDate('broadcast-start')">清空</button>
+                          <button type="button" class="font-medium text-slate-900 hover:text-slate-600" @click="selectDate('broadcast-start', toDateKey(new Date()))">今天</button>
+                        </div>
+                      </div>
+                    </div>
                   </label>
                   <label class="block">
                     <span class="mb-1 block text-sm text-slate-500">结束日期</span>
-                    <input v-model="broadcastForm.ends_at" type="date" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white" />
+                    <div class="relative" data-admin-date-picker>
+                      <button type="button" class="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition hover:border-slate-300 hover:bg-white focus:border-slate-400 focus:bg-white" @click="toggleDatePicker('broadcast-end')">
+                        <span :class="datePickerValue('broadcast-end') ? 'text-slate-900' : 'text-slate-400'">{{ displayDateOnly(datePickerValue('broadcast-end')) }}</span>
+                        <CalendarDays class="h-4 w-4 shrink-0 text-slate-400" />
+                      </button>
+                      <div v-if="activeDatePicker === 'broadcast-end'" class="absolute left-0 top-full z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 text-slate-900 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                        <div class="flex items-center justify-between">
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-end', -1)">
+                            <ChevronLeft class="h-4 w-4" />
+                          </button>
+                          <p class="text-sm font-semibold">{{ calendarMonthLabel('broadcast-end') }}</p>
+                          <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" @click="shiftCalendarMonth('broadcast-end', 1)">
+                            <ChevronRight class="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div class="mt-2 grid grid-cols-7 gap-0.5 text-center text-[11px] font-medium text-slate-400">
+                          <span v-for="day in weekdayLabels" :key="day" class="py-1">{{ day }}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-0.5">
+                          <button v-for="day in calendarCells('broadcast-end')" :key="day.value" type="button" class="inline-flex h-7 items-center justify-center rounded-md text-xs font-medium transition" :class="day.selected ? 'bg-slate-900 text-white' : day.today ? 'border border-slate-300 text-slate-900' : day.inMonth ? 'text-slate-700 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-50'" @click="selectDate('broadcast-end', day.value)">
+                            {{ day.label }}
+                          </button>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+                          <button type="button" class="font-medium text-slate-500 hover:text-slate-900" @click="clearDate('broadcast-end')">清空</button>
+                          <button type="button" class="font-medium text-slate-900 hover:text-slate-600" @click="selectDate('broadcast-end', toDateKey(new Date()))">今天</button>
+                        </div>
+                      </div>
+                    </div>
                   </label>
                 </div>
               </div>
