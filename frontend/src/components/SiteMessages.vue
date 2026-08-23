@@ -71,6 +71,20 @@ const globalPopups = computed(() =>
 const directPopups = computed(() =>
   userMessages.value.filter((item) => item.channel === "popup" && item.scope === "user"),
 )
+const modalMessages = computed(() => [
+  ...banners.value,
+  ...globalPopups.value,
+  ...directPopups.value,
+])
+
+function getMessageIcon(message: BroadcastMessage) {
+  return message.channel === "announcement" ? BellRing : Megaphone
+}
+
+function getMessageLabel(message: BroadcastMessage) {
+  if (message.channel === "announcement") return "全站公告"
+  return message.scope === "user" ? "定向弹窗" : "全站弹窗"
+}
 
 watch(
   () => route.path,
@@ -86,115 +100,45 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    v-if="!route.path.startsWith('/admin') && (banners.length || globalPopups.length || directPopups.length)"
-    class="pointer-events-none fixed inset-x-0 top-[4.75rem] z-40 px-4 lg:top-[5.35rem]"
-  >
-    <div class="mx-auto flex w-full max-w-5xl flex-col gap-3">
-      <section
-        v-for="banner in banners"
-        :key="banner.id"
-        class="pointer-events-auto flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-[0_12px_35px_rgba(15,23,42,0.08)]"
-      >
-        <div class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-          <BellRing class="h-4 w-4" />
-        </div>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <p class="text-sm font-semibold">{{ banner.title }}</p>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">全站公告</span>
-          </div>
-          <p class="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">{{ banner.content }}</p>
-        </div>
-        <button
-          type="button"
-          class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-          @click="dismiss(banner.id)"
-        >
-          <X class="h-4 w-4" />
-        </button>
-      </section>
-    </div>
-  </div>
-
   <transition name="fade">
     <div
-      v-if="globalPopups.length || directPopups.length"
-      class="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-slate-950/40 px-4 py-6 pt-[5.75rem] backdrop-blur-sm sm:items-center sm:pt-6"
+      v-if="!route.path.startsWith('/admin') && modalMessages.length"
+      class="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-slate-950/48 px-4 py-8 backdrop-blur-sm"
     >
-      <div class="grid w-full max-w-5xl gap-4 lg:grid-cols-2">
+      <div class="grid w-full max-w-2xl gap-4">
         <section
-          v-for="popup in globalPopups"
-          :key="popup.id"
-          class="pointer-events-auto rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
+          v-for="message in modalMessages"
+          :key="message.id"
+          class="pointer-events-auto max-h-[calc(100vh-4rem)] min-h-[18rem] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-7 text-slate-900 shadow-[0_34px_90px_rgba(15,23,42,0.24)] sm:p-8"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-start gap-3">
-              <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                <Megaphone class="h-5 w-5" />
+              <div class="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                <component :is="getMessageIcon(message)" class="h-5 w-5" />
               </div>
-              <div>
-                <p class="text-lg font-semibold">{{ popup.title }}</p>
-                <p class="mt-1 text-sm text-slate-500">全站弹窗</p>
+              <div class="min-w-0">
+                <p class="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">{{ message.title }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ getMessageLabel(message) }}</p>
               </div>
             </div>
             <button
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-              @click="dismiss(popup.id)"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+              @click="dismiss(message.id)"
             >
               <X class="h-4 w-4" />
             </button>
           </div>
 
-          <p class="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
-            {{ popup.content }}
+          <p class="mt-7 whitespace-pre-wrap text-base leading-8 text-slate-600">
+            {{ message.content }}
           </p>
 
-          <div class="mt-6 flex justify-end">
+          <div class="mt-8 flex justify-end">
             <button
               type="button"
-              class="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-              @click="dismiss(popup.id)"
-            >
-              我知道了
-            </button>
-          </div>
-        </section>
-
-        <section
-          v-for="popup in directPopups"
-          :key="popup.id"
-          class="pointer-events-auto rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex items-start gap-3">
-              <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                <Megaphone class="h-5 w-5" />
-              </div>
-              <div>
-                <p class="text-lg font-semibold">{{ popup.title }}</p>
-                <p class="mt-1 text-sm text-slate-500">定向弹窗</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-              @click="dismiss(popup.id)"
-            >
-              <X class="h-4 w-4" />
-            </button>
-          </div>
-
-          <p class="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
-            {{ popup.content }}
-          </p>
-
-          <div class="mt-6 flex justify-end">
-            <button
-              type="button"
-              class="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-              @click="dismiss(popup.id)"
+              class="inline-flex min-h-11 items-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+              @click="dismiss(message.id)"
             >
               我知道了
             </button>
