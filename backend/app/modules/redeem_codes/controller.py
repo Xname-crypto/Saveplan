@@ -20,6 +20,7 @@ from .schema import (
 from .service import RedeemCodeService
 
 router = APIRouter(prefix="/api/admin/redeem-codes", tags=["admin-redeem-codes"])
+public_router = APIRouter(prefix="/api/redeem-codes", tags=["redeem-codes"])
 
 
 def _to_read_model(service: RedeemCodeService, item) -> RedeemCodeRead:
@@ -60,7 +61,7 @@ def deactivate_redeem_code(
     return _to_read_model(RedeemCodeService(db), code)
 
 
-@router.post("/claim", response_model=RedeemCodeClaimResponse)
+@public_router.post("/claim", response_model=RedeemCodeClaimResponse)
 def claim_redeem_code(
     payload: RedeemCodeClaimRequest,
     db: Annotated[Session, Depends(get_db)],

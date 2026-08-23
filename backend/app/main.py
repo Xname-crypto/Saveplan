@@ -16,6 +16,7 @@ from .modules.audit_logs.controller import router as audit_logs_router
 from .modules.conversions.controller import router as admin_conversions_router
 from .modules.orders.controller import router as orders_router
 from .modules.rbac.controller import router as rbac_router
+from .modules.redeem_codes.controller import public_router as redeem_codes_public_router
 from .modules.redeem_codes.controller import router as redeem_codes_router
 from .modules.users.controller import router as admin_users_router
 
@@ -53,6 +54,7 @@ app.include_router(admin_users_router)
 app.include_router(admin_conversions_router)
 app.include_router(audit_logs_router)
 app.include_router(redeem_codes_router)
+app.include_router(redeem_codes_public_router)
 app.include_router(admin_broadcasts_router)
 app.include_router(broadcasts_public_router)
 
