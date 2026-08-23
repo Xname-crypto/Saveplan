@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
 import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import ValidCode from "@/components/ValidCode.vue"
-import { authClient, getAuthErrorMessage } from "@/services/authClient"
+import { authClient, getAuthErrorMessage, getAuthErrorStatus } from "@/services/authClient"
 import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-vue-next"
 
@@ -21,23 +21,39 @@ const validCode = ref("")
 const generatedCode = ref("")
 const validCodeRef = ref<InstanceType<typeof ValidCode> | null>(null)
 const loading = ref(false)
+const loginNotice = ref<{
+  kind: "error" | "warning"
+  message: string
+  actionLabel?: string
+  actionTo?: string
+} | null>(null)
 
 const handleLogin = async () => {
   const normalizedEmail = email.value.trim()
   const normalizedValidCode = validCode.value.trim().toLowerCase()
+  loginNotice.value = null
 
   if (!normalizedEmail || !password.value) {
-    window.alert("登录失败\n\n请输入邮箱和密码。")
+    loginNotice.value = {
+      kind: "error",
+      message: "请输入邮箱和密码。",
+    }
     return
   }
 
   if (!normalizedValidCode) {
-    window.alert("登录失败\n\n请输入验证码。")
+    loginNotice.value = {
+      kind: "error",
+      message: "请输入验证码。",
+    }
     return
   }
 
   if (normalizedValidCode !== generatedCode.value.toLowerCase()) {
-    window.alert("登录失败\n\n验证码错误，请重新输入。")
+    loginNotice.value = {
+      kind: "error",
+      message: "验证码错误，请重新输入。",
+    }
     validCode.value = ""
     validCodeRef.value?.refreshCode()
     return
@@ -50,7 +66,23 @@ const handleLogin = async () => {
     const redirectTo = typeof route.query.redirect === "string" ? route.query.redirect : "/"
     await router.push(redirectTo)
   } catch (error) {
-    window.alert(`登录失败\n\n${getAuthErrorMessage(error)}`)
+    const status = getAuthErrorStatus(error)
+    const message = getAuthErrorMessage(error)
+
+    if (status === 404) {
+      loginNotice.value = {
+        kind: "warning",
+        message,
+        actionLabel: "去注册",
+        actionTo: "/register",
+      }
+    } else {
+      loginNotice.value = {
+        kind: "error",
+        message,
+      }
+    }
+
     validCode.value = ""
     validCodeRef.value?.refreshCode()
   } finally {
@@ -79,6 +111,19 @@ const updateGeneratedCode = (code: string) => {
     <template #subtitle>访问你的专属题库。</template>
 
     <form class="login-form" @submit.prevent="handleLogin">
+      <div v-if="loginNotice" class="auth-alert p-3 text-sm" :class="`auth-alert--${loginNotice.kind}`">
+        <div class="flex items-center justify-between gap-4">
+          <span>{{ loginNotice.message }}</span>
+          <router-link
+            v-if="loginNotice.actionTo"
+            :to="loginNotice.actionTo"
+            class="auth-link shrink-0 font-semibold"
+          >
+            {{ loginNotice.actionLabel }}
+          </router-link>
+        </div>
+      </div>
+
       <AuthWaveInput
         id="email"
         v-model="email"

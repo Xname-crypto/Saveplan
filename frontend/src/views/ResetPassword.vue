@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
 import AuthWaveInput from "@/components/AuthWaveInput.vue"
 import { authClient, getAuthErrorMessage } from "@/services/authClient"
+import { AUTH_PASSWORD_MIN_LENGTH, getPasswordPolicyMessage, isStrongPassword } from "@/services/passwordPolicy"
 import { VIDEO_ASSETS } from "@/services/videoAssets"
 import { Loader2, Lock } from "lucide-vue-next"
 
@@ -39,8 +40,13 @@ const handleUpdatePassword = async () => {
     return
   }
 
-  if (password.value.length < 6) {
-    errorMsg.value = "密码长度至少需要 6 位。"
+  if (password.value.length < AUTH_PASSWORD_MIN_LENGTH) {
+    errorMsg.value = `密码长度至少需要 ${AUTH_PASSWORD_MIN_LENGTH} 位。`
+    return
+  }
+
+  if (!isStrongPassword(password.value)) {
+    errorMsg.value = getPasswordPolicyMessage()
     return
   }
 

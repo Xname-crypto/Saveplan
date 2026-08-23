@@ -23,7 +23,7 @@ class UserAdminRead(BaseModel):
 
 class UserAdminCreateRequest(BaseModel):
     email: str = Field(min_length=3, max_length=254)
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
     username: str = Field(min_length=3, max_length=80)
     job: str | None = Field(default=None, max_length=120)
     bio: str | None = Field(default=None, max_length=600)

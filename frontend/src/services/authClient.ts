@@ -273,3 +273,7 @@ export function getAuthErrorMessage(error: unknown) {
 export function isAuthSessionInvalid(error: unknown) {
   return error instanceof ApiError && error.status === 401
 }
+
+export function getAuthErrorStatus(error: unknown) {
+  return error instanceof ApiError ? error.status : null
+}

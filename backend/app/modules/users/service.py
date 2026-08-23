@@ -9,11 +9,12 @@ from sqlalchemy.orm import Session
 from ...config import INITIAL_USER_POINTS
 from ...core.security import hash_password
 from ..audit_logs.service import AuditLogService
-from ..points.service import PointService
 from ..auth.model import PasswordReset
+from ..auth.service import validate_password_policy
 from ..broadcasts.model import BroadcastMessage
 from ..conversions.model import Conversion
 from ..orders.model import Order
+from ..points.service import PointService
 from ..points.model import PointTransaction
 from .crud import UserCrud
 from .model import User
@@ -58,6 +59,8 @@ class UserAdminService:
         email = normalize_email(payload.email)
         if self.crud.get_by_email(email) is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="这个邮箱已经存在。")
+
+        validate_password_policy(payload.password)
 
         password_hash, password_salt = hash_password(payload.password)
         point_balance = payload.point_balance if payload.point_balance is not None else INITIAL_USER_POINTS

@@ -3,7 +3,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useRouter } from "@/router"
 import AuthLayout from "@/components/AuthLayout.vue"
 import AuthWaveInput from "@/components/AuthWaveInput.vue"
+import PasswordPolicyHint from "@/components/PasswordPolicyHint.vue"
 import { authClient, getAuthErrorMessage, saveAuthAvatarSource } from "@/services/authClient"
+import { AUTH_PASSWORD_MIN_LENGTH, getPasswordPolicyMessage, isStrongPassword } from "@/services/passwordPolicy"
 import { VIDEO_ASSETS } from "@/services/videoAssets"
 import {
   ArrowRight,
@@ -63,6 +65,7 @@ const formData = ref({
 })
 
 const isUsernameValid = computed(() => formData.value.username.trim().length >= 3)
+const isPasswordStrong = computed(() => isStrongPassword(formData.value.password))
 const identityOptions = ["学生", "教师", "备考用户"]
 
 const selectIdentity = (identity: string) => {
@@ -193,8 +196,13 @@ const handleStep1 = () => {
     return
   }
 
-  if (formData.value.password.length < 6) {
-    errorMsg.value = "密码长度至少需要 6 位。"
+  if (formData.value.password.length < AUTH_PASSWORD_MIN_LENGTH) {
+    errorMsg.value = `密码长度至少需要 ${AUTH_PASSWORD_MIN_LENGTH} 位。`
+    return
+  }
+
+  if (!isPasswordStrong.value) {
+    errorMsg.value = getPasswordPolicyMessage()
     return
   }
 
@@ -345,28 +353,33 @@ watch(currentStep, async (step) => {
           </template>
         </AuthWaveInput>
 
-        <AuthWaveInput
-          v-model="formData.password"
-          :type="showPassword ? 'text' : 'password'"
-          autocomplete="new-password"
-          label="请输入密码"
-          required
-        >
-          <template #leading>
-            <Lock />
-          </template>
-          <template #trailing>
-            <button
-              v-show="formData.password"
-              type="button"
-              class="auth-link focus:outline-none"
-              @click="showPassword = !showPassword"
-            >
-              <EyeOff v-if="!showPassword" class="h-5 w-5" />
-              <Eye v-else class="h-5 w-5" />
-            </button>
-          </template>
-        </AuthWaveInput>
+        <div class="register-password-field">
+          <AuthWaveInput
+            v-model="formData.password"
+            :type="showPassword ? 'text' : 'password'"
+            autocomplete="new-password"
+            label="请输入密码"
+            required
+          >
+            <template #leading>
+              <Lock />
+            </template>
+            <template #trailing>
+              <div class="register-password-actions">
+                <PasswordPolicyHint :password="formData.password" />
+                <button
+                  v-show="formData.password"
+                  type="button"
+                  class="auth-link focus:outline-none"
+                  @click="showPassword = !showPassword"
+                >
+                  <EyeOff v-if="!showPassword" class="h-5 w-5" />
+                  <Eye v-else class="h-5 w-5" />
+                </button>
+              </div>
+            </template>
+          </AuthWaveInput>
+        </div>
 
         <AuthWaveInput
           v-model="formData.confirmPassword"
@@ -568,6 +581,24 @@ watch(currentStep, async (step) => {
 input::-ms-reveal,
 input::-ms-clear {
   display: none;
+}
+
+.register-password-field {
+  display: grid;
+}
+
+.register-password-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+:global(.register-password-field .auth-wave-field__control.has-trailing) {
+  --auth-wave-right: 4.35rem;
+}
+
+:global(.register-password-field .auth-wave-field__trailing) {
+  right: 0;
 }
 
 .identity-choice-block {

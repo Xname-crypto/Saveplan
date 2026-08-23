@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,8 @@ from .schema import AuthResponse, AuthUser, ForgotPasswordResponse, RegisterRequ
 RESET_TOKEN_MINUTES = 60
 SESSION_DAYS = 30
 SESSION_MINUTES = SESSION_DAYS * 24 * 60
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_POLICY_MESSAGE = "密码至少 8 位，并且要同时包含字母和数字。"
 
 
 def as_aware_utc(value: datetime) -> datetime:
@@ -35,6 +38,17 @@ def normalize_email(email: str) -> str:
             detail="请输入有效的邮箱地址。",
         )
     return normalized
+
+
+def validate_password_policy(password: str) -> None:
+    has_letter = re.search(r"[A-Za-z]", password) is not None
+    has_digit = re.search(r"\d", password) is not None
+
+    if len(password) < PASSWORD_MIN_LENGTH or not has_letter or not has_digit:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=PASSWORD_POLICY_MESSAGE,
+        )
 
 
 def user_to_schema(user: User) -> AuthUser:
@@ -78,6 +92,8 @@ class AuthService:
                 detail="这个邮箱已经注册过，请直接登录。",
             )
 
+        validate_password_policy(payload.password)
+
         password_hash, password_salt = hash_password(payload.password)
         user = self.crud.create_user(
             User(
@@ -99,10 +115,16 @@ class AuthService:
 
     def login(self, email: str, password: str) -> AuthResponse:
         user = self.crud.get_user_by_email(normalize_email(email))
-        if user is None or not verify_password(password, user.password_hash, user.password_salt):
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="该邮箱还没有注册，请先注册账号。",
+            )
+
+        if not verify_password(password, user.password_hash, user.password_salt):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="邮箱或密码不正确，请检查后重试。",
+                detail="密码不正确，请重新输入。",
             )
         return AuthResponse(token=create_user_token(user), user=user_to_schema(user))
 
@@ -153,6 +175,8 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="重置链接无效或已经使用。",
             )
+
+        validate_password_policy(password)
 
         password_hash, password_salt = hash_password(password)
         user.password_hash = password_hash
