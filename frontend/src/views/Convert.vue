@@ -119,6 +119,7 @@ const subQuestionLinePattern = /^\s*[（(](\d+)[）)]\s*[.。、]?\s*(.*)$/
 const assetStatusLabel = computed(() =>
   includeAssetProcessing.value ? ` · ${assets.value.length} 个待处理素材` : "",
 )
+const activeStatusTone = computed(() => getConversionStatusTone(activeConversion.value))
 
 function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
@@ -144,6 +145,25 @@ function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   }
 
   return issues
+}
+
+function getSubjectLabel(subject: Subject) {
+  return subjects.find((item) => item.id === subject)?.label ?? "通用"
+}
+
+function getConversionStatusTone(conversion: ConversionSummary | ConversionDetail | null | undefined) {
+  if (!conversion) return "idle"
+  if (conversion.ocr_state === "failed" || conversion.status === "failed" || conversion.status === "needs_attention") {
+    return "warning"
+  }
+  if (conversion.status === "ocr_running") return "running"
+  if (conversion.status === "exported") return "done"
+  return "review"
+}
+
+function getFailurePointMessage(conversion: ConversionSummary | ConversionDetail | null | undefined) {
+  if (!conversion || conversion.ocr_state !== "failed") return ""
+  return conversion.points_charged === 0 ? "本次失败未扣费或已自动退回积分。" : `本次任务扣除 ${conversion.points_charged} 积分。`
 }
 
 function getQuestionStemRows(value: string) {
@@ -260,7 +280,19 @@ function waitForOcrPoll(ms: number) {
 function updateCloudOcrProgress(status: CloudOcrStatus) {
   const totalPages = status.total_pages || 0
   const extractedPages = status.extracted_pages || 0
-  if (status.state === "pending") {
+  if (status.conversion) {
+    activeConversion.value = status.conversion
+  }
+
+  if (status.state === "failed") {
+    uploadStage.value = "OCR 失败"
+    ocrProgressText.value = [status.message || "PaddleOCR 识别失败。", getFailurePointMessage(status.conversion)]
+      .filter(Boolean)
+      .join(" ")
+  } else if (status.state === "unavailable") {
+    uploadStage.value = "OCR 不可用"
+    ocrProgressText.value = status.message || "该任务当前无法继续 OCR。"
+  } else if (status.state === "pending") {
     uploadStage.value = "OCR 排队"
     ocrProgressText.value = "PaddleOCR 任务已提交，正在等待识别。"
   } else if (totalPages > 0) {
@@ -286,7 +318,9 @@ async function pollCloudOcrConversion(id: string) {
     }
 
     if (ocrStatus.state === "failed" || ocrStatus.state === "unavailable") {
-      throw new Error(ocrStatus.message || "PaddleOCR 识别失败。")
+      await loadHistory()
+      notifyConversionHistoryChanged()
+      throw new Error([ocrStatus.message || "PaddleOCR 识别失败。", getFailurePointMessage(ocrStatus.conversion)].filter(Boolean).join(" "))
     }
 
     await waitForOcrPoll(5000)
@@ -437,6 +471,11 @@ async function uploadSelectedFile() {
     }, 900)
     if (includeAssetProcessing.value) {
       const ocrStatus = await conversionClient.startCloudOcr(file as File, selectedSubject.value)
+      if (ocrStatus.conversion) {
+        activeConversion.value = ocrStatus.conversion
+        await loadHistory()
+        notifyConversionHistoryChanged()
+      }
       updateCloudOcrProgress(ocrStatus)
       activeConversion.value = await pollCloudOcrConversion(ocrStatus.id)
     } else {
@@ -1435,8 +1474,17 @@ onBeforeUnmount(() => {
               <p class="review-panel__label">MANUAL REVIEW</p>
               <h2>{{ isLoadingDetail ? "正在读取历史任务..." : activeConversion?.filename || "等待上传文档" }}</h2>
               <span v-if="activeConversion">
-                {{ questions.length }} 道题 · {{ activeConversion.subject }} · {{ issueCount }} 个提示{{ assetStatusLabel }}
+                {{ questions.length }} 道题 · {{ getSubjectLabel(activeConversion.subject) }} · {{ activeConversion.status_label }} · {{ issueCount }} 个提示{{ assetStatusLabel }}
               </span>
+              <div
+                v-if="activeConversion"
+                :class="['conversion-task-state', `conversion-task-state--${activeStatusTone}`]"
+              >
+                <strong>{{ activeConversion.status_label }}</strong>
+                <em>{{ activeConversion.next_action }}</em>
+                <small v-if="activeConversion.ocr_error">{{ activeConversion.ocr_error }}</small>
+                <small v-else-if="getFailurePointMessage(activeConversion)">{{ getFailurePointMessage(activeConversion) }}</small>
+              </div>
             </div>
             <div class="review-panel__actions">
               <button type="button" :disabled="!hasQuestions || isSaving || isExporting" @click="saveReview">

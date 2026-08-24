@@ -37,10 +37,14 @@ export interface ConversionSummary {
   filename: string
   subject: Subject
   status: string
+  status_label: string
+  next_action: string
   question_count: number
   issue_count: number
   points_charged?: number
   point_balance_after?: number | null
+  ocr_state?: string | null
+  ocr_error?: string | null
   created_at: string
   updated_at: string
 }
@@ -81,11 +85,35 @@ function normalizeConversionSummary(summary: ConversionSummary): ConversionSumma
     ...summary,
     filename: summary.filename ?? "",
     status: summary.status ?? "",
+    status_label: summary.status_label ?? getFallbackStatusLabel(summary.status, summary.ocr_state),
+    next_action: summary.next_action ?? getFallbackNextAction(summary.status, summary.ocr_state),
     question_count: summary.question_count ?? 0,
     issue_count: summary.issue_count ?? 0,
     points_charged: summary.points_charged ?? 0,
     point_balance_after: summary.point_balance_after ?? null,
+    ocr_state: summary.ocr_state ?? null,
+    ocr_error: summary.ocr_error ?? null,
   }
+}
+
+function getFallbackStatusLabel(status: string, ocrState?: string | null) {
+  if (ocrState === "failed") return "OCR 失败"
+  if (status === "ocr_running") return ocrState === "pending" ? "OCR 排队中" : "OCR 识别中"
+  return {
+    needs_review: "待人工校对",
+    needs_attention: "需处理",
+    reviewed: "已校对",
+    exported: "已导出",
+    failed: "转换失败",
+  }[status] ?? "处理中"
+}
+
+function getFallbackNextAction(status: string, ocrState?: string | null) {
+  if (ocrState === "failed" || status === "failed") return "查看失败原因，必要时重新上传"
+  if (status === "ocr_running") return "等待 OCR 完成"
+  if (status === "needs_attention") return "检查提示后手动补充题目"
+  if (status === "exported") return "可复制或下载导出文本"
+  return "继续校对并导出"
 }
 
 function normalizeQuestion(question: ConversionQuestion): ConversionQuestion {

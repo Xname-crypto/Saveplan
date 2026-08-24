@@ -100,10 +100,14 @@ class ConversionSummary(BaseModel):
     filename: str
     subject: Subject
     status: str
+    status_label: str
+    next_action: str
     question_count: int
     issue_count: int
     points_charged: int = 0
     point_balance_after: int | None = None
+    ocr_state: str | None = None
+    ocr_error: str | None = None
     created_at: str
     updated_at: str
 
@@ -217,6 +221,37 @@ def record_iso(value: datetime | str) -> str:
     return value.isoformat() if isinstance(value, datetime) else value
 
 
+def conversion_status_label(row: Conversion) -> str:
+    if row.ocr_state == "failed":
+        return "OCR 失败"
+    if row.status == "ocr_running":
+        if row.ocr_state == "pending":
+            return "OCR 排队中"
+        return "OCR 识别中"
+
+    return {
+        "needs_review": "待人工校对",
+        "needs_attention": "需处理",
+        "reviewed": "已校对",
+        "exported": "已导出",
+        "failed": "转换失败",
+    }.get(row.status, "处理中")
+
+
+def conversion_next_action(row: Conversion) -> str:
+    if row.ocr_state == "failed" or row.status == "failed":
+        return "查看失败原因，必要时重新上传或联系管理员"
+    if row.status == "ocr_running":
+        return "等待 OCR 完成"
+    if row.status == "needs_attention":
+        return "检查提示后手动补充题目"
+    if row.status in {"needs_review", "reviewed"}:
+        return "继续校对并导出"
+    if row.status == "exported":
+        return "可复制或下载导出文本"
+    return "查看转换详情"
+
+
 def row_to_summary(row: Conversion) -> ConversionSummary:
     questions = read_json(record_value(row, "questions_json"), [])
     issues = collect_issue_list(row)
@@ -225,10 +260,14 @@ def row_to_summary(row: Conversion) -> ConversionSummary:
         filename=record_value(row, "filename"),
         subject=record_value(row, "subject") if record_value(row, "subject") else "general",
         status=record_value(row, "status"),
+        status_label=conversion_status_label(row),
+        next_action=conversion_next_action(row),
         question_count=len(questions),
         issue_count=len(issues),
         points_charged=record_value(row, "points_charged") or 0,
         point_balance_after=getattr(row, "point_balance_after", None),
+        ocr_state=getattr(row, "ocr_state", None),
+        ocr_error=getattr(row, "ocr_error", None),
         created_at=record_iso(record_value(row, "created_at")),
         updated_at=record_iso(record_value(row, "updated_at")),
     )
@@ -474,13 +513,101 @@ def ensure_conversion_points_available(db: Session, user_id: str) -> User:
     return user
 
 
+def append_issue_once(row: Conversion, issue: str) -> None:
+    issues = read_json(row.issues_json, [])
+    if issue not in issues:
+        issues.append(issue)
+    row.issues_json = issues
+
+
+def charge_conversion_once(
+    db: Session,
+    *,
+    user: User,
+    conversion_id: str,
+    filename: str,
+    reason_prefix: str,
+) -> tuple[int, int | None]:
+    points_charged = max(CONVERSION_POINT_COST, 0)
+    if points_charged <= 0:
+        return 0, None
+
+    existing_transaction = db.scalar(
+        select(PointTransaction)
+        .where(
+            PointTransaction.conversion_id == conversion_id,
+            PointTransaction.source == "conversion",
+        )
+        .limit(1)
+    )
+    if existing_transaction is not None:
+        return abs(existing_transaction.amount), existing_transaction.balance_after
+
+    if user.point_balance < points_charged:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="积分不足，请先充值或联系管理员调整积分。",
+        )
+
+    user.point_balance -= points_charged
+    PointService(db).record_conversion_charge(
+        user_id=user.id,
+        amount=-points_charged,
+        balance_after=user.point_balance,
+        reason=f"{reason_prefix}：{filename}",
+        conversion_id=conversion_id,
+    )
+    return points_charged, user.point_balance
+
+
+def refund_conversion_charge_once(
+    db: Session,
+    *,
+    row: Conversion,
+    user_id: str,
+    reason: str,
+) -> int | None:
+    points_charged = max(row.points_charged or 0, 0)
+    if points_charged <= 0:
+        return None
+
+    existing_refund = db.scalar(
+        select(PointTransaction)
+        .where(
+            PointTransaction.conversion_id == row.id,
+            PointTransaction.source == "conversion_refund",
+        )
+        .limit(1)
+    )
+    if existing_refund is not None:
+        return existing_refund.balance_after
+
+    user = db.get(User, user_id)
+    if user is None:
+        return None
+
+    user.point_balance += points_charged
+    row.points_charged = 0
+    PointService(db).record_conversion_refund(
+        user_id=user_id,
+        amount=points_charged,
+        balance_after=user.point_balance,
+        reason=reason,
+        conversion_id=row.id,
+    )
+    append_issue_once(row, f"已自动退回本次转换扣除的 {points_charged} 积分。")
+    return user.point_balance
+
+
 def attach_point_balances(db: Session, conversions: list[Conversion]) -> list[Conversion]:
     conversion_ids = [item.id for item in conversions]
     if not conversion_ids:
         return conversions
 
     transactions = db.scalars(
-        select(PointTransaction).where(PointTransaction.conversion_id.in_(conversion_ids))
+        select(PointTransaction)
+        .where(PointTransaction.conversion_id.in_(conversion_ids))
+        .order_by(PointTransaction.created_at.asc())
     ).all()
     balance_by_conversion = {
         transaction.conversion_id: transaction.balance_after
@@ -825,11 +952,13 @@ def create_conversion_record(
     now = utc_now()
     status_value = "needs_review" if question_payloads else "needs_attention"
     user = ensure_conversion_points_available(db, user_id)
-    points_charged = max(CONVERSION_POINT_COST, 0)
-    point_balance_after: int | None = None
-    if points_charged:
-        user.point_balance -= points_charged
-        point_balance_after = user.point_balance
+    points_charged, point_balance_after = charge_conversion_once(
+        db,
+        user=user,
+        conversion_id=conversion_id,
+        filename=filename,
+        reason_prefix="转换任务扣除",
+    )
 
     conversion = Conversion(
         id=conversion_id,
@@ -849,14 +978,6 @@ def create_conversion_record(
         updated_at=datetime.fromisoformat(now),
     )
     db.add(conversion)
-    if points_charged:
-        PointService(db).record_conversion_charge(
-            user_id=user_id,
-            amount=-points_charged,
-            balance_after=user.point_balance,
-            reason=f"转换任务扣除：{filename}",
-            conversion_id=conversion_id,
-        )
     db.commit()
     db.refresh(conversion)
     conversion.point_balance_after = point_balance_after
@@ -1025,9 +1146,13 @@ def create_cloud_ocr_conversion_record(
         "已提交 PaddleOCR 云端识别，完成后会自动进入题目解析和人工校对。",
     ]
     user = ensure_conversion_points_available(db, user_id)
-    points_charged = max(CONVERSION_POINT_COST, 0)
-    if points_charged:
-        user.point_balance -= points_charged
+    points_charged, point_balance_after = charge_conversion_once(
+        db,
+        user=user,
+        conversion_id=conversion_id,
+        filename=filename,
+        reason_prefix="云端 OCR 转换扣除",
+    )
 
     conversion = Conversion(
         id=conversion_id,
@@ -1050,15 +1175,8 @@ def create_cloud_ocr_conversion_record(
         updated_at=datetime.fromisoformat(now),
     )
     db.add(conversion)
-    if points_charged:
-        PointService(db).record_conversion_charge(
-            user_id=user_id,
-            amount=-points_charged,
-            balance_after=user.point_balance,
-            reason=f"云端 OCR 转换扣除：{filename}",
-            conversion_id=conversion_id,
-        )
     db.commit()
+    conversion.point_balance_after = point_balance_after
 
     return CloudOcrStatusResponse(
         id=conversion_id,
@@ -1066,6 +1184,7 @@ def create_cloud_ocr_conversion_record(
         message="PaddleOCR 任务已提交，正在排队识别。",
         total_pages=0,
         extracted_pages=0,
+        conversion=row_to_detail(conversion),
     )
 
 
@@ -1215,7 +1334,18 @@ def get_cloud_ocr_status(
             conversion=row_to_detail(row),
         )
 
-    if row.ocr_state == "done" or row.status != "ocr_running":
+    if row.ocr_state == "failed":
+        attach_point_balances(db, [row])
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="failed",
+            message=row.ocr_error or "PaddleOCR 识别失败，请重新上传或改用粘贴文本解析。",
+            total_pages=row.ocr_total_pages or 0,
+            extracted_pages=row.ocr_extracted_pages or 0,
+            conversion=row_to_detail(row),
+        )
+
+    if row.ocr_state == "done":
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="done",
@@ -1225,13 +1355,68 @@ def get_cloud_ocr_status(
             conversion=row_to_detail(row),
         )
 
-    poll_data = poll_paddle_ocr_job(provider_job_id)
+    if row.status != "ocr_running":
+        attach_point_balances(db, [row])
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="unavailable",
+            message="该任务当前不在 OCR 处理中。",
+            total_pages=row.ocr_total_pages or 0,
+            extracted_pages=row.ocr_extracted_pages or 0,
+            conversion=row_to_detail(row),
+        )
+
+    try:
+        poll_data = poll_paddle_ocr_job(provider_job_id)
+    except HTTPException as error:
+        error_message = str(error.detail)
+        row.ocr_error = error_message
+        append_issue_once(row, f"PaddleOCR 进度读取异常：{error_message}")
+        row.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        attach_point_balances(db, [row])
+        return CloudOcrStatusResponse(
+            id=conversion_id,
+            state="running",
+            message="暂时无法读取 OCR 进度，任务仍保留在处理中。",
+            total_pages=row.ocr_total_pages or 0,
+            extracted_pages=row.ocr_extracted_pages or 0,
+            conversion=row_to_detail(row),
+        )
+
     ocr_state = str(poll_data.get("state") or "running")
     total_pages = int(poll_data.get("total_pages") or 0)
     extracted_pages = int(poll_data.get("extracted_pages") or 0)
 
     if ocr_state == "done":
-        conversion = finish_cloud_ocr_conversion(row, poll_data, current_user.id, db)
+        try:
+            conversion = finish_cloud_ocr_conversion(row, poll_data, current_user.id, db)
+        except HTTPException as error:
+            error_message = str(error.detail)
+            row.status = "needs_attention"
+            row.ocr_state = "failed"
+            row.ocr_error = error_message
+            row.ocr_total_pages = total_pages
+            row.ocr_extracted_pages = extracted_pages
+            append_issue_once(row, f"PaddleOCR 结果处理失败：{error_message}")
+            refund_conversion_charge_once(
+                db,
+                row=row,
+                user_id=current_user.id,
+                reason=f"OCR 结果处理失败退款：{row.filename}",
+            )
+            row.updated_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(row)
+            attach_point_balances(db, [row])
+            return CloudOcrStatusResponse(
+                id=conversion_id,
+                state="failed",
+                message=error_message,
+                total_pages=total_pages,
+                extracted_pages=extracted_pages,
+                conversion=row_to_detail(row),
+            )
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="done",
@@ -1248,14 +1433,24 @@ def get_cloud_ocr_status(
         row.ocr_error = error_message
         row.ocr_total_pages = total_pages
         row.ocr_extracted_pages = extracted_pages
+        append_issue_once(row, f"PaddleOCR 识别失败：{error_message}")
+        refund_conversion_charge_once(
+            db,
+            row=row,
+            user_id=current_user.id,
+            reason=f"OCR 识别失败退款：{row.filename}",
+        )
         row.updated_at = datetime.now(timezone.utc)
         db.commit()
+        db.refresh(row)
+        attach_point_balances(db, [row])
         return CloudOcrStatusResponse(
             id=conversion_id,
             state="failed",
             message=error_message,
             total_pages=total_pages,
             extracted_pages=extracted_pages,
+            conversion=row_to_detail(row),
         )
 
     row.ocr_state = ocr_state
@@ -1263,6 +1458,7 @@ def get_cloud_ocr_status(
     row.ocr_extracted_pages = extracted_pages
     row.updated_at = datetime.now(timezone.utc)
     db.commit()
+    attach_point_balances(db, [row])
 
     progress_message = (
         f"PaddleOCR 正在识别第 {extracted_pages} / {total_pages} 页。"
@@ -1275,6 +1471,7 @@ def get_cloud_ocr_status(
         message=progress_message,
         total_pages=total_pages,
         extracted_pages=extracted_pages,
+        conversion=row_to_detail(row),
     )
 
 
