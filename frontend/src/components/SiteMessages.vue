@@ -13,6 +13,7 @@ const error = ref("")
 const dismissedKey = "saveplan.broadcast.dismissed"
 const dismissedIds = ref<Set<string>>(new Set())
 const activeMessageId = ref<string | null>(null)
+const activePopupId = ref<string | null>(null)
 const refreshIntervalMs = 15000
 let refreshTimer: number | undefined
 
@@ -70,9 +71,12 @@ function dismiss(messageId: string) {
   if (activeMessageId.value === messageId) {
     activeMessageId.value = modalMessages.value[0]?.id ?? null
   }
+  if (activePopupId.value === messageId) {
+    activePopupId.value = profilePopupMessages.value[0]?.id ?? null
+  }
 }
 
-const banners = computed(() =>
+const announcementMessages = computed(() =>
   globalMessages.value.filter((item) => item.channel === "announcement" && item.scope === "global"),
 )
 const globalPopups = computed(() =>
@@ -81,13 +85,19 @@ const globalPopups = computed(() =>
 const directPopups = computed(() =>
   userMessages.value.filter((item) => item.channel === "popup" && item.scope === "user"),
 )
-const modalMessages = computed(() => [
-  ...banners.value,
-  ...globalPopups.value,
-  ...directPopups.value,
-])
+const modalMessages = computed(() => announcementMessages.value)
+const profilePopupMessages = computed(() => {
+  if (route.path !== "/profile") return []
+  return [...globalPopups.value, ...directPopups.value].sort((a, b) => b.priority - a.priority)
+})
 const activeMessage = computed(() =>
   modalMessages.value.find((message) => message.id === activeMessageId.value) ?? modalMessages.value[0] ?? null,
+)
+const activePopup = computed(() =>
+  profilePopupMessages.value.find((message) => message.id === activePopupId.value) ?? profilePopupMessages.value[0] ?? null,
+)
+const activePopupIndex = computed(() =>
+  activePopup.value ? profilePopupMessages.value.findIndex((message) => message.id === activePopup.value?.id) : -1,
 )
 
 function selectMessage(messageId: string) {
@@ -119,6 +129,20 @@ watch(
     }
     if (!activeMessageId.value || !messages.some((message) => message.id === activeMessageId.value)) {
       activeMessageId.value = messages[0].id
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  profilePopupMessages,
+  (messages) => {
+    if (!messages.length) {
+      activePopupId.value = null
+      return
+    }
+    if (!activePopupId.value || !messages.some((message) => message.id === activePopupId.value)) {
+      activePopupId.value = messages[0].id
     }
   },
   { immediate: true },
@@ -217,6 +241,52 @@ onBeforeUnmount(() => {
       </section>
     </div>
   </transition>
+
+  <transition name="popup-card">
+    <aside
+      v-if="activePopup"
+      class="fixed bottom-5 right-5 z-[80] w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-[0_24px_70px_rgba(15,23,42,0.18)]"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="flex items-start gap-3 p-4">
+        <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+          <Megaphone class="h-4 w-4" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-slate-950">{{ activePopup.title }}</p>
+              <p class="mt-1 text-xs text-slate-500">{{ getMessageLabel(activePopup) }}</p>
+            </div>
+            <button
+              type="button"
+              class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"
+              aria-label="关闭弹窗"
+              @click="dismiss(activePopup.id)"
+            >
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+          <p class="mt-3 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+            {{ activePopup.content }}
+          </p>
+          <div class="mt-4 flex items-center justify-between gap-3">
+            <p class="text-xs text-slate-400">
+              第 {{ activePopupIndex + 1 }} / {{ profilePopupMessages.length }} 条
+            </p>
+            <button
+              type="button"
+              class="inline-flex min-h-9 items-center rounded-full bg-slate-900 px-4 text-xs font-medium text-white transition hover:bg-slate-800"
+              @click="dismiss(activePopup.id)"
+            >
+              我知道了
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </transition>
 </template>
 
 <style scoped>
@@ -231,5 +301,25 @@ onBeforeUnmount(() => {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+.popup-card-enter-active,
+.popup-card-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.popup-card-enter-from,
+.popup-card-leave-to {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+}
+
+@media (max-width: 640px) {
+  .popup-card-enter-from,
+  .popup-card-leave-to {
+    transform: translateY(18px);
+  }
 }
 </style>
