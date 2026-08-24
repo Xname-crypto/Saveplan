@@ -92,6 +92,9 @@ const ocrProgressText = ref("")
 const currentStep = ref(1)
 const showIssueQuestions = ref(true)
 const showValidQuestions = ref(true)
+const selectedQuestionNumbers = ref<Set<number>>(new Set())
+const bulkQuestionType = ref<QuestionType>("single_choice")
+const bulkScoreValue = ref("0")
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
 const showCopySuccessDialog = ref(false)
 const filePickState = ref<"idle" | "loading" | "success" | "error">("idle")
@@ -129,6 +132,14 @@ const assetStatusLabel = computed(() =>
   includeAssetProcessing.value ? ` · ${assets.value.length} 个待处理素材` : "",
 )
 const activeStatusTone = computed(() => getConversionStatusTone(activeConversion.value))
+const selectedQuestions = computed(() =>
+  questions.value.filter((question) => selectedQuestionNumbers.value.has(question.number)),
+)
+const selectedQuestionCount = computed(() => selectedQuestions.value.length)
+const visibleQuestionNumbers = computed(() => visibleQuestions.value.map((question) => question.number))
+const areAllVisibleQuestionsSelected = computed(() =>
+  visibleQuestionNumbers.value.length > 0 && visibleQuestionNumbers.value.every((number) => selectedQuestionNumbers.value.has(number)),
+)
 
 function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
@@ -204,6 +215,71 @@ function updateQuestionScore(question: ConversionQuestion, value: string) {
   const nextScore = Number(value)
   question.score = Number.isFinite(nextScore) ? Math.max(Math.floor(nextScore), 0) : 0
   exportText.value = ""
+}
+
+function isQuestionSelected(question: ConversionQuestion) {
+  return selectedQuestionNumbers.value.has(question.number)
+}
+
+function setSelectedQuestionNumbers(numbers: Iterable<number>) {
+  selectedQuestionNumbers.value = new Set(numbers)
+}
+
+function toggleQuestionSelection(question: ConversionQuestion) {
+  const nextSelection = new Set(selectedQuestionNumbers.value)
+  if (nextSelection.has(question.number)) {
+    nextSelection.delete(question.number)
+  } else {
+    nextSelection.add(question.number)
+  }
+  selectedQuestionNumbers.value = nextSelection
+}
+
+function toggleVisibleQuestionSelection() {
+  if (areAllVisibleQuestionsSelected.value) {
+    const visibleSet = new Set(visibleQuestionNumbers.value)
+    setSelectedQuestionNumbers([...selectedQuestionNumbers.value].filter((number) => !visibleSet.has(number)))
+    return
+  }
+
+  setSelectedQuestionNumbers([...selectedQuestionNumbers.value, ...visibleQuestionNumbers.value])
+}
+
+function clearQuestionSelection() {
+  setSelectedQuestionNumbers([])
+}
+
+function applyBulkQuestionType() {
+  if (!selectedQuestionCount.value) return
+  selectedQuestions.value.forEach((question) => updateQuestionType(question, bulkQuestionType.value))
+  statusMessage.value = `已将 ${selectedQuestionCount.value} 道题改为${getQuestionTypeLabel(bulkQuestionType.value)}。`
+  errorMessage.value = ""
+}
+
+function applyBulkScore() {
+  if (!selectedQuestionCount.value) return
+  const nextScore = Number(bulkScoreValue.value)
+  if (!Number.isFinite(nextScore) || nextScore < 0) {
+    errorMessage.value = "请输入大于或等于 0 的分值。"
+    return
+  }
+
+  selectedQuestions.value.forEach((question) => updateQuestionScore(question, String(nextScore)))
+  statusMessage.value = `已将 ${selectedQuestionCount.value} 道题的分值设为 ${Math.floor(nextScore)} 分。`
+  errorMessage.value = ""
+}
+
+function deleteSelectedQuestions() {
+  if (!activeConversion.value || !selectedQuestionCount.value) return
+  if (!window.confirm(`确定删除已选的 ${selectedQuestionCount.value} 道题吗？删除后需要重新识别或手动新增。`)) return
+
+  const selectedSet = selectedQuestionNumbers.value
+  activeConversion.value.questions = questions.value.filter((question) => !selectedSet.has(question.number))
+  renumberQuestions()
+  clearQuestionSelection()
+  exportText.value = ""
+  statusMessage.value = "已删除选中的题目。"
+  errorMessage.value = ""
 }
 
 function getSubjectLabel(subject: Subject) {
@@ -791,6 +867,7 @@ function addQuestion(afterNumber?: number) {
     createEmptyQuestion(questions.value.length + 1),
   )
   renumberQuestions()
+  clearQuestionSelection()
   exportText.value = ""
   statusMessage.value = "已新增一道题目，请补全题干、题型和答案。"
 }
@@ -802,6 +879,7 @@ function removeQuestion(index: number) {
     : []
   activeConversion.value.questions.splice(index, 1)
   renumberQuestions()
+  clearQuestionSelection()
   exportText.value = ""
   statusMessage.value = "题目已删除，保存或导出时会同步到后端。"
 }
@@ -818,6 +896,7 @@ function moveQuestionByNumber(number: number, direction: "up" | "down") {
   const [question] = questions.value.splice(index, 1)
   questions.value.splice(targetIndex, 0, question)
   renumberQuestions()
+  clearQuestionSelection()
   exportText.value = ""
   statusMessage.value = "题目顺序已调整，保存或导出时会同步。"
 }
@@ -836,6 +915,7 @@ function splitQuestionByNumber(number: number) {
     questions.value.splice(index + 1, 0, createEmptyQuestion(question.number + 1))
   }
   renumberQuestions()
+  clearQuestionSelection()
   exportText.value = ""
   statusMessage.value = parsedQuestions.length > 1
     ? "已按完整题块拆分，题目、选项、答案和解析会一起保留。"
@@ -862,6 +942,7 @@ function mergeQuestionByNumber(number: number, direction: "up" | "down") {
   target.issues = []
   questions.value.splice(sourceIndex, 1)
   renumberQuestions()
+  clearQuestionSelection()
   exportText.value = ""
   statusMessage.value = direction === "up"
     ? "已向上合并为完整题块，可再用拆分恢复。"
@@ -1289,6 +1370,7 @@ onMounted(() => {
 watch(
   () => activeConversion.value?.id,
   () => {
+    clearQuestionSelection()
     void loadAssetPreviews()
   },
 )
@@ -1679,13 +1761,52 @@ onBeforeUnmount(() => {
           </div>
 
           <div v-else class="question-list question-list--review">
+            <div class="question-bulk-toolbar" aria-label="批量操作">
+              <label class="question-bulk-toolbar__select">
+                <input
+                  type="checkbox"
+                  :checked="areAllVisibleQuestionsSelected"
+                  @change="toggleVisibleQuestionSelection"
+                />
+                <span>{{ areAllVisibleQuestionsSelected ? "取消本页选择" : "选择当前显示" }}</span>
+              </label>
+              <strong>已选 {{ selectedQuestionCount }} 道</strong>
+              <label>
+                <small>批量题型</small>
+                <select v-model="bulkQuestionType" :disabled="!selectedQuestionCount">
+                  <option v-for="type in questionTypes" :key="type.id" :value="type.id">{{ type.label }}</option>
+                </select>
+              </label>
+              <button type="button" :disabled="!selectedQuestionCount" @click="applyBulkQuestionType">应用题型</button>
+              <label>
+                <small>批量分值</small>
+                <input v-model="bulkScoreValue" type="number" min="0" step="1" :disabled="!selectedQuestionCount" />
+              </label>
+              <button type="button" :disabled="!selectedQuestionCount" @click="applyBulkScore">应用分值</button>
+              <button type="button" :disabled="!selectedQuestionCount" @click="clearQuestionSelection">清空选择</button>
+              <button
+                class="question-bulk-toolbar__danger"
+                type="button"
+                :disabled="!selectedQuestionCount"
+                @click="deleteSelectedQuestions"
+              >
+                批量删除
+              </button>
+            </div>
             <article
               v-for="question in visibleQuestions"
               :key="question.number"
               :id="`review-question-${question.number}`"
-              :class="['question-editor', 'question-editor--formal', { 'has-issue': getQuestionIssues(question).length }]"
+              :class="['question-editor', 'question-editor--formal', { 'has-issue': getQuestionIssues(question).length, 'is-selected': isQuestionSelected(question) }]"
             >
               <header>
+                <label class="question-select-checkbox" :aria-label="`选择第${question.number}题`">
+                  <input
+                    type="checkbox"
+                    :checked="isQuestionSelected(question)"
+                    @change="toggleQuestionSelection(question)"
+                  />
+                </label>
                 <strong>第 {{ question.number }} 题 · {{ getQuestionTypeLabel(getQuestionType(question)) }}</strong>
                 <div v-if="getQuestionIssues(question).length" class="question-title-issues">
                   <button
