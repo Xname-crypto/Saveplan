@@ -98,10 +98,15 @@ const bulkScoreValue = ref("0")
 const issueDialogQuestion = ref<ConversionQuestion | null>(null)
 const showCopySuccessDialog = ref(false)
 const filePickState = ref<"idle" | "loading" | "success" | "error">("idle")
+const autosaveState = ref<"idle" | "dirty" | "saving" | "saved" | "error">("idle")
+const autosaveMessage = ref("")
 const fileInputRef = ref<HTMLInputElement | null>(null)
 let filePickTimer: number | undefined
 let uploadStageTimer: number | undefined
 let copySuccessTimer: number | undefined
+let autosaveTimer: number | undefined
+let autosaveSuppress = false
+let lastSavedQuestionsSignature = ""
 let ocrPollingCancelled = false
 let authRedirectStarted = false
 
@@ -140,6 +145,58 @@ const visibleQuestionNumbers = computed(() => visibleQuestions.value.map((questi
 const areAllVisibleQuestionsSelected = computed(() =>
   visibleQuestionNumbers.value.length > 0 && visibleQuestionNumbers.value.every((number) => selectedQuestionNumbers.value.has(number)),
 )
+
+function serializeQuestionsForAutosave() {
+  return JSON.stringify(
+    questions.value.map((question) => ({
+      number: question.number,
+      question_type: getQuestionType(question),
+      score: question.score ?? 0,
+      stem: question.stem ?? "",
+      options: Object.keys(question.options ?? {})
+        .sort()
+        .reduce<Record<string, string>>((options, label) => {
+          options[label] = question.options?.[label] ?? ""
+          return options
+        }, {}),
+      answer: question.answer ?? "",
+      analysis: question.analysis ?? "",
+    })),
+  )
+}
+
+function clearAutosaveTimer() {
+  if (autosaveTimer) {
+    window.clearTimeout(autosaveTimer)
+    autosaveTimer = undefined
+  }
+}
+
+function markQuestionsSnapshotSaved(message = "已保存") {
+  lastSavedQuestionsSignature = serializeQuestionsForAutosave()
+  autosaveState.value = activeConversion.value ? "saved" : "idle"
+  autosaveMessage.value = activeConversion.value ? message : ""
+}
+
+function resetAutosaveState() {
+  clearAutosaveTimer()
+  lastSavedQuestionsSignature = ""
+  autosaveState.value = "idle"
+  autosaveMessage.value = ""
+}
+
+function setActiveConversionSnapshot(conversion: ConversionDetail | null, message = "已保存") {
+  autosaveSuppress = true
+  activeConversion.value = conversion
+  if (conversion) {
+    markQuestionsSnapshotSaved(message)
+  } else {
+    resetAutosaveState()
+  }
+  window.setTimeout(() => {
+    autosaveSuppress = false
+  }, 0)
+}
 
 function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
@@ -416,7 +473,7 @@ function updateCloudOcrProgress(status: CloudOcrStatus) {
   const totalPages = status.total_pages || 0
   const extractedPages = status.extracted_pages || 0
   if (status.conversion) {
-    activeConversion.value = status.conversion
+    setActiveConversionSnapshot(status.conversion, "已同步识别结果")
   }
 
   if (status.state === "failed") {
@@ -482,7 +539,7 @@ async function loadConversionDetail(id: string) {
   exportText.value = ""
 
   try {
-    activeConversion.value = await conversionClient.get(id)
+    setActiveConversionSnapshot(await conversionClient.get(id), "已保存")
     statusMessage.value = "已载入历史任务，可以继续校对或导出。"
   } catch (error) {
     setError(error)
@@ -502,13 +559,15 @@ async function deleteHistoryItem(item: ConversionSummary) {
     await conversionClient.delete(item.id)
     historyItems.value = historyItems.value.filter((historyItem) => historyItem.id !== item.id)
     if (activeConversion.value?.id === item.id) {
-      activeConversion.value = null
+      setActiveConversionSnapshot(null)
       exportText.value = ""
       currentStep.value = 1
     }
     statusMessage.value = "转换历史已删除。"
     notifyConversionHistoryChanged()
   } catch (error) {
+    autosaveState.value = "error"
+    autosaveMessage.value = "保存失败"
     setError(error)
   } finally {
     deletingHistoryId.value = null
@@ -607,21 +666,27 @@ async function uploadSelectedFile() {
     if (includeAssetProcessing.value) {
       const ocrStatus = await conversionClient.startCloudOcr(file as File, selectedSubject.value)
       if (ocrStatus.conversion) {
-        activeConversion.value = ocrStatus.conversion
+        setActiveConversionSnapshot(ocrStatus.conversion, "已保存")
         await loadHistory()
         notifyConversionHistoryChanged()
       }
       updateCloudOcrProgress(ocrStatus)
-      activeConversion.value = await pollCloudOcrConversion(ocrStatus.id)
+      setActiveConversionSnapshot(await pollCloudOcrConversion(ocrStatus.id), "已保存")
     } else {
-      activeConversion.value = await conversionClient.upload(
-        file as File,
-        selectedSubject.value,
-        includeAssetProcessing.value,
+      setActiveConversionSnapshot(
+        await conversionClient.upload(
+          file as File,
+          selectedSubject.value,
+          includeAssetProcessing.value,
+        ),
+        "已保存",
       )
     }
     uploadStage.value = "解析完成"
-    statusMessage.value = `解析完成：识别 ${activeConversion.value.question_count} 道题，${activeConversion.value.issue_count} 个提示。请点击下一步进入人工校对。`
+    const conversion = activeConversion.value
+    statusMessage.value = conversion
+      ? `解析完成：识别 ${conversion.question_count} 道题，${conversion.issue_count} 个提示。请点击下一步进入人工校对。`
+      : "解析完成，请点击下一步进入人工校对。"
     await loadHistory()
     notifyConversionHistoryChanged()
   } catch (error) {
@@ -650,10 +715,13 @@ async function createFromPastedText() {
   exportText.value = ""
 
   try {
-    activeConversion.value = await conversionClient.createFromText(
-      pastedTitle.value.trim() || "粘贴文本",
-      pastedText.value,
-      selectedSubject.value,
+    setActiveConversionSnapshot(
+      await conversionClient.createFromText(
+        pastedTitle.value.trim() || "粘贴文本",
+        pastedText.value,
+        selectedSubject.value,
+      ),
+      "已保存",
     )
     uploadStage.value = "解析完成"
     statusMessage.value = "粘贴文本已解析，请点击下一步进入人工校对。"
@@ -1059,12 +1127,15 @@ function scrollToQuestion(number: number) {
 
 async function saveReview() {
   if (!activeConversion.value) return
+  clearAutosaveTimer()
   isSaving.value = true
   errorMessage.value = ""
   statusMessage.value = "正在保存校对结果..."
+  autosaveState.value = "saving"
+  autosaveMessage.value = "保存中..."
 
   try {
-    await persistQuestions()
+    await persistQuestions("已保存")
     exportText.value = ""
     statusMessage.value = "校对结果已保存。"
     await loadHistory()
@@ -1075,12 +1146,37 @@ async function saveReview() {
   }
 }
 
-async function persistQuestions() {
+async function persistQuestions(savedMessage = "已保存") {
   if (!activeConversion.value) return
-  activeConversion.value = await conversionClient.saveQuestions(
-    activeConversion.value.id,
-    questions.value,
-  )
+  autosaveSuppress = true
+  try {
+    activeConversion.value = await conversionClient.saveQuestions(activeConversion.value.id, questions.value)
+    markQuestionsSnapshotSaved(savedMessage)
+  } finally {
+    autosaveSuppress = false
+  }
+}
+
+async function runQuestionsAutosave() {
+  if (!activeConversion.value || isSaving.value || isExporting.value || isLoadingDetail.value || isUploading.value) return
+
+  const currentSignature = serializeQuestionsForAutosave()
+  if (currentSignature === lastSavedQuestionsSignature) return
+
+  autosaveState.value = "saving"
+  autosaveMessage.value = "保存中..."
+
+  try {
+    await persistQuestions("已自动保存")
+    exportText.value = ""
+    await loadHistory()
+  } catch (error) {
+    autosaveState.value = "error"
+    autosaveMessage.value = "自动保存失败"
+    if (isConversionAuthError(error)) {
+      setError(error)
+    }
+  }
 }
 
 function updateAssetTranscript(asset: ConversionAsset, value: string) {
@@ -1364,8 +1460,24 @@ async function downloadReviewedWord() {
 }
 
 onMounted(() => {
+  window.addEventListener("beforeunload", handleBeforeUnload)
   void loadHistory()
 })
+
+watch(
+  () => serializeQuestionsForAutosave(),
+  (signature) => {
+    if (!activeConversion.value || autosaveSuppress) return
+    if (signature === lastSavedQuestionsSignature) return
+
+    autosaveState.value = "dirty"
+    autosaveMessage.value = "有未保存修改"
+    clearAutosaveTimer()
+    autosaveTimer = window.setTimeout(() => {
+      void runQuestionsAutosave()
+    }, 1500)
+  },
+)
 
 watch(
   () => activeConversion.value?.id,
@@ -1375,8 +1487,16 @@ watch(
   },
 )
 
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (autosaveState.value !== "dirty" && autosaveState.value !== "saving") return
+  event.preventDefault()
+  event.returnValue = ""
+}
+
 onBeforeUnmount(() => {
   ocrPollingCancelled = true
+  window.removeEventListener("beforeunload", handleBeforeUnload)
+  clearAutosaveTimer()
   if (uploadStageTimer) window.clearTimeout(uploadStageTimer)
   if (filePickTimer) window.clearTimeout(filePickTimer)
   if (copySuccessTimer) window.clearTimeout(copySuccessTimer)
@@ -1671,6 +1791,14 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="review-panel__actions">
+              <div
+                v-if="activeConversion"
+                :class="['autosave-indicator', `autosave-indicator--${autosaveState}`]"
+                aria-live="polite"
+              >
+                <i aria-hidden="true" />
+                <strong>{{ autosaveMessage || "已保存" }}</strong>
+              </div>
               <button type="button" :disabled="!hasQuestions || isSaving || isExporting" @click="saveReview">
                 <Save :size="16" />
                 保存校对

@@ -4025,6 +4025,70 @@ html:not([data-theme="day"]) .upload-step-nav__button:disabled .upload-step-nav_
   justify-content: flex-end;
 }
 
+.autosave-indicator {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0 0.72rem;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.autosave-indicator i {
+  width: 0.46rem;
+  height: 0.46rem;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.autosave-indicator strong {
+  font: inherit;
+}
+
+.autosave-indicator--saved i {
+  background: #15803d;
+}
+
+.autosave-indicator--dirty i {
+  background: #d97706;
+}
+
+.autosave-indicator--saving i {
+  background: #345d75;
+  animation: autosavePulse 920ms ease-in-out infinite;
+}
+
+.autosave-indicator--error {
+  border-color: #fecdd3;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.autosave-indicator--error i {
+  background: #dc2626;
+}
+
+@keyframes autosavePulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .review-panel__actions button {
   display: inline-flex;
   min-height: 2rem;
