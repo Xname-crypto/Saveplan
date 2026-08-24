@@ -8,12 +8,16 @@ export const CONVERSION_HISTORY_CHANGE_EVENT = "saveplan:conversion-history-chan
 
 export interface ConversionQuestion {
   number: number
+  question_type: QuestionType
+  score: number
   stem: string
   options: Record<string, string>
   answer: string
   analysis: string
   issues: string[]
 }
+
+export type QuestionType = "single_choice" | "multiple_choice" | "true_false" | "fill_blank" | "short_answer"
 
 export interface ConversionAsset {
   id: string
@@ -119,6 +123,8 @@ function getFallbackNextAction(status: string, ocrState?: string | null) {
 function normalizeQuestion(question: ConversionQuestion): ConversionQuestion {
   return {
     ...question,
+    question_type: question.question_type ?? "single_choice",
+    score: Number.isFinite(Number(question.score)) ? Math.max(Number(question.score), 0) : 0,
     options: question.options ?? {},
     stem: question.stem ?? "",
     answer: question.answer ?? "",

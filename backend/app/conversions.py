@@ -32,12 +32,13 @@ from .config import CONVERSION_POINT_COST, INITIAL_USER_POINTS, MEDIA_DIR, UPLOA
 from .database.session import get_db
 from .kshuati_converter import (
     ParsedQuestion,
+    QuestionType,
     Subject,
     detect_text_state,
     export_kshuati_text,
     parse_single_choice_questions,
     sorted_option_labels,
-    validate_single_choice_question,
+    validate_question,
 )
 from .modules.conversions.model import Conversion
 from .modules.points.model import PointTransaction
@@ -64,9 +65,11 @@ PADDLE_OCR_MODEL = os.getenv("PADDLEOCR_MODEL", "PaddleOCR-VL-1.6")
 
 class ConversionQuestionPayload(BaseModel):
     number: int = Field(ge=1)
+    question_type: QuestionType = "single_choice"
+    score: int = Field(default=0, ge=0, le=1000)
     stem: str = Field(default="", max_length=5000)
     options: dict[str, str] = Field(default_factory=dict)
-    answer: str = Field(default="", max_length=1)
+    answer: str = Field(default="", max_length=1000)
     analysis: str = Field(default="", max_length=5000)
     issues: list[str] = Field(default_factory=list)
 
@@ -312,6 +315,11 @@ def coerce_question_number(value: object, fallback_number: int) -> int:
 def sanitize_question_payload(question: object, fallback_number: int) -> dict[str, object]:
     payload = dict(question) if isinstance(question, dict) else {}
     payload["number"] = coerce_question_number(payload.get("number"), fallback_number)
+    payload["question_type"] = payload.get("question_type") or "single_choice"
+    try:
+        payload["score"] = max(int(payload.get("score") or 0), 0)
+    except (TypeError, ValueError):
+        payload["score"] = 0
     return payload
 
 
@@ -325,6 +333,8 @@ def question_payloads_from_raw(questions: list[object]) -> list[ConversionQuesti
 def question_to_payload(question: ParsedQuestion, fallback_number: int) -> dict[str, object]:
     return {
         "number": coerce_question_number(question.number, fallback_number),
+        "question_type": question.question_type,
+        "score": question.score,
         "stem": question.stem,
         "options": {key: question.options.get(key, "") for key in sorted_option_labels(question.options)},
         "answer": question.answer,
@@ -336,9 +346,11 @@ def question_to_payload(question: ParsedQuestion, fallback_number: int) -> dict[
 def payload_to_question(payload: ConversionQuestionPayload) -> ParsedQuestion:
     return ParsedQuestion(
         number=payload.number,
+        question_type=payload.question_type,
+        score=payload.score,
         stem=payload.stem.strip(),
         options={key.upper(): value.strip() for key, value in payload.options.items()},
-        answer=payload.answer.strip().upper(),
+        answer=payload.answer.strip().upper() if payload.question_type in {"single_choice", "multiple_choice"} else payload.answer.strip(),
         analysis=payload.analysis.strip(),
         issues=list(payload.issues),
     )
@@ -947,7 +959,7 @@ def create_conversion_record(
     ]
     asset_payloads = bind_assets_to_detected_markers(asset_payloads, parsed_questions)
     if not question_payloads:
-        issues.append("未识别到单选题结构，请检查题号和选项格式。")
+        issues.append("未识别到可用题目结构，请检查题号、选项、答案或填空格式。")
 
     now = utc_now()
     status_value = "needs_review" if question_payloads else "needs_attention"
@@ -1208,7 +1220,7 @@ def finish_cloud_ocr_conversion(
         for index, question in enumerate(parsed_questions)
     ]
     if not question_payloads:
-        issues.append("OCR 完成后仍未识别到单选题结构，请在人工校对页手动新增或粘贴文本。")
+        issues.append("OCR 完成后仍未识别到可用题目结构，请在人工校对页手动新增或粘贴文本。")
 
     status_value = "needs_review" if question_payloads else "needs_attention"
     row.raw_text = raw_text
@@ -1498,15 +1510,17 @@ def update_questions(
     for index, question in enumerate(payload, 1):
         data = question.model_dump()
         data["number"] = index
-        data["answer"] = data["answer"].strip().upper()
+        data["answer"] = data["answer"].strip().upper() if data["question_type"] in {"single_choice", "multiple_choice"} else data["answer"].strip()
         data["options"] = {
             key.upper(): value.strip()
             for key, value in data["options"].items()
             if key.strip()
         }
-        data["issues"] = validate_single_choice_question(
+        data["issues"] = validate_question(
             ParsedQuestion(
                 number=data["number"],
+                question_type=data["question_type"],
+                score=data["score"],
                 stem=data["stem"].strip(),
                 options=data["options"],
                 answer=data["answer"],

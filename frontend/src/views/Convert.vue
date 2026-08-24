@@ -32,6 +32,7 @@ import {
   type ConversionAsset,
   type ConversionQuestion,
   type ConversionSummary,
+  type QuestionType,
   type Subject,
 } from "@/services/conversionClient"
 
@@ -56,6 +57,14 @@ const exportFormats = [
     label: "出题试卷形式",
     description: "按普通试卷样式整理题目，适合审核、打印或导出 Word。",
   },
+]
+
+const questionTypes: Array<{ id: QuestionType; label: string; needsOptions: boolean; description: string }> = [
+  { id: "single_choice", label: "单选", needsOptions: true, description: "一个正确选项" },
+  { id: "multiple_choice", label: "多选", needsOptions: true, description: "多个正确选项" },
+  { id: "true_false", label: "判断", needsOptions: false, description: "正确或错误" },
+  { id: "fill_blank", label: "填空", needsOptions: false, description: "一个或多个填空答案" },
+  { id: "short_answer", label: "简答", needsOptions: false, description: "参考答案或解析" },
 ]
 
 const selectedFile = ref<File | null>(null)
@@ -125,26 +134,76 @@ function getQuestionIssues(question: ConversionQuestion | null | undefined) {
   if (!question) return []
 
   const issues: string[] = []
+  const questionType = getQuestionType(question)
   if (!question.stem?.trim()) {
     issues.push("缺少题干")
   }
 
-  for (const label of baseOptionLabels) {
-    if (!question.options?.[label]?.trim()) {
-      issues.push(`缺少${label}选项`)
+  if (questionType === "single_choice" || questionType === "multiple_choice") {
+    for (const label of baseOptionLabels) {
+      if (!question.options?.[label]?.trim()) {
+        issues.push(`缺少${label}选项`)
+      }
     }
-  }
 
-  const answer = question.answer?.trim().toUpperCase()
-  if (!answer) {
+    const answer = question.answer?.trim().toUpperCase()
+    if (!answer) {
+      issues.push("缺少答案")
+    } else {
+      const labels = getQuestionOptionLabels(question)
+      const invalidLabels = answer.split("").filter((label) => !labels.includes(label) || !question.options?.[label]?.trim())
+      if (invalidLabels.length) {
+        issues.push("答案不在已添加选项中")
+      }
+      if (questionType === "single_choice" && answer.length > 1) {
+        issues.push("单选题答案只能有一个选项")
+      }
+      if (questionType === "multiple_choice" && answer.length < 2) {
+        issues.push("多选题答案建议填写两个或以上选项")
+      }
+    }
+  } else if (questionType === "true_false") {
+    if (!["正确", "错误"].includes(question.answer?.trim())) {
+      issues.push("判断题答案应为正确或错误")
+    }
+  } else if (!question.answer?.trim()) {
     issues.push("缺少答案")
-  } else if (!getQuestionOptionLabels(question).includes(answer)) {
-    issues.push("答案不在已添加选项中")
-  } else if (!question.options?.[answer]?.trim()) {
-    issues.push("答案对应的选项为空")
   }
 
   return issues
+}
+
+function getQuestionType(question: ConversionQuestion | null | undefined): QuestionType {
+  return question?.question_type ?? "single_choice"
+}
+
+function getQuestionTypeLabel(type: QuestionType) {
+  return questionTypes.find((item) => item.id === type)?.label ?? "单选"
+}
+
+function questionTypeNeedsOptions(question: ConversionQuestion) {
+  return ["single_choice", "multiple_choice"].includes(getQuestionType(question))
+}
+
+function updateQuestionType(question: ConversionQuestion, type: QuestionType) {
+  question.question_type = type
+  if (type === "single_choice" || type === "multiple_choice") {
+    question.options = Object.keys(question.options ?? {}).length ? question.options : { A: "", B: "", C: "", D: "" }
+    question.answer = question.answer?.trim().toUpperCase() ?? ""
+  } else {
+    question.options = {}
+    if (type === "true_false" && !["正确", "错误"].includes(question.answer)) {
+      question.answer = ""
+    }
+  }
+  question.issues = getQuestionIssues(question)
+  exportText.value = ""
+}
+
+function updateQuestionScore(question: ConversionQuestion, value: string) {
+  const nextScore = Number(value)
+  question.score = Number.isFinite(nextScore) ? Math.max(Math.floor(nextScore), 0) : 0
+  exportText.value = ""
 }
 
 function getSubjectLabel(subject: Subject) {
@@ -586,12 +645,16 @@ function createQuestionFromBlock(
   options?: Record<string, string>,
   answer = "",
   analysis = "",
+  questionType: QuestionType = "single_choice",
+  score = 0,
 ): ConversionQuestion {
   return {
     number,
+    question_type: questionType,
+    score,
     stem: stem.trimEnd(),
     options: options && Object.keys(options).length ? options : { A: "", B: "", C: "", D: "" },
-    answer: answer.trim().toUpperCase(),
+    answer: questionType === "single_choice" || questionType === "multiple_choice" ? answer.trim().toUpperCase() : answer.trim(),
     analysis: analysis.trim(),
     issues: [],
   }
@@ -599,8 +662,10 @@ function createQuestionFromBlock(
 
 function serializeQuestionBlock(question: ConversionQuestion) {
   const lines = [`${question.number}.${stripQuestionNumberPrefix(question.stem || "")}`.trim()]
-  for (const [label, value] of sortedOptionEntries(question.options)) {
-    lines.push(`${label}. ${value.trim()}`)
+  if (questionTypeNeedsOptions(question)) {
+    for (const [label, value] of sortedOptionEntries(question.options)) {
+      lines.push(`${label}. ${value.trim()}`)
+    }
   }
   if (question.answer?.trim()) lines.push(`答案: ${question.answer.trim().toUpperCase()}`)
   if (question.analysis?.trim()) lines.push(`解析: ${question.analysis.trim()}`)
@@ -631,7 +696,7 @@ function parseQuestionBlocksFromText(text: string) {
 function parseQuestionBlockLines(lines: string[], fallbackNumber: number) {
   const questionStartPattern = /^\s*(?:第\s*(\d+)\s*题\s*[:：、.)）]?|(\d+)\s*[.．、)）])\s*(.*)$/
   const optionPattern = /^\s*([A-Z])\s*[.．、:：)）]\s*(.*)$/i
-  const answerPattern = /^\s*(?:答案|正确答案|参考答案)\s*[:：]?\s*([A-Z])?\s*(.*)$/i
+  const answerPattern = /^\s*(?:答案|正确答案|参考答案)\s*[:：]?\s*(.*?)\s*$/i
   const analysisPattern = /^\s*(?:解析|答案解析|解题思路|说明)\s*[:：]?\s*(.*)$/i
 
   let number = fallbackNumber
@@ -655,7 +720,7 @@ function parseQuestionBlockLines(lines: string[], fallbackNumber: number) {
 
     const answerMatch = answerPattern.exec(line)
     if (answerMatch) {
-      answer = (answerMatch[1] || answerMatch[2] || "").trim().slice(0, 1).toUpperCase()
+      answer = (answerMatch[1] || "").trim().toUpperCase()
       section = "analysis"
       return
     }
@@ -696,6 +761,8 @@ function renumberQuestions() {
 function createEmptyQuestion(number: number): ConversionQuestion {
   return {
     number,
+    question_type: "single_choice",
+    score: 0,
     stem: "",
     options: {
       A: "",
@@ -725,7 +792,7 @@ function addQuestion(afterNumber?: number) {
   )
   renumberQuestions()
   exportText.value = ""
-  statusMessage.value = "已新增一道单选题，请补全题干、选项和答案。"
+  statusMessage.value = "已新增一道题目，请补全题干、题型和答案。"
 }
 
 function removeQuestion(index: number) {
@@ -790,6 +857,8 @@ function mergeQuestionByNumber(number: number, direction: "up" | "down") {
   target.options = {}
   target.answer = ""
   target.analysis = ""
+  target.question_type = "short_answer"
+  target.score = Math.max(target.score || 0, source.score || 0)
   target.issues = []
   questions.value.splice(sourceIndex, 1)
   renumberQuestions()
@@ -821,12 +890,42 @@ function removeOption(question: ConversionQuestion, label: string) {
   const nextOptions = { ...question.options }
   delete nextOptions[label]
   question.options = nextOptions
-  if (question.answer === label) {
-    question.answer = ""
+  if (question.answer?.includes(label)) {
+    question.answer = question.answer.replace(label, "")
   }
   exportText.value = ""
   statusMessage.value = `已删除 ${label} 选项。`
   errorMessage.value = ""
+}
+
+function updateChoiceAnswer(question: ConversionQuestion, value: string) {
+  const cleaned = value
+    .toUpperCase()
+    .split("")
+    .filter((label) => optionLabelPool.includes(label))
+    .join("")
+  question.answer = getQuestionType(question) === "single_choice" ? cleaned.slice(0, 1) : [...new Set(cleaned)].join("")
+  exportText.value = ""
+}
+
+function toggleChoiceAnswer(question: ConversionQuestion, label: string) {
+  if (getQuestionType(question) === "single_choice") {
+    question.answer = question.answer === label ? "" : label
+    return
+  }
+
+  const selected = new Set((question.answer || "").split("").filter(Boolean))
+  if (selected.has(label)) {
+    selected.delete(label)
+  } else {
+    selected.add(label)
+  }
+  question.answer = [...selected].sort((left, right) => optionLabelPool.indexOf(left) - optionLabelPool.indexOf(right)).join("")
+  exportText.value = ""
+}
+
+function isChoiceAnswerSelected(question: ConversionQuestion, label: string) {
+  return (question.answer || "").includes(label)
 }
 
 function updateSubQuestion(question: ConversionQuestion, subNumber: number, value: string) {
@@ -866,7 +965,7 @@ function addSubQuestionByNumber(number: number) {
 }
 
 function showUnsupportedQuestionAction(action: string) {
-  statusMessage.value = `${action}需要多题型结构，当前单选题 V1 暂不支持。`
+  statusMessage.value = `${action}暂不支持批量处理；可以直接在题目属性里修改题型。`
   errorMessage.value = ""
 }
 
@@ -989,7 +1088,7 @@ async function exportKshuati() {
     }
     const result = await conversionClient.exportKshuati(activeConversion.value.id)
     exportText.value = result.export_text
-    statusMessage.value = `已生成 ${result.question_count} 道单选题。`
+    statusMessage.value = `已生成 ${result.question_count} 道题目。`
     await loadHistory()
   } catch (error) {
     setError(error)
@@ -1125,8 +1224,11 @@ function formatReviewedQuestionForWord(question: ConversionQuestion) {
   const stem = normalizeReviewedStem(stripQuestionNumberPrefix(question.stem || ""))
   const lines = [
     `${question.number}.${ensureQuestionStemBlank(stem)}`,
-    ...sortedOptionEntries(question.options).map(([label, value]) => `${label}.${normalizeReviewedExportField(value)}`),
-    `答案:${question.answer?.trim().toUpperCase() || ""}`,
+    `题型:${getQuestionTypeLabel(getQuestionType(question))}${question.score ? `  分值:${question.score}` : ""}`,
+    ...(questionTypeNeedsOptions(question)
+      ? sortedOptionEntries(question.options).map(([label, value]) => `${label}.${normalizeReviewedExportField(value)}`)
+      : []),
+    `答案:${questionTypeNeedsOptions(question) ? question.answer?.trim().toUpperCase() || "" : question.answer?.trim() || ""}`,
     `解析:${normalizeReviewedExportField(question.analysis || "")}`,
   ]
   return lines.join("\n")
@@ -1572,8 +1674,8 @@ onBeforeUnmount(() => {
 
           <div v-if="!activeConversion" class="conversion-empty conversion-empty--large">请先上传文档或选择历史任务。</div>
           <div v-else-if="!questions.length" class="conversion-empty conversion-empty--large">
-            <span>没有识别到单选题。可以先手动新增题目，再把 OCR 或图片转写内容填进去。</span>
-            <button type="button" @click="addQuestion()"><Plus :size="16" />新增单选题</button>
+            <span>没有识别到可用题目。可以先手动新增题目，再把 OCR 或图片转写内容填进去。</span>
+            <button type="button" @click="addQuestion()"><Plus :size="16" />新增题目</button>
           </div>
 
           <div v-else class="question-list question-list--review">
@@ -1584,7 +1686,7 @@ onBeforeUnmount(() => {
               :class="['question-editor', 'question-editor--formal', { 'has-issue': getQuestionIssues(question).length }]"
             >
               <header>
-                <strong>第 {{ question.number }} 题</strong>
+                <strong>第 {{ question.number }} 题 · {{ getQuestionTypeLabel(getQuestionType(question)) }}</strong>
                 <div v-if="getQuestionIssues(question).length" class="question-title-issues">
                   <button
                     v-for="issue in getQuestionIssues(question)"
@@ -1601,6 +1703,31 @@ onBeforeUnmount(() => {
                   <Trash2 :size="15" />
                 </button>
               </header>
+
+              <div class="question-meta-row">
+                <label>
+                  <small>题型</small>
+                  <select
+                    :value="getQuestionType(question)"
+                    @change="updateQuestionType(question, ($event.target as HTMLSelectElement).value as QuestionType)"
+                  >
+                    <option v-for="type in questionTypes" :key="type.id" :value="type.id">
+                      {{ type.label }} · {{ type.description }}
+                    </option>
+                  </select>
+                </label>
+                <label>
+                  <small>分值</small>
+                  <input
+                    :value="question.score || 0"
+                    type="number"
+                    min="0"
+                    step="1"
+                    aria-label="本题分值"
+                    @input="updateQuestionScore(question, ($event.target as HTMLInputElement).value)"
+                  />
+                </label>
+              </div>
 
               <label class="question-stem question-stem--paper">
                 <textarea
@@ -1632,7 +1759,7 @@ onBeforeUnmount(() => {
                 </label>
               </div>
 
-              <div class="option-grid option-grid--formal option-grid--paper">
+              <div v-if="questionTypeNeedsOptions(question)" class="option-grid option-grid--formal option-grid--paper">
                 <label v-for="label in getQuestionOptionLabels(question)" :key="label">
                   <span class="question-option-prefix">{{ label }}.</span>
                   <textarea
@@ -1652,27 +1779,50 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="answer-block answer-block--paper">
-                <label class="answer-block__answer">
+                <label v-if="questionTypeNeedsOptions(question)" class="answer-block__answer">
                   <strong>答案:</strong>
                   <input
                     :value="question.answer || ''"
                     class="answer-block__answer-input"
-                    maxlength="1"
+                    :maxlength="getQuestionType(question) === 'single_choice' ? 1 : 26"
                     aria-label="正确答案"
                     placeholder="?"
-                    @input="question.answer = ($event.target as HTMLInputElement).value.trim().toUpperCase()"
+                    @input="updateChoiceAnswer(question, ($event.target as HTMLInputElement).value)"
                   />
                   <div class="answer-block__choices" aria-label="选择正确答案">
                   <button
                       v-for="label in getQuestionOptionLabels(question)"
                       :key="label"
                       type="button"
-                      :class="{ 'is-selected': question.answer === label }"
-                      @click="question.answer = question.answer === label ? '' : label"
+                      :class="{ 'is-selected': isChoiceAnswerSelected(question, label) }"
+                      @click="toggleChoiceAnswer(question, label)"
                     >
                       {{ label }}
                     </button>
                   </div>
+                </label>
+                <label v-else-if="getQuestionType(question) === 'true_false'" class="answer-block__answer">
+                  <strong>答案:</strong>
+                  <div class="answer-block__choices answer-block__choices--wide" aria-label="选择判断答案">
+                    <button
+                      type="button"
+                      :class="{ 'is-selected': question.answer === '正确' }"
+                      @click="question.answer = question.answer === '正确' ? '' : '正确'"
+                    >
+                      正确
+                    </button>
+                    <button
+                      type="button"
+                      :class="{ 'is-selected': question.answer === '错误' }"
+                      @click="question.answer = question.answer === '错误' ? '' : '错误'"
+                    >
+                      错误
+                    </button>
+                  </div>
+                </label>
+                <label v-else class="answer-block__answer answer-block__answer--text">
+                  <strong>答案:</strong>
+                  <textarea v-model="question.answer" rows="3" :placeholder="getQuestionType(question) === 'fill_blank' ? '多个填空答案可用顿号、逗号或换行分隔' : '请输入参考答案'" />
                 </label>
                 <label class="answer-block__analysis">
                   <strong>解析:</strong>
@@ -1688,9 +1838,8 @@ onBeforeUnmount(() => {
                 <button type="button" @click="splitQuestionByNumber(question.number)">拆分</button>
                 <button v-if="question.number > 1" type="button" @click="mergeQuestionByNumber(question.number, 'up')">向上合并</button>
                 <button v-if="question.number < questions.length" type="button" @click="mergeQuestionByNumber(question.number, 'down')">向下合并</button>
-                <button type="button" @click="addOptionByNumber(question.number)">添选项</button>
+                <button v-if="questionTypeNeedsOptions(question)" type="button" @click="addOptionByNumber(question.number)">添选项</button>
                 <button type="button" @click="addSubQuestionByNumber(question.number)">添子题</button>
-                <span class="question-paper-actions__score">本题 <input class="question-score-input" type="number" value="0" min="0" aria-label="本题分数" /> 分</span>
                 <button class="question-paper-actions__add" type="button" aria-label="添题" @click="addQuestion(question.number)">+</button>
               </footer>
             </article>

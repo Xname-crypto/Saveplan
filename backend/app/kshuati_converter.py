@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 Subject = Literal["general", "politics", "math", "physics", "chemistry", "biology"]
+QuestionType = Literal["single_choice", "multiple_choice", "true_false", "fill_blank", "short_answer"]
 
 OPTION_LABEL_CHARS = "A-Za-zＡ-Ｚａ-ｚ"
 OPTION_LABEL_ORDER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -14,7 +15,7 @@ QUESTION_NUMBER_RE = re.compile(r"^\s*(?:第\s*(\d+)\s*题\s*[:：、.)）]?|(\d
 OPTION_RE = re.compile(
     rf"^\s*(?:([{OPTION_LABEL_CHARS}])(?:\s*[.．、:：)）]|\s+)|\(([{OPTION_LABEL_CHARS}])\)|（([{OPTION_LABEL_CHARS}])）|【([{OPTION_LABEL_CHARS}])】|\[([{OPTION_LABEL_CHARS}])\])\s*(.*)$"
 )
-ANSWER_RE = re.compile(rf"^\s*(?:【(?:答案|正确答案|参考答案)】|\[(?:答案|正确答案|参考答案)\]|(?:答案|正确答案|参考答案|Answer|Correct\s+Answer|Reference\s+Answer)\s*[:：]?)\s*([{OPTION_LABEL_CHARS}])\b\s*(.*)$", re.I)
+ANSWER_RE = re.compile(r"^\s*(?:【(?:答案|正确答案|参考答案)】|\[(?:答案|正确答案|参考答案)\]|(?:答案|正确答案|参考答案|Answer|Correct\s+Answer|Reference\s+Answer)\s*[:：]?)\s*(.+?)\s*$", re.I)
 ANALYSIS_RE = re.compile(r"^\s*(?:【(?:解析|答案解析|解题思路|说明)】|\[(?:解析|答案解析|解题思路|说明)\]|(?:解析|答案解析|解题思路|说明)\s*[:：])\s*(.*)$")
 ANSWER_PLACEHOLDER_RE = re.compile(r"\s*(?:（\s*）|\(\s*\))\s*$")
 CENTRAL_ANSWER_HEADER_RE = re.compile(r"^\s*(?:参考答案及解析|答案及解析|参考答案|正确答案|答案|Answers?|Answer\s+Key|Correct\s+Answers?)\s*[:：]?\s*(.*)$", re.I)
@@ -253,24 +254,86 @@ class ParsedQuestion:
     answer: str = ""
     analysis: str = ""
     issues: list[str] = field(default_factory=list)
+    question_type: QuestionType = "single_choice"
+    score: int = 0
 
 
-def validate_single_choice_question(question: ParsedQuestion) -> list[str]:
+def normalize_answer_value(value: str) -> str:
+    answer = value.strip()
+    if not answer:
+        return ""
+
+    true_tokens = {"对", "正确", "是", "true", "t", "yes", "y", "√", "✓"}
+    false_tokens = {"错", "错误", "否", "false", "f", "no", "n", "×", "x"}
+    lower_answer = answer.lower()
+    if lower_answer in true_tokens:
+        return "正确"
+    if lower_answer in false_tokens:
+        return "错误"
+
+    if re.fullmatch(rf"[{OPTION_LABEL_CHARS}]+", answer):
+        return "".join(normalize_option_label(char) for char in answer)
+
+    return answer
+
+
+def split_answer_and_analysis(value: str) -> tuple[str, str]:
+    for marker in INLINE_ANALYSIS_MARKERS:
+        if marker in value:
+            answer, analysis = value.split(marker, 1)
+            return normalize_answer_value(answer), normalize_option(analysis)
+    return normalize_answer_value(value), ""
+
+
+def infer_question_type(question: ParsedQuestion) -> QuestionType:
+    answer = question.answer.strip()
+    if answer in {"正确", "错误"} and not question.options:
+        return "true_false"
+    if question.options:
+        if len(answer) > 1 and re.fullmatch(r"[A-Z]+", answer):
+            return "multiple_choice"
+        return "single_choice"
+    if re.search(r"(?:\(\s*\)|（\s*）|____+|_{2,})", question.stem):
+        return "fill_blank"
+    if answer or question.analysis:
+        return "short_answer"
+    return "single_choice"
+
+
+def validate_question(question: ParsedQuestion) -> list[str]:
     issues: list[str] = []
+    question_type = question.question_type or infer_question_type(question)
 
-    for label in ("A", "B", "C", "D"):
-        if not question.options.get(label):
-            issues.append(f"缺少{label}选项")
+    if question_type in {"single_choice", "multiple_choice"}:
+        for label in ("A", "B", "C", "D"):
+            if not question.options.get(label):
+                issues.append(f"缺少{label}选项")
+
+        answer = question.answer.strip().upper()
+        if answer:
+            missing_labels = [label for label in answer if label not in question.options or not question.options.get(label)]
+            if missing_labels:
+                issues.append("答案不在已识别选项中")
+
+        if question_type == "single_choice" and len(answer) > 1:
+            issues.append("单选题答案只能有一个选项")
+        if question_type == "multiple_choice" and len(answer) < 2:
+            issues.append("多选题答案建议填写两个或以上选项")
+
+    elif question_type == "true_false" and question.answer not in {"正确", "错误"}:
+        issues.append("判断题答案应为正确或错误")
 
     if not question.answer:
         issues.append("缺少答案")
-    elif question.answer not in question.options:
-        issues.append("答案不在已识别选项中")
 
     if not question.stem:
         issues.append("缺少题干")
 
     return issues
+
+
+def validate_single_choice_question(question: ParsedQuestion) -> list[str]:
+    return validate_question(question)
 
 
 def sorted_option_labels(options: dict[str, str]) -> list[str]:
@@ -352,7 +415,8 @@ def parse_single_choice_questions(text: str, subject: Subject = "general") -> li
         if current is None:
             return
 
-        current.issues = validate_single_choice_question(current)
+        current.question_type = infer_question_type(current)
+        current.issues = validate_question(current)
         questions.append(current)
 
     for raw_line in split_inline_segments(text_without_answer_key):
@@ -391,10 +455,10 @@ def parse_single_choice_questions(text: str, subject: Subject = "general") -> li
 
         answer_match = ANSWER_RE.match(line)
         if answer_match:
-            current.answer = normalize_option_label(answer_match.group(1))
-            trailing = answer_match.group(2).strip()
-            if trailing:
-                current.analysis = normalize_option(trailing, subject)
+            answer, inline_analysis = split_answer_and_analysis(answer_match.group(1))
+            current.answer = answer
+            if inline_analysis:
+                current.analysis = inline_analysis
                 active_field = ("analysis", None)
             else:
                 active_field = ("answer", None)
@@ -434,24 +498,53 @@ def parse_single_choice_questions(text: str, subject: Subject = "general") -> li
             question.answer = central_answer_key[question.number]
         if not question.analysis and question.number in central_analysis_key:
             question.analysis = normalize_option(central_analysis_key[question.number], subject)
-        question.issues = validate_single_choice_question(question)
+        question.question_type = infer_question_type(question)
+        question.issues = validate_question(question)
     return questions
+
+
+def question_type_label(question_type: QuestionType) -> str:
+    return {
+        "single_choice": "单选题",
+        "multiple_choice": "多选题",
+        "true_false": "判断题",
+        "fill_blank": "填空题",
+        "short_answer": "简答题",
+    }[question_type]
+
+
+def answer_for_export(question: ParsedQuestion) -> str:
+    if question.question_type == "true_false":
+        return "A" if question.answer == "正确" else "B" if question.answer == "错误" else ""
+    return question.answer.strip().upper() if question.question_type in {"single_choice", "multiple_choice"} else question.answer.strip()
 
 
 def export_kshuati_text(questions: list[ParsedQuestion], subject: Subject = "general") -> str:
     blocks: list[str] = []
 
     for index, question in enumerate(questions, 1):
+        question.question_type = question.question_type or infer_question_type(question)
         lines = [
             f"{index}.{safe_replace(ANSWER_PLACEHOLDER_RE.sub('', question.stem).strip(), subject)}",
             "()",
         ]
 
-        for label in sorted_option_labels(question.options):
-            lines.append(f"{label}.{safe_replace(question.options.get(label, '').strip(), subject)}")
+        options = question.options
+        if question.question_type == "true_false" and not options:
+            options = {"A": "正确", "B": "错误"}
 
-        if question.answer:
-            lines.append(f"答案:{question.answer.upper()}")
+        for label in sorted_option_labels(options):
+            lines.append(f"{label}.{safe_replace(options.get(label, '').strip(), subject)}")
+
+        if question.question_type not in {"single_choice", "multiple_choice"}:
+            lines.append(f"题型:{question_type_label(question.question_type)}")
+
+        if question.score > 0:
+            lines.append(f"分值:{question.score}")
+
+        export_answer = answer_for_export(question)
+        if export_answer:
+            lines.append(f"答案:{export_answer}")
 
         if question.analysis:
             lines.append(f"解析:{safe_replace(question.analysis.strip(), subject)}")
