@@ -33,6 +33,7 @@ let setupFrame: number | null = null
 
 const shouldUseCustomCursor = () => {
   if (typeof window === "undefined") return false
+  if (window.innerWidth <= 768) return false
 
   const hasFinePointer = window.matchMedia?.("(pointer: fine)").matches
   const canHover = window.matchMedia?.("(hover: hover)").matches

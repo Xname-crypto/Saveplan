@@ -299,7 +299,44 @@ const updateGeneratedCode = (code: string) => {
   font-weight: 900;
 }
 
-@media (max-width: 420px) {
+@media (max-width: 760px) {
+  .login-form {
+    gap: 0.9rem;
+  }
+
+  .auth-login-options-row {
+    margin-top: -0.28rem;
+    border: 1px solid rgba(226, 218, 194, 0.1);
+    border-radius: 999px;
+    padding: 0.65rem 0.78rem;
+    background: rgba(226, 218, 194, 0.035);
+  }
+
+  .remember-me-control,
+  .forgot-password-link {
+    font-size: 0.78rem !important;
+  }
+
+  .auth-code-row {
+    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 28vw);
+    gap: 0.55rem;
+  }
+
+  .auth-code-box {
+    align-self: center;
+    padding-bottom: 0;
+  }
+
+  .login-account-row {
+    margin-top: 0.45rem !important;
+  }
+
+  .login-account-row > div {
+    gap: 0.72rem;
+  }
+}
+
+@media (max-width: 360px) {
   .auth-code-row {
     grid-template-columns: minmax(0, 1fr);
   }

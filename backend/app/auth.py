@@ -22,6 +22,7 @@ RESET_TOKEN_MINUTES = 60
 SESSION_DAYS = 30
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ.get("SAVEPLAN_JWT_SECRET", "saveplan-local-dev-jwt-secret")
+DEFAULT_USER_CREDITS = 100
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -34,6 +35,7 @@ class AuthUser(BaseModel):
     bio: str | None = None
     interests: list[str] = Field(default_factory=list)
     avatar_name: str | None = None
+    credits: int = DEFAULT_USER_CREDITS
     created_at: str
 
 
@@ -105,6 +107,7 @@ def init_auth_db() -> None:
                 bio TEXT,
                 interests TEXT NOT NULL DEFAULT '[]',
                 avatar_name TEXT,
+                credits INTEGER NOT NULL DEFAULT 100,
                 token_version INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             );
@@ -132,6 +135,10 @@ def init_auth_db() -> None:
         if "token_version" not in user_columns:
             connection.execute(
                 "ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"
+            )
+        if "credits" not in user_columns:
+            connection.execute(
+                "ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 100"
             )
 
         existing_columns = {
@@ -244,6 +251,7 @@ def row_to_user(row: sqlite3.Row) -> AuthUser:
         bio=row["bio"],
         interests=interests if isinstance(interests, list) else [],
         avatar_name=row["avatar_name"],
+        credits=int(row["credits"] or 0),
         created_at=row["created_at"],
     )
 

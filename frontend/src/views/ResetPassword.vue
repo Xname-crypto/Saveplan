@@ -74,7 +74,7 @@ const handleUpdatePassword = async () => {
     <template #title>New Password</template>
     <template #subtitle>为你的账号设置一个新密码。</template>
 
-    <form class="space-y-5" @submit.prevent="handleUpdatePassword">
+    <form class="reset-form" @submit.prevent="handleUpdatePassword">
       <div v-if="!resetToken" class="auth-alert auth-alert--warning p-3 text-sm">
         当前链接缺少重置凭证，请先回到找回密码页面重新发送。
       </div>
@@ -126,3 +126,16 @@ const handleUpdatePassword = async () => {
     </form>
   </AuthLayout>
 </template>
+
+<style scoped>
+.reset-form {
+  display: grid;
+  gap: 1.08rem;
+}
+
+@media (max-width: 760px) {
+  .reset-form {
+    gap: 0.9rem;
+  }
+}
+</style>
